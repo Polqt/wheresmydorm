@@ -1,0 +1,35 @@
+{
+  "name": "wheresmydorm",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "type": "module",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "check-types": "turbo check-types",
+    "dev:native": "turbo -F native dev",
+    "dev:web": "turbo -F web dev",
+    "db:push": "turbo -F @wheresmydorm/db db:push",
+    "db:studio": "turbo -F @wheresmydorm/db db:studio",
+    "db:generate": "turbo -F @wheresmydorm/db db:generate",
+    "db:migrate": "turbo -F @wheresmydorm/db db:migrate",
+    "check": "biome check --write ."
+  },
+  "dependencies": {
+    "@wheresmydorm/env": "workspace:*",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.4",
+    "@cloudflare/workers-types": "catalog:",
+    "@types/node": "^22.13.14",
+    "@wheresmydorm/config": "workspace:*",
+    "turbo": "^2.6.3",
+    "typescript": "catalog:"
+  },
+  "packageManager": "pnpm@10.24.0"
+}
