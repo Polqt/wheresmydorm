@@ -11,11 +11,14 @@
   },
   "scripts": {},
   "dependencies": {
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.99.2",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
     "@wheresmydorm/db": "workspace:*",
     "@wheresmydorm/env": "workspace:*",
     "dotenv": "catalog:",
+    "drizzle-orm": "^0.45.1",
     "effect": "catalog:",
     "next": "catalog:",
     "zod": "catalog:"
