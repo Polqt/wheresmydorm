@@ -1,3 +1,4 @@
+import { MapFilters } from "@/types/map";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "@wheresmydorm/api/routers/index";
 
@@ -7,23 +8,6 @@ type RouterOutputs = inferRouterOutputs<AppRouter>;
 
 export type NearbyListing = RouterOutputs["listings"]["getNearby"][number];
 export type ListingDetail = RouterOutputs["listings"]["getById"];
-
-export type PropertyTypeFilter =
-  | "dorm"
-  | "apartment"
-  | "bedspace"
-  | "condo"
-  | "boarding_house"
-  | "studio";
-
-export type MapFilters = {
-  minPrice?: number;
-  maxPrice?: number;
-  propertyTypes: PropertyTypeFilter[];
-  amenities: string[];
-  minRating?: number;
-  distanceMeters: number;
-};
 
 type MapStore = {
   filters: MapFilters;
