@@ -1,11 +1,12 @@
-import { haptics } from "@/services/haptics";
-import { FeedPost } from "@/types/api";
-import { trpc } from "@/utils/trpc";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 
+import { haptics } from "@/services/haptics";
+import { sharePost } from "@/services/share-post";
+import type { FeedPost } from "@/types/api";
+import { trpc } from "@/utils/trpc";
 
 const reactionEmoji = {
   funny: "😂",
