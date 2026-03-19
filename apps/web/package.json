@@ -12,6 +12,7 @@
     "@base-ui/react": "^1.0.0",
     "@fontsource-variable/noto-sans": "^5.2.5",
     "@opennextjs/cloudflare": "^1.17.1",
+    "@sentry/nextjs": "^10.44.0",
     "@sentry/node": "^9.1.0",
     "@sentry/profiling-node": "^9.1.0",
     "@supabase/ssr": "^0.8.0",
