@@ -4,10 +4,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import "../index.css";
 import Header from "@/components/header";
-import Providers from "@/components/providers";
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
+  variable: "--font-geist-sans", 
   subsets: ["latin"],
 });
 
@@ -29,12 +28,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <Providers>
           <div className="grid grid-rows-[auto_1fr] h-svh">
             <Header />
             {children}
           </div>
-        </Providers>
       </body>
     </html>
   );
