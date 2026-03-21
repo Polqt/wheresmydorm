@@ -1,160 +1,165 @@
-import * as AuthSession from "expo-auth-session";
-import Constants from "expo-constants";
-import * as Linking from "expo-linking";
+import { Image } from "expo-image";
 import { router } from "expo-router";
-import * as WebBrowser from "expo-web-browser";
-import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StatusBar } from "expo-status-bar";
+import { useCallback, useMemo, useState } from "react";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
-import { supabase } from "@/utils/supabase";
+import { AUTH_TERMS_COPY, SOCIAL_BUTTON_CLASS_NAME } from "@/lib/auth";
+import { signInWithOAuth } from "@/services/auth";
+import type { ActiveProvider, OAuthProvider } from "@/types/auth";
 
-WebBrowser.maybeCompleteAuthSession();
+function getProviderLabel(provider: OAuthProvider) {
+  return provider === "google" ? "Google" : "Facebook";
+}
 
 export default function NativeSignInScreen() {
-  const [isLoading, setIsLoading] = useState(false);
+  const insets = useSafeAreaInsets();
+  const [activeProvider, setActiveProvider] = useState<ActiveProvider>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true);
+  const isLoading = activeProvider !== null;
+  const footerStyle = useMemo(
+    () => ({
+      bottom: insets.bottom,
+    }),
+    [insets.bottom],
+  );
+
+  const handleOAuthSignIn = useCallback(async (provider: OAuthProvider) => {
+    setActiveProvider(provider);
     setErrorMessage(null);
 
     try {
-      const scheme = Array.isArray(Constants.expoConfig?.scheme)
-        ? Constants.expoConfig?.scheme[0]
-        : Constants.expoConfig?.scheme;
-      const redirectTo = AuthSession.makeRedirectUri({
-        scheme: scheme ?? "mybettertapp",
-        path: "auth/callback",
-      });
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo,
-          skipBrowserRedirect: true,
-        },
-      });
+      const didComplete = await signInWithOAuth(provider);
 
-      if (error) {
-        throw error;
+      if (didComplete) {
+        router.replace("/auth/role-select");
       }
-
-      if (!data.url) {
-        throw new Error("Supabase did not return an OAuth URL.");
-      }
-
-      const result = await WebBrowser.openAuthSessionAsync(
-        data.url,
-        redirectTo,
-      );
-
-      if (result.type !== "success") {
-        setIsLoading(false);
-        return;
-      }
-
-      const parsed = Linking.parse(result.url);
-      const code =
-        typeof parsed.queryParams?.code === "string"
-          ? parsed.queryParams.code
-          : null;
-
-      if (!code) {
-        throw new Error("Missing OAuth code in the redirect response.");
-      }
-
-      const { error: exchangeError } =
-        await supabase.auth.exchangeCodeForSession(code);
-
-      if (exchangeError) {
-        throw exchangeError;
-      }
-
-      router.replace("/auth/role-select");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Google sign-in failed.",
+        error instanceof Error
+          ? error.message
+          : `${getProviderLabel(provider)} sign-in failed.`,
       );
     } finally {
-      setIsLoading(false);
+      setActiveProvider(null);
     }
-  };
+  }, []);
+
+  const handleGoogleSignIn = useCallback(() => {
+    void handleOAuthSignIn("google");
+  }, [handleOAuthSignIn]);
+
+  const handleFacebookSignIn = useCallback(() => {
+    void handleOAuthSignIn("facebook");
+  }, [handleOAuthSignIn]);
+
+  const handleContinueWithEmail = useCallback(() => {
+    router.push("/auth/email");
+  }, []);
 
   return (
-    <View style={styles.screen}>
-      <View style={styles.heroCard}>
-        <Text style={styles.eyebrow}>Android MVP</Text>
-        <Text style={styles.title}>
-          Google is the only sign-in path for WheresMyDorm
-        </Text>
-        <Text style={styles.body}>
-          We'll keep the session alive with Supabase, create your profile, and
-          send you to role selection the first time you connect.
-        </Text>
+    <SafeAreaView className="flex-1 bg-white">
+      <StatusBar style="dark" />
 
-        {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
+      <View className="flex-1 px-6">
+        <View className="flex-1" />
 
-        <Pressable
-          disabled={isLoading}
-          onPress={handleGoogleSignIn}
-          style={styles.primaryButton}
-        >
-          <Text style={styles.primaryButtonText}>
-            {isLoading ? "Connecting to Google..." : "Continue with Google"}
+        <View className="items-center">
+          <Image
+            accessibilityLabel="WheresMyDorm logo"
+            className="h-16 w-16"
+            contentFit="contain"
+            source={require("../../assets/images/logo.svg")}
+          />
+          <Text className="mt-6 text-center font-black text-2xl text-brand-primary-900">
+            Sign in to discover trusted{"\n"}dorms near campus
           </Text>
-        </Pressable>
+        </View>
+
+        <View className="mt-8">
+          <Pressable
+            className={SOCIAL_BUTTON_CLASS_NAME}
+            disabled={isLoading}
+            onPress={handleGoogleSignIn}
+          >
+            {activeProvider === "google" ? (
+              <View className="w-full items-center">
+                <ActivityIndicator color="#5b6fd1" size="small" />
+              </View>
+            ) : (
+              <>
+                <Image
+                  accessibilityLabel="Google icon"
+                  className="h-6 w-6"
+                  contentFit="cover"
+                  source={{ uri: "https://www.google.com/favicon.ico" }}
+                />
+                <Text className="ml-4 font-semibold text-base text-slate-800">
+                  Continue with Google
+                </Text>
+              </>
+            )}
+          </Pressable>
+
+          <Pressable
+            className={SOCIAL_BUTTON_CLASS_NAME}
+            disabled={isLoading}
+            onPress={handleFacebookSignIn}
+          >
+            {activeProvider === "facebook" ? (
+              <View className="w-full items-center">
+                <ActivityIndicator color="#5b6fd1" size="small" />
+              </View>
+            ) : (
+              <>
+                <View className="h-7 w-7 items-center justify-center rounded-full bg-[#1877F2]">
+                  <Text className="font-black text-base text-white">f</Text>
+                </View>
+                <Text className="ml-4 font-semibold text-base text-slate-800">
+                  Continue with Facebook
+                </Text>
+              </>
+            )}
+          </Pressable>
+
+          <View className="mt-6 flex-row items-center gap-3">
+            <View className="h-px flex-1 bg-slate-200" />
+            <Text className="text-slate-400 text-sm">or</Text>
+            <View className="h-px flex-1 bg-slate-200" />
+          </View>
+
+          <Pressable
+            className="mt-4 h-14 w-full items-center justify-center rounded-2xl bg-brand-primary-900"
+            disabled={isLoading}
+            onPress={handleContinueWithEmail}
+          >
+            <Text className="font-bold text-base text-white">
+              Continue with email
+            </Text>
+          </Pressable>
+
+          {errorMessage ? (
+            <View className="mt-4 rounded-xl bg-red-50 p-3">
+              <Text className="text-center text-red-600 text-sm">
+                {errorMessage}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+
+        <View className="flex-1" />
       </View>
-    </View>
+
+      <View className="absolute right-0 left-0 px-8" style={footerStyle}>
+        <Text className="text-center text-slate-400 text-xs leading-5">
+          {AUTH_TERMS_COPY}
+        </Text>
+      </View>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    justifyContent: "center",
-    paddingHorizontal: 20,
-    backgroundColor: "#fff7ed",
-  },
-  heroCard: {
-    borderRadius: 32,
-    backgroundColor: "#fffbeb",
-    padding: 24,
-  },
-  eyebrow: {
-    color: "#9a3412",
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 1.6,
-    textTransform: "uppercase",
-  },
-  title: {
-    marginTop: 10,
-    color: "#0f172a",
-    fontSize: 30,
-    fontWeight: "800",
-    lineHeight: 36,
-  },
-  body: {
-    marginTop: 12,
-    color: "#475569",
-    fontSize: 15,
-    lineHeight: 24,
-  },
-  error: {
-    marginTop: 14,
-    color: "#b91c1c",
-    fontSize: 13,
-    lineHeight: 20,
-  },
-  primaryButton: {
-    marginTop: 20,
-    alignItems: "center",
-    borderRadius: 18,
-    backgroundColor: "#ea580c",
-    paddingVertical: 15,
-  },
-  primaryButtonText: {
-    color: "#ffffff",
-    fontSize: 15,
-    fontWeight: "800",
-  },
-});

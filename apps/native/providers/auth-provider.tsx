@@ -2,9 +2,11 @@ import type { Session, User } from "@supabase/supabase-js";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, useSegments } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import {
   createContext,
   startTransition,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -22,6 +24,8 @@ import { NAV_THEME } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 import { supabase } from "@/utils/supabase";
 import { trpc } from "@/utils/trpc";
+
+const ONBOARDING_COMPLETE_KEY = "onboarding_complete";
 
 type AuthContextValue = {
   session: Session | null;
@@ -106,31 +110,79 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     (!session ||
       (isProfileSynced && !profileQuery.isLoading && !syncProfile.isPending));
   const isInAuth = firstSegment === "auth";
+  const isIndexRoute = firstSegment === undefined;
+  const isOnboardingRoute = firstSegment === "onboarding";
   const isRoleSelectRoute = isInAuth && secondSegment === "role-select";
+  const isSignInRoute = isInAuth && secondSegment === "sign-in";
 
   useEffect(() => {
+    let isCancelled = false;
+
     if (!isReady) {
-      return;
+      return () => {
+        isCancelled = true;
+      };
     }
 
-    if (!session) {
-      if (!isInAuth || isRoleSelectRoute) {
-        router.replace("/auth/sign-in");
+    const syncRoute = async () => {
+      if (!session) {
+        if ((!isInAuth && !isIndexRoute) || isRoleSelectRoute) {
+          router.replace("/auth/sign-in");
+        }
+        return;
       }
-      return;
-    }
 
-    if (!role) {
-      if (!isRoleSelectRoute) {
-        router.replace("/auth/role-select");
+      if (!role) {
+        if (!isRoleSelectRoute && !isSignInRoute) {
+          router.replace("/auth/role-select");
+        }
+        return;
       }
-      return;
-    }
 
-    if (isInAuth || firstSegment === undefined) {
-      router.replace("/(tabs)/map");
-    }
-  }, [firstSegment, isInAuth, isReady, isRoleSelectRoute, role, session]);
+      if (role && !isInAuth && !isOnboardingRoute) {
+        const onboardingDone = await SecureStore.getItemAsync(
+          ONBOARDING_COMPLETE_KEY,
+        );
+
+        if (isCancelled) {
+          return;
+        }
+
+        if (!onboardingDone) {
+          router.replace("/onboarding");
+          return;
+        }
+      }
+
+      if (isInAuth || isIndexRoute) {
+        router.replace("/(tabs)/map");
+      }
+    };
+
+    void syncRoute();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [
+    isInAuth,
+    isIndexRoute,
+    isReady,
+    isOnboardingRoute,
+    isRoleSelectRoute,
+    isSignInRoute,
+    role,
+    session,
+  ]);
+
+  const handleRetryProfile = useCallback(() => {
+    void profileQuery.refetch();
+  }, [profileQuery.refetch]);
+
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
+    router.replace("/auth/sign-in");
+  }, []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -138,12 +190,9 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       user: session?.user ?? null,
       role,
       isReady,
-      signOut: async () => {
-        await supabase.auth.signOut();
-        router.replace("/auth/sign-in");
-      },
+      signOut,
     }),
-    [isReady, role, session],
+    [isReady, role, session, signOut],
   );
 
   if (!isReady) {
@@ -171,13 +220,13 @@ function AuthGate({ children }: { children: React.ReactNode }) {
         </Text>
         <View style={styles.actions}>
           <Pressable
-            onPress={() => profileQuery.refetch()}
+            onPress={handleRetryProfile}
             style={[styles.primaryButton, { backgroundColor: theme.primary }]}
           >
             <Text style={styles.primaryButtonText}>Retry</Text>
           </Pressable>
           <Pressable
-            onPress={value.signOut}
+            onPress={signOut}
             style={[styles.secondaryButton, { borderColor: theme.border }]}
           >
             <Text style={[styles.secondaryButtonText, { color: theme.text }]}>
