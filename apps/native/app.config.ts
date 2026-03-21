@@ -7,7 +7,7 @@ const config: ExpoConfig = {
   slug: "wheresmydorm",
   version: "1.0.0",
   orientation: "portrait",
-  icon: "./assets/images/logo.svg",
+  icon: "./assets/images/icon.png",
   scheme: "mybettertapp",
   userInterfaceStyle: "automatic",
   newArchEnabled: true,
@@ -46,12 +46,12 @@ const config: ExpoConfig = {
     [
       "expo-splash-screen",
       {
-        image: "./assets/images/splash-icon.png",
+        image: "./assets/animations/animation.gif",
         imageWidth: 200,
         resizeMode: "contain",
-        backgroundColor: "#ffffff",
+        backgroundColor: "#04170E",
         dark: {
-          backgroundColor: "#000000",
+          backgroundColor: "#04170E",
         },
       },
     ],

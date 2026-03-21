@@ -1,6 +1,6 @@
 import type { Profile } from "../../../packages/db/src/schema/profiles";
 
-export type OAuthProvider = "google" | "facebook";
+export type OAuthProvider = "apple" | "google" | "facebook";
 export type ActiveProvider = OAuthProvider | null;
 export type RoleOption = Extract<
   NonNullable<Profile["role"]>,
@@ -20,4 +20,17 @@ export type RoleCardProps = {
   disabled: boolean;
   isSelected: boolean;
   onSelect: (role: RoleOption) => void;
+};
+
+export type SignInFormProps = {
+  activeProvider: ActiveProvider;
+  errorMessage: string | null;
+  onContinueWithEmail: () => void;
+  onContinueWithFacebook: () => void;
+  onContinueWithGoogle: () => void;
+};
+
+export type EmailOtpSendResult = {
+  email: PendingAuthEmail;
+  resendAvailableAt: number;
 };
