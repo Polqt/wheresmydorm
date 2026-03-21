@@ -1,4 +1,4 @@
-import { Image } from "expo-image";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -14,25 +14,42 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
-import { AUTH_TEXT_INPUT_CLASS_NAME, EMAIL_CODE_LENGTH } from "@/lib/auth";
+import { AppLaunchScreen } from "@/components/ui/app-launch-screen";
+import { AppLogo } from "@/components/ui/app-logo";
+import {
+  EMAIL_CODE_LENGTH,
+  getEmailOtpRateLimitMessage,
+  parseEmailOtpRetryAfterSeconds,
+} from "@/lib/auth";
 import { sendEmailOtp, verifyEmailOtp } from "@/services/auth";
 import { useAuthFlowStore } from "@/stores/auth";
 
 export default function EmailCodeScreen() {
   const insets = useSafeAreaInsets();
+  const clearOtpCooldown = useAuthFlowStore((state) => state.clearOtpCooldown);
   const pendingEmail = useAuthFlowStore((state) => state.pendingEmail);
+  const resendAvailableAt = useAuthFlowStore(
+    (state) => state.resendAvailableAt,
+  );
   const clearPendingEmail = useAuthFlowStore(
     (state) => state.clearPendingEmail,
   );
+  const setOtpCooldown = useAuthFlowStore((state) => state.setOtpCooldown);
   const [code, setCode] = useState("");
+  const [currentTime, setCurrentTime] = useState(Date.now());
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
 
+  const secondsRemaining =
+    resendAvailableAt && resendAvailableAt > currentTime
+      ? Math.ceil((resendAvailableAt - currentTime) / 1000)
+      : 0;
   const canContinue = code.trim().length === EMAIL_CODE_LENGTH && !isSubmitting;
   const bottomAreaStyle = useMemo(
     () => ({
-      paddingBottom: insets.bottom,
+      paddingBottom: insets.bottom + 12,
     }),
     [insets.bottom],
   );
@@ -42,6 +59,20 @@ export default function EmailCodeScreen() {
       router.replace("/auth/email");
     }
   }, [pendingEmail]);
+
+  useEffect(() => {
+    if (resendAvailableAt === null) {
+      return;
+    }
+
+    const intervalId = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [resendAvailableAt]);
 
   const handleBack = useCallback(() => {
     router.replace("/auth/email");
@@ -65,15 +96,32 @@ export default function EmailCodeScreen() {
     setErrorMessage(null);
 
     try {
-      await sendEmailOtp(pendingEmail);
+      if (resendAvailableAt !== null && resendAvailableAt > Date.now()) {
+        setErrorMessage(getEmailOtpRateLimitMessage(secondsRemaining));
+        return;
+      }
+
+      const result = await sendEmailOtp(pendingEmail);
+      setOtpCooldown(result.resendAvailableAt);
     } catch (error) {
+      const retryAfterSeconds =
+        error instanceof Error
+          ? parseEmailOtpRetryAfterSeconds(error.message)
+          : null;
+
+      if (retryAfterSeconds !== null) {
+        setOtpCooldown(Date.now() + retryAfterSeconds * 1000);
+        setErrorMessage(getEmailOtpRateLimitMessage(retryAfterSeconds));
+        return;
+      }
+
       setErrorMessage(
         error instanceof Error ? error.message : "Unable to resend your code.",
       );
     } finally {
       setIsResending(false);
     }
-  }, [pendingEmail]);
+  }, [pendingEmail, resendAvailableAt, secondsRemaining, setOtpCooldown]);
 
   const handleContinue = useCallback(async () => {
     if (!pendingEmail) {
@@ -82,7 +130,7 @@ export default function EmailCodeScreen() {
     }
 
     if (code.trim().length !== EMAIL_CODE_LENGTH) {
-      setErrorMessage("Enter the 6-digit code from your email.");
+      setErrorMessage(`Enter the ${EMAIL_CODE_LENGTH}-digit code from your email.`);
       return;
     }
 
@@ -91,8 +139,9 @@ export default function EmailCodeScreen() {
 
     try {
       await verifyEmailOtp(pendingEmail, code);
+      clearOtpCooldown();
       clearPendingEmail();
-      router.replace("/auth/role-select");
+      setIsVerified(true);
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "Unable to verify your code.",
@@ -100,60 +149,71 @@ export default function EmailCodeScreen() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [clearPendingEmail, code, pendingEmail]);
+  }, [clearOtpCooldown, clearPendingEmail, code, pendingEmail]);
+
+  if (isVerified) {
+    return (
+      <AppLaunchScreen
+        body="We're setting up your account."
+        title="Email verified!"
+      />
+    );
+  }
 
   return (
-    <SafeAreaView className="flex-1 bg-brand-surface">
+    <SafeAreaView className="flex-1 bg-white">
       <StatusBar style="dark" />
 
       <View className="flex-1">
-        <View className="flex-row items-center justify-between px-4 pt-4">
+        <View className="flex-row items-center justify-between px-4 pt-2">
           <Pressable
             className="h-11 w-11 items-center justify-center rounded-full"
             onPress={handleBack}
           >
-            <Text className="text-2xl text-brand-primary-900">←</Text>
+            <Ionicons color="#1A1A1A" name="chevron-back" size={24} />
           </Pressable>
 
           <View className="h-11 w-11" />
         </View>
 
         <View className="flex-1 items-center px-6">
-          <Image
-            accessibilityLabel="WheresMyDorm logo"
-            className="mt-8 h-14 w-14"
-            contentFit="contain"
-            source={require("../../assets/images/logo.svg")}
-          />
+          <AppLogo className="mt-6 h-12 w-12" />
 
-          <Text className="mt-6 text-center font-black text-2xl text-brand-primary-900">
+          <Text className="mt-6 text-center font-bold text-[24px] text-[#1A1A1A]">
             Enter your code
           </Text>
-          <Text className="mt-2 text-center text-slate-400 text-sm leading-5">
-            We sent a 6-digit code to {pendingEmail ?? "your email"}.
+          <Text className="mt-2 text-center text-[#7A7A7A] text-sm">
+            We sent a code to {pendingEmail}
           </Text>
 
-          <View className="mt-10 w-full">
-            <Text className="text-slate-500 text-sm">Verification code</Text>
+          <View className="mt-8 w-full">
+            <Text className="text-[#555555] text-sm font-medium">
+              Verification code
+            </Text>
             <TextInput
               autoCapitalize="none"
               autoCorrect={false}
-              className={AUTH_TEXT_INPUT_CLASS_NAME}
+              className="mt-2 h-14 w-full rounded-2xl border border-[#E0E0E0] bg-white px-4 text-base text-[#1A1A1A]"
               keyboardType="number-pad"
+              maxLength={EMAIL_CODE_LENGTH}
               onChangeText={handleCodeChange}
-              placeholder="123456"
-              placeholderTextColor="#94a3b8"
+              placeholder="12345678"
+              placeholderTextColor="#B0B0B0"
               value={code}
             />
           </View>
 
           <Pressable
             className="mt-4"
-            disabled={isResending}
+            disabled={isResending || secondsRemaining > 0}
             onPress={handleResend}
           >
-            <Text className="font-semibold text-brand-primary-500 text-sm">
-              {isResending ? "Sending a new code..." : "Resend code"}
+            <Text className="font-semibold text-[#1B5E3A] text-sm">
+              {isResending
+                ? "Sending a new code..."
+                : secondsRemaining > 0
+                  ? `Resend available in ${secondsRemaining}s`
+                  : "Resend code"}
             </Text>
           </Pressable>
 
@@ -165,12 +225,12 @@ export default function EmailCodeScreen() {
         </View>
 
         <View
-          className="absolute bottom-0 w-full px-6 pt-4"
+          className="w-full px-6 pt-4"
           style={bottomAreaStyle}
         >
           <Pressable
-            className={`h-14 w-full items-center justify-center rounded-2xl ${
-              canContinue ? "bg-brand-primary-900" : "bg-slate-200"
+            className={`h-14 w-full items-center justify-center rounded-full ${
+              canContinue ? "bg-[#04170E]" : "bg-[#E5E5E5]"
             }`}
             disabled={!canContinue}
             onPress={handleContinue}
@@ -179,8 +239,8 @@ export default function EmailCodeScreen() {
               <ActivityIndicator color="#ffffff" size="small" />
             ) : (
               <Text
-                className={`font-bold text-base ${
-                  canContinue ? "text-white" : "text-slate-400"
+                className={`font-semibold text-base ${
+                  canContinue ? "text-white" : "text-[#9A9A9A]"
                 }`}
               >
                 Continue

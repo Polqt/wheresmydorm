@@ -1,11 +1,50 @@
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 
-import { getAuthRedirectUrl, normalizeAuthEmail } from "@/lib/auth";
-import type { OAuthProvider, PendingAuthEmail } from "@/types/auth";
+import {
+  EMAIL_OTP_COOLDOWN_MS,
+  getAuthRedirectUrl,
+  normalizeAuthEmail,
+} from "@/lib/auth";
+import type {
+  EmailOtpSendResult,
+  OAuthProvider,
+  PendingAuthEmail,
+} from "@/types/auth";
 import { supabase } from "@/utils/supabase";
 
 WebBrowser.maybeCompleteAuthSession();
+
+function parseParamValue(value: unknown) {
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+function parseOAuthResponse(url: string) {
+  const parsed = Linking.parse(url);
+  const query = parsed.queryParams ?? {};
+  const hashParams =
+    url.includes("#") && url.split("#")[1]
+      ? new URLSearchParams(url.split("#")[1] ?? "")
+      : new URLSearchParams();
+
+  const code = parseParamValue(query.code) ?? hashParams.get("code");
+  const accessToken =
+    parseParamValue(query.access_token) ?? hashParams.get("access_token");
+  const refreshToken =
+    parseParamValue(query.refresh_token) ?? hashParams.get("refresh_token");
+  const errorDescription =
+    parseParamValue(query.error_description) ??
+    hashParams.get("error_description");
+  const error = parseParamValue(query.error) ?? hashParams.get("error");
+
+  return {
+    accessToken,
+    code,
+    error,
+    errorDescription,
+    refreshToken,
+  };
+}
 
 export async function signInWithOAuth(provider: OAuthProvider) {
   const redirectTo = getAuthRedirectUrl();
@@ -28,17 +67,51 @@ export async function signInWithOAuth(provider: OAuthProvider) {
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
 
   if (result.type !== "success") {
+    // On Android, the custom tab closes via deep link before openAuthSessionAsync
+    // signals "success". The callback screen may have already set the session.
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (session) {
+      return true;
+    }
+
     return false;
   }
 
-  const parsed = Linking.parse(result.url);
-  const code =
-    typeof parsed.queryParams?.code === "string"
-      ? parsed.queryParams.code
-      : null;
+  const { accessToken, code, error: oauthError, errorDescription, refreshToken } =
+    parseOAuthResponse(result.url);
+
+  if (oauthError || errorDescription) {
+    throw new Error(
+      errorDescription ?? oauthError ?? "OAuth sign-in was denied.",
+    );
+  }
+
+  if (accessToken && refreshToken) {
+    const { error: setSessionError } = await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+
+    if (setSessionError) {
+      throw setSessionError;
+    }
+
+    return true;
+  }
 
   if (!code) {
-    throw new Error("Missing OAuth code.");
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (session) {
+      return true;
+    }
+
+    throw new Error("Missing OAuth callback data.");
   }
 
   const { error: exchangeError } =
@@ -51,7 +124,7 @@ export async function signInWithOAuth(provider: OAuthProvider) {
   return true;
 }
 
-export async function sendEmailOtp(email: string) {
+export async function sendEmailOtp(email: string): Promise<EmailOtpSendResult> {
   const normalizedEmail = normalizeAuthEmail(email);
   const { error } = await supabase.auth.signInWithOtp({
     email: normalizedEmail,
@@ -64,7 +137,10 @@ export async function sendEmailOtp(email: string) {
     throw error;
   }
 
-  return normalizedEmail;
+  return {
+    email: normalizedEmail,
+    resendAvailableAt: Date.now() + EMAIL_OTP_COOLDOWN_MS,
+  };
 }
 
 export async function verifyEmailOtp(email: PendingAuthEmail, token: string) {

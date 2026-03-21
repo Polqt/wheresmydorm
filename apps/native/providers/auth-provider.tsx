@@ -2,7 +2,6 @@ import type { Session, User } from "@supabase/supabase-js";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, useSegments } from "expo-router";
-import * as SecureStore from "expo-secure-store";
 import {
   createContext,
   startTransition,
@@ -10,22 +9,17 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
-
-import { NAV_THEME } from "@/lib/constants";
-import { useColorScheme } from "@/lib/use-color-scheme";
+  AppLaunchScreen,
+  LaunchScreenButton,
+} from "@/components/ui/app-launch-screen";
+import { getOnboardingCompletion } from "@/services/onboarding";
+import { useAuthFlowStore } from "@/stores/auth";
 import { supabase } from "@/utils/supabase";
 import { trpc } from "@/utils/trpc";
-
-const ONBOARDING_COMPLETE_KEY = "onboarding_complete";
 
 type AuthContextValue = {
   session: Session | null;
@@ -36,16 +30,29 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+const MAX_PROFILE_SYNC_RETRIES = 3;
+const PROFILE_SYNC_RETRY_DELAY_MS = 800;
+const PROFILE_SYNC_INITIAL_DELAY_MS = 200;
+const LOADING_TIMEOUT_MS = 10_000;
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const segments = useSegments();
   const [firstSegment, secondSegment] = segments as string[];
-  const { colorScheme } = useColorScheme();
-  const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
   const [session, setSession] = useState<Session | null>(null);
   const [isSessionReady, setIsSessionReady] = useState(false);
   const [isProfileSynced, setIsProfileSynced] = useState(false);
+  const [didRetryMissingProfileSync, setDidRetryMissingProfileSync] =
+    useState(false);
+  const [profileSyncFailures, setProfileSyncFailures] = useState(0);
+  const [loadingTooLong, setLoadingTooLong] = useState(false);
+  const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearAwaitingRoleSync = useAuthFlowStore(
+    (state) => state.clearAwaitingRoleSync,
+  );
+  const isAwaitingRoleSync = useAuthFlowStore(
+    (state) => state.isAwaitingRoleSync,
+  );
 
   const syncProfile = useMutation(
     trpc.profiles.sync.mutationOptions({
@@ -59,9 +66,15 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const profileQuery = useQuery(
     trpc.profiles.me.queryOptions(undefined, {
       enabled: Boolean(session) && isProfileSynced,
-      retry: false,
+      retry: 2,
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
     }),
   );
+
+  useEffect(() => {
+    setDidRetryMissingProfileSync(false);
+    setProfileSyncFailures(0);
+  }, [session?.user.id]);
 
   useEffect(() => {
     let isMounted = true;
@@ -95,14 +108,56 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    startTransition(() => {
-      syncProfile.mutate(undefined, {
-        onError: () => {
-          setIsProfileSynced(true);
-        },
+    if (profileSyncFailures >= MAX_PROFILE_SYNC_RETRIES) {
+      setIsProfileSynced(true);
+      return;
+    }
+
+    const delay =
+      profileSyncFailures === 0
+        ? PROFILE_SYNC_INITIAL_DELAY_MS
+        : PROFILE_SYNC_RETRY_DELAY_MS * Math.pow(1.5, profileSyncFailures - 1);
+
+    const timeoutId = setTimeout(() => {
+      startTransition(() => {
+        syncProfile.mutate(undefined, {
+          onError: () => {
+            setProfileSyncFailures((current) => current + 1);
+          },
+        });
       });
-    });
-  }, [isProfileSynced, session, syncProfile]);
+    }, delay);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [isProfileSynced, profileSyncFailures, session, syncProfile]);
+
+  useEffect(() => {
+    if (
+      !session ||
+      !profileQuery.error ||
+      syncProfile.isPending ||
+      didRetryMissingProfileSync
+    ) {
+      return;
+    }
+
+    if (
+      !profileQuery.error.message.toLowerCase().includes("profile not found")
+    ) {
+      return;
+    }
+
+    setDidRetryMissingProfileSync(true);
+    setProfileSyncFailures(0);
+    setIsProfileSynced(false);
+  }, [
+    didRetryMissingProfileSync,
+    profileQuery.error,
+    session,
+    syncProfile.isPending,
+  ]);
 
   const role = profileQuery.data?.role ?? null;
   const isReady =
@@ -113,7 +168,33 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const isIndexRoute = firstSegment === undefined;
   const isOnboardingRoute = firstSegment === "onboarding";
   const isRoleSelectRoute = isInAuth && secondSegment === "role-select";
-  const isSignInRoute = isInAuth && secondSegment === "sign-in";
+
+  // Loading timeout: if isReady hasn't become true within LOADING_TIMEOUT_MS, show escape hatch
+  useEffect(() => {
+    if (isReady) {
+      setLoadingTooLong(false);
+      if (loadingTimerRef.current) {
+        clearTimeout(loadingTimerRef.current);
+        loadingTimerRef.current = null;
+      }
+      return;
+    }
+
+    if (!isSessionReady) {
+      return;
+    }
+
+    loadingTimerRef.current = setTimeout(() => {
+      setLoadingTooLong(true);
+    }, LOADING_TIMEOUT_MS);
+
+    return () => {
+      if (loadingTimerRef.current) {
+        clearTimeout(loadingTimerRef.current);
+        loadingTimerRef.current = null;
+      }
+    };
+  }, [isReady, isSessionReady]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -125,37 +206,59 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     }
 
     const syncRoute = async () => {
+      let onboardingDone = false;
+
+      try {
+        onboardingDone = await getOnboardingCompletion();
+      } catch {
+        onboardingDone = false;
+      }
+
+      if (isCancelled) {
+        return;
+      }
+
       if (!session) {
-        if ((!isInAuth && !isIndexRoute) || isRoleSelectRoute) {
-          router.replace("/auth/sign-in");
+        if (!onboardingDone) {
+          if (!isOnboardingRoute) {
+            startTransition(() => router.replace("/onboarding"));
+          }
+          return;
+        }
+
+        if (
+          isIndexRoute ||
+          isOnboardingRoute ||
+          (!isInAuth && !isIndexRoute) ||
+          isRoleSelectRoute
+        ) {
+          startTransition(() => router.replace("/auth/sign-in"));
         }
         return;
       }
 
       if (!role) {
-        if (!isRoleSelectRoute && !isSignInRoute) {
-          router.replace("/auth/role-select");
+        if (isAwaitingRoleSync) {
+          return;
+        }
+
+        if (!isRoleSelectRoute) {
+          startTransition(() => router.replace("/auth/role-select"));
         }
         return;
       }
 
-      if (role && !isInAuth && !isOnboardingRoute) {
-        const onboardingDone = await SecureStore.getItemAsync(
-          ONBOARDING_COMPLETE_KEY,
-        );
-
-        if (isCancelled) {
-          return;
-        }
-
-        if (!onboardingDone) {
-          router.replace("/onboarding");
-          return;
-        }
+      if (isAwaitingRoleSync) {
+        clearAwaitingRoleSync();
       }
 
-      if (isInAuth || isIndexRoute) {
-        router.replace("/(tabs)/map");
+      if (!onboardingDone && !isOnboardingRoute) {
+        startTransition(() => router.replace("/onboarding"));
+        return;
+      }
+
+      if ((isInAuth || isIndexRoute || isOnboardingRoute) && onboardingDone) {
+        startTransition(() => router.replace("/(tabs)/map"));
       }
     };
 
@@ -166,22 +269,27 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     };
   }, [
     isInAuth,
+    isAwaitingRoleSync,
     isIndexRoute,
     isReady,
     isOnboardingRoute,
     isRoleSelectRoute,
-    isSignInRoute,
+    clearAwaitingRoleSync,
     role,
     session,
   ]);
 
   const handleRetryProfile = useCallback(() => {
-    void profileQuery.refetch();
-  }, [profileQuery.refetch]);
+    setLoadingTooLong(false);
+    setDidRetryMissingProfileSync(false);
+    setProfileSyncFailures(0);
+    setIsProfileSynced(false);
+    queryClient.invalidateQueries();
+  }, [queryClient]);
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
-    router.replace("/auth/sign-in");
+    startTransition(() => router.replace("/auth/sign-in"));
   }, []);
 
   const value = useMemo<AuthContextValue>(
@@ -197,44 +305,26 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (!isReady) {
     return (
-      <View style={[styles.stateScreen, { backgroundColor: theme.background }]}>
-        <ActivityIndicator color={theme.primary} size="large" />
-        <Text style={[styles.stateTitle, { color: theme.text }]}>
-          Preparing your account
-        </Text>
-        <Text style={[styles.stateBody, { color: theme.text }]}>
-          We're checking your session and loading your role.
-        </Text>
-      </View>
-    );
-  }
-
-  if (session && profileQuery.error) {
-    return (
-      <View style={[styles.stateScreen, { backgroundColor: theme.background }]}>
-        <Text style={[styles.stateTitle, { color: theme.text }]}>
-          We couldn't load your profile
-        </Text>
-        <Text style={[styles.stateBody, { color: theme.text }]}>
-          Please try again or sign out and reconnect your account.
-        </Text>
-        <View style={styles.actions}>
-          <Pressable
-            onPress={handleRetryProfile}
-            style={[styles.primaryButton, { backgroundColor: theme.primary }]}
-          >
-            <Text style={styles.primaryButtonText}>Retry</Text>
-          </Pressable>
-          <Pressable
-            onPress={signOut}
-            style={[styles.secondaryButton, { borderColor: theme.border }]}
-          >
-            <Text style={[styles.secondaryButtonText, { color: theme.text }]}>
-              Sign out
-            </Text>
-          </Pressable>
-        </View>
-      </View>
+      <AppLaunchScreen
+        body={
+          loadingTooLong
+            ? "We're having trouble connecting. You can retry or sign out and try again."
+            : "We're checking your session and loading your role."
+        }
+        title={loadingTooLong ? "Taking longer than expected" : "Preparing your account"}
+        actions={
+          loadingTooLong ? (
+            <>
+              <LaunchScreenButton label="Retry" onPress={handleRetryProfile} />
+              <LaunchScreenButton
+                label="Sign out"
+                onPress={signOut}
+                variant="ghost"
+              />
+            </>
+          ) : undefined
+        }
+      />
     );
   }
 
@@ -254,52 +344,3 @@ export function useAuth() {
 
   return context;
 }
-
-const styles = StyleSheet.create({
-  stateScreen: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 32,
-  },
-  stateTitle: {
-    marginTop: 16,
-    fontSize: 24,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  stateBody: {
-    marginTop: 8,
-    fontSize: 14,
-    lineHeight: 22,
-    opacity: 0.78,
-    textAlign: "center",
-  },
-  actions: {
-    marginTop: 20,
-    width: "100%",
-    gap: 12,
-  },
-  primaryButton: {
-    alignItems: "center",
-    borderRadius: 18,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-  },
-  primaryButtonText: {
-    color: "#ffffff",
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  secondaryButton: {
-    alignItems: "center",
-    borderRadius: 18,
-    borderWidth: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-  },
-  secondaryButtonText: {
-    fontSize: 15,
-    fontWeight: "700",
-  },
-});
