@@ -28,7 +28,7 @@ const config: ExpoConfig = {
     },
     edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
-    package: "com.anonymous.mybettertapp",
+    package: "com.anonymous.wheresmydorm",
     config: googleMapsApiKey
       ? {
           googleMaps: {
