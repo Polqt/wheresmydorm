@@ -1,0 +1,71 @@
+"use client";
+
+import Image from "next/image";
+import logoSrc from "@/assets/images/LOGO WMD.svg";
+
+const NAV_LINKS = [
+  { label: "Product", href: "#product" },
+  { label: "Community", href: "#community" },
+  { label: "Pricing", href: "#pricing" },
+] as const;
+
+export function Navbar() {
+  function handleScroll(
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) {
+    e.preventDefault();
+    const target = document.querySelector(href);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  return (
+    <header className="sticky top-0 z-40 flex justify-center px-5 pt-4 pb-2 pointer-events-none">
+      <nav
+        aria-label="Main navigation"
+        className="pointer-events-auto flex items-center justify-between gap-6 rounded-full border border-[#E2E8F0] bg-white/90 backdrop-blur-md px-4 py-2.5 shadow-[0_8px_24px_rgba(15,23,42,0.10)] w-full max-w-3xl"
+      >
+        {/* Logo */}
+        <a
+          href="/"
+          aria-label="Where's My Dorm — home"
+          className="shrink-0 focus-visible:outline-2 focus-visible:outline-[#5B6FD1] focus-visible:outline-offset-2 rounded-full"
+        >
+          <Image
+            src={logoSrc}
+            alt="Where's My Dorm"
+            height={28}
+            priority
+            className="h-7 w-auto"
+          />
+        </a>
+
+        {/* Nav links */}
+        <ul className="hidden sm:flex items-center gap-1" role="list">
+          {NAV_LINKS.map(({ label, href }) => (
+            <li key={href}>
+              <a
+                href={href}
+                onClick={(e) => handleScroll(e, href)}
+                className="inline-flex items-center h-9 px-4 rounded-full text-sm font-medium text-[#475569] hover:text-[#0F172A] hover:bg-[#F5F7FF] transition-colors duration-[180ms] focus-visible:outline-2 focus-visible:outline-[#5B6FD1] focus-visible:outline-offset-2"
+              >
+                {label}
+              </a>
+            </li>
+          ))}
+        </ul>
+
+        {/* CTA */}
+        <a
+          href="#"
+          className="shrink-0 inline-flex items-center h-10 px-5 rounded-full bg-[#0F172A] text-white text-sm font-medium hover:bg-[#1E293B] transition-colors duration-[180ms] focus-visible:outline-2 focus-visible:outline-[#5B6FD1] focus-visible:outline-offset-2 active:scale-[0.98]"
+          aria-label="Get the app"
+        >
+          Get the app
+        </a>
+      </nav>
+    </header>
+  );
+}
