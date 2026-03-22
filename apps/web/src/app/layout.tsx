@@ -16,8 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "wheresmydorm",
-  description: "wheresmydorm",
+  title: "Where's My Dorm — Find Student Housing, Simplified",
+  description:
+    "Where's My Dorm helps students discover, compare, and secure the best dorm and rental housing near their campus.",
 };
 
 export default function RootLayout({
