@@ -134,7 +134,7 @@ export function ListingSheet({
 
             <Text style={styles.sectionTitle}>Amenities</Text>
             <View style={styles.amenities}>
-              {listing.amenities.map((amenity) => (
+              {listing.amenities.map((amenity: string) => (
                 <View key={amenity} style={styles.amenityChip}>
                   <Text style={styles.amenityText}>
                     {amenity.replaceAll("_", " ")}

@@ -1,8 +1,8 @@
-import { Image } from "expo-image";
 import React, { useMemo } from "react";
 import { Text, View } from "react-native";
 
 import type { OnboardingSlide as OnboardingSlideItem } from "@/types/onboarding";
+import { AppLogo } from "../ui/app-logo";
 
 type OnboardingSlideProps = {
   item: OnboardingSlideItem;
@@ -30,14 +30,10 @@ export const OnboardingSlide = React.memo(function OnboardingSlide({
   return (
     <View className={containerClassName} style={slideStyle}>
       <View className="items-center">
-        <View className="h-28 w-28 items-center justify-center rounded-[32px] border border-white/15 bg-white/10 p-4">
-          <Image
-            accessibilityLabel="WheresMyDorm logo"
-            className="h-16 w-16"
-            contentFit="contain"
-            source={require("../../assets/icons/logo_white_fill.svg")}
-          />
-        </View>
+        <AppLogo
+          className="h-16 w-16"
+          containerClassName="h-28 w-28 rounded-[32px] border border-white/15 bg-white/10 p-4"
+        />
       </View>
 
       <Text className="mt-10 text-center font-semibold text-[11px] text-white/50 tracking-[3px] uppercase">

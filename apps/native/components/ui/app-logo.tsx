@@ -13,7 +13,7 @@ export const AppLogo = React.memo(function AppLogo({
 }: AppLogoProps) {
   return (
     <View
-      className={`items-center justify-center rounded-[22px] bg-[#04170E] p-3 ${
+      className={`items-center justify-center rounded-[22px] p-3 ${
         containerClassName ?? ""
       }`}
     >

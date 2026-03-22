@@ -11,14 +11,13 @@ import {
   Text,
   View,
 } from "react-native";
-import ClusteredMapView from "react-native-map-clustering";
-import { PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { PROVIDER_GOOGLE } from "react-native-maps";
 
 import { FilterBar } from "@/components/map/FilterBar";
 import { ListingSheet } from "@/components/map/ListingSheet";
 import { PropertyPin } from "@/components/map/PropertyPin";
+import { getListingById, getNearbyListings } from "@/services/listings";
 import { useMapStore } from "@/stores/map";
-import { trpc } from "@/utils/trpc";
 
 const FALLBACK_COORDINATES = {
   latitude: 10.6765,
@@ -87,27 +86,27 @@ export default function MapTabScreen() {
     };
   }, []);
 
-  const nearbyQuery = useQuery(
-    trpc.listings.getNearby.queryOptions(
-      {
+  const nearbyQuery = useQuery({
+    placeholderData: (previousData) => previousData,
+    queryFn: () =>
+      getNearbyListings({
+        filters,
         lat: coordinates.latitude,
         lng: coordinates.longitude,
-        filters,
-      },
-      {
-        placeholderData: (previousData) => previousData,
-      },
-    ),
-  );
+      }),
+    queryKey: [
+      "nearby-listings",
+      coordinates.latitude,
+      coordinates.longitude,
+      filters,
+    ],
+  });
 
-  const selectedListingQuery = useQuery(
-    trpc.listings.getById.queryOptions(
-      { id: selectedListingId ?? "00000000-0000-0000-0000-000000000000" },
-      {
-        enabled: Boolean(selectedListingId),
-      },
-    ),
-  );
+  const selectedListingQuery = useQuery({
+    enabled: Boolean(selectedListingId),
+    queryFn: () => getListingById(selectedListingId!),
+    queryKey: ["listing-detail", selectedListingId],
+  });
 
   const results = nearbyQuery.data ?? [];
   const isSheetOpen = Boolean(selectedListingId);
@@ -128,12 +127,10 @@ export default function MapTabScreen() {
 
   return (
     <View style={styles.container}>
-      <ClusteredMapView
-        animationEnabled
-        clusterColor="#0f766e"
-        clusterTextColor="#ffffff"
-        region={coordinates}
+      <MapView
+        initialRegion={coordinates}
         provider={PROVIDER_GOOGLE}
+        region={coordinates}
         style={StyleSheet.absoluteFill}
       >
         {results.map((listing) => (
@@ -144,7 +141,7 @@ export default function MapTabScreen() {
             onPress={() => setSelectedListingId(listing.id)}
           />
         ))}
-      </ClusteredMapView>
+      </MapView>
 
       <FilterBar
         filters={filters}

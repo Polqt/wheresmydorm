@@ -1,4 +1,3 @@
-import { Image } from "expo-image";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { StatusBar } from "expo-status-bar";
 import React, { useMemo } from "react";
@@ -10,6 +9,7 @@ import {
 
 import { AUTH_TERMS_COPY } from "@/lib/auth";
 import type { SignInFormProps } from "@/types/auth";
+import { AppLogo } from "./ui/app-logo";
 
 type SocialButtonProps = {
   disabled: boolean;
@@ -74,14 +74,7 @@ export function SignInForm({
 
       <View className="flex-1 px-6 pt-6">
         <View className="items-center mt-8">
-          <View className="h-[72px] w-[72px] items-center justify-center rounded-[22px] bg-[#04170E] p-3">
-            <Image
-              accessibilityLabel="WheresMyDorm logo"
-              className="h-12 w-12"
-              contentFit="contain"
-              source={require("../assets/icons/logo_white_fill.svg")}
-            />
-          </View>
+          <AppLogo className="h-12 w-12" containerClassName="h-[72px] w-[72px]" />
           <Text className="mt-7 text-center font-bold text-[28px] text-[#1A1A1A] leading-[34px]">
             Sign up or log in{"\n"}to start exploring
           </Text>
@@ -90,14 +83,7 @@ export function SignInForm({
         <View className="mt-10">
           <SocialButton
             disabled={isLoading}
-            icon={
-              <Image
-                accessibilityLabel="Google icon"
-                className="h-5 w-5"
-                contentFit="contain"
-                source={require("../assets/icons/google.svg")}
-              />
-            }
+            icon={<Ionicons color="#DB4437" name="logo-google" size={20} />}
             isLoading={activeProvider === "google"}
             label="Continue with Google"
             onPress={onContinueWithGoogle}

@@ -5,7 +5,6 @@ import { NAV_THEME } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
 const tabIconByRoute = {
-  "ai-chat": "comments",
   discover: "search",
   feed: "rss",
   map: "map-marker",
@@ -43,7 +42,6 @@ export default function NativeTabsLayout() {
     >
       <Tabs.Screen name="map" options={{ title: "Map" }} />
       <Tabs.Screen name="discover" options={{ title: "Discover" }} />
-      <Tabs.Screen name="ai-chat" options={{ title: "AI Chat" }} />
       <Tabs.Screen name="feed" options={{ title: "Feed" }} />
       <Tabs.Screen name="profile" options={{ title: "Profile" }} />
     </Tabs>

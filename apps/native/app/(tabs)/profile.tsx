@@ -3,11 +3,15 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { Container } from "@/components/container";
 import { useAuth } from "@/providers/auth-provider";
-import { trpc } from "@/utils/trpc";
+import { getOrCreateCurrentProfile } from "@/services/profile";
 
 export default function ProfileTabScreen() {
   const { signOut, user, role } = useAuth();
-  const profileQuery = useQuery(trpc.profiles.me.queryOptions());
+  const profileQuery = useQuery({
+    enabled: Boolean(user),
+    queryFn: () => getOrCreateCurrentProfile(user!),
+    queryKey: ["auth-profile", user?.id],
+  });
 
   return (
     <Container>
@@ -27,8 +31,8 @@ export default function ProfileTabScreen() {
         <View style={styles.infoCard}>
           <Text style={styles.infoTitle}>Profile sync</Text>
           <Text style={styles.infoBody}>
-            The role, credits, and profile preferences are all backed by the
-            shared Supabase + tRPC stack now.
+            The role and account profile are now read directly from Supabase in
+            the native app.
           </Text>
         </View>
 

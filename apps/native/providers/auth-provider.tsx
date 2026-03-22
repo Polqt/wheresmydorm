@@ -1,6 +1,6 @@
 import type { Session, User } from "@supabase/supabase-js";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, useSegments } from "expo-router";
 import {
   createContext,
@@ -17,9 +17,9 @@ import {
   LaunchScreenButton,
 } from "@/components/ui/app-launch-screen";
 import { getOnboardingCompletion } from "@/services/onboarding";
+import { getOrCreateCurrentProfile } from "@/services/profile";
 import { useAuthFlowStore } from "@/stores/auth";
 import { supabase } from "@/utils/supabase";
-import { trpc } from "@/utils/trpc";
 
 type AuthContextValue = {
   session: Session | null;
@@ -30,9 +30,6 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-const MAX_PROFILE_SYNC_RETRIES = 3;
-const PROFILE_SYNC_RETRY_DELAY_MS = 800;
-const PROFILE_SYNC_INITIAL_DELAY_MS = 200;
 const LOADING_TIMEOUT_MS = 10_000;
 
 function AuthGate({ children }: { children: React.ReactNode }) {
@@ -41,10 +38,6 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const [firstSegment, secondSegment] = segments as string[];
   const [session, setSession] = useState<Session | null>(null);
   const [isSessionReady, setIsSessionReady] = useState(false);
-  const [isProfileSynced, setIsProfileSynced] = useState(false);
-  const [didRetryMissingProfileSync, setDidRetryMissingProfileSync] =
-    useState(false);
-  const [profileSyncFailures, setProfileSyncFailures] = useState(0);
   const [loadingTooLong, setLoadingTooLong] = useState(false);
   const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clearAwaitingRoleSync = useAuthFlowStore(
@@ -54,27 +47,13 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     (state) => state.isAwaitingRoleSync,
   );
 
-  const syncProfile = useMutation(
-    trpc.profiles.sync.mutationOptions({
-      onSuccess: () => {
-        setIsProfileSynced(true);
-        queryClient.invalidateQueries();
-      },
-    }),
-  );
-
-  const profileQuery = useQuery(
-    trpc.profiles.me.queryOptions(undefined, {
-      enabled: Boolean(session) && isProfileSynced,
-      retry: 2,
-      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
-    }),
-  );
-
-  useEffect(() => {
-    setDidRetryMissingProfileSync(false);
-    setProfileSyncFailures(0);
-  }, [session?.user.id]);
+  const profileQuery = useQuery({
+    enabled: Boolean(session),
+    queryFn: () => getOrCreateCurrentProfile(session!.user),
+    queryKey: ["auth-profile", session?.user.id],
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -85,16 +64,20 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       }
 
       setSession(data.session);
-      setIsProfileSynced(!data.session);
       setIsSessionReady(true);
     });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      // TOKEN_REFRESHED just updates the token, no need to re-sync the profile.
+      // Only a real sign-in or sign-out should reset the sync state.
+      if (event === "TOKEN_REFRESHED") {
+        setSession(nextSession);
+        return;
+      }
       setSession(nextSession);
-      setIsProfileSynced(!nextSession);
-      queryClient.invalidateQueries();
+      queryClient.invalidateQueries({ queryKey: ["auth-profile"] });
     });
 
     return () => {
@@ -103,73 +86,17 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     };
   }, [queryClient]);
 
-  useEffect(() => {
-    if (!session || isProfileSynced || syncProfile.isPending) {
-      return;
-    }
-
-    if (profileSyncFailures >= MAX_PROFILE_SYNC_RETRIES) {
-      setIsProfileSynced(true);
-      return;
-    }
-
-    const delay =
-      profileSyncFailures === 0
-        ? PROFILE_SYNC_INITIAL_DELAY_MS
-        : PROFILE_SYNC_RETRY_DELAY_MS * Math.pow(1.5, profileSyncFailures - 1);
-
-    const timeoutId = setTimeout(() => {
-      startTransition(() => {
-        syncProfile.mutate(undefined, {
-          onError: () => {
-            setProfileSyncFailures((current) => current + 1);
-          },
-        });
-      });
-    }, delay);
-
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [isProfileSynced, profileSyncFailures, session, syncProfile]);
-
-  useEffect(() => {
-    if (
-      !session ||
-      !profileQuery.error ||
-      syncProfile.isPending ||
-      didRetryMissingProfileSync
-    ) {
-      return;
-    }
-
-    if (
-      !profileQuery.error.message.toLowerCase().includes("profile not found")
-    ) {
-      return;
-    }
-
-    setDidRetryMissingProfileSync(true);
-    setProfileSyncFailures(0);
-    setIsProfileSynced(false);
-  }, [
-    didRetryMissingProfileSync,
-    profileQuery.error,
-    session,
-    syncProfile.isPending,
-  ]);
-
   const role = profileQuery.data?.role ?? null;
   const isReady =
-    isSessionReady &&
-    (!session ||
-      (isProfileSynced && !profileQuery.isLoading && !syncProfile.isPending));
+    isSessionReady && (!session || (!profileQuery.isLoading && !profileQuery.error));
   const isInAuth = firstSegment === "auth";
   const isIndexRoute = firstSegment === undefined;
   const isOnboardingRoute = firstSegment === "onboarding";
   const isRoleSelectRoute = isInAuth && secondSegment === "role-select";
 
-  // Loading timeout: if isReady hasn't become true within LOADING_TIMEOUT_MS, show escape hatch
+  // Loading timeout: if isReady hasn't become true within LOADING_TIMEOUT_MS, show escape hatch.
+  // loadingTooLong is included in deps so the timer restarts when the user clicks "Retry"
+  // (which resets loadingTooLong to false, re-running this effect and starting a fresh timer).
   useEffect(() => {
     if (isReady) {
       setLoadingTooLong(false);
@@ -180,7 +107,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (!isSessionReady) {
+    if (!isSessionReady || loadingTooLong) {
       return;
     }
 
@@ -194,7 +121,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
         loadingTimerRef.current = null;
       }
     };
-  }, [isReady, isSessionReady]);
+  }, [isReady, isSessionReady, loadingTooLong]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -281,10 +208,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
   const handleRetryProfile = useCallback(() => {
     setLoadingTooLong(false);
-    setDidRetryMissingProfileSync(false);
-    setProfileSyncFailures(0);
-    setIsProfileSynced(false);
-    queryClient.invalidateQueries();
+    queryClient.invalidateQueries({ queryKey: ["auth-profile"] });
   }, [queryClient]);
 
   const signOut = useCallback(async () => {
@@ -308,7 +232,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       <AppLaunchScreen
         body={
           loadingTooLong
-            ? "We're having trouble connecting. You can retry or sign out and try again."
+            ? "We're having trouble loading your profile from Supabase. You can retry or sign out and try again."
             : "We're checking your session and loading your role."
         }
         title={loadingTooLong ? "Taking longer than expected" : "Preparing your account"}

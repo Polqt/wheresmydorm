@@ -1,3 +1,4 @@
+import "../global.css";
 import {
   DarkTheme,
   DefaultTheme,
@@ -10,13 +11,12 @@ import { StatusBar } from "expo-status-bar";
 import React, { useRef } from "react";
 import { Platform, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-
-import "../global.css";
 import { setAndroidNavigationBar } from "@/lib/navigation-bar";
 import { NAV_THEME } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 import { AuthProvider } from "@/providers/auth-provider";
 import { queryClient } from "@/utils/trpc";
+
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,

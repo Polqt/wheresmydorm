@@ -6,7 +6,7 @@ import { Marker } from "react-native-maps";
 import type { NearbyListing } from "@/stores/map";
 
 const iconByType: Record<
-  NearbyListing["property_type"],
+  NearbyListing["propertyType"],
   React.ComponentProps<typeof FontAwesome>["name"]
 > = {
   apartment: "building",
@@ -47,19 +47,19 @@ export function PropertyPin({
         <View style={[styles.pin, isSelected ? styles.pinSelected : null]}>
           <View style={styles.pinHeader}>
             <FontAwesome
-              name={iconByType[listing.property_type]}
+              name={iconByType[listing.propertyType]}
               color="#0f172a"
               size={14}
             />
             <Text style={styles.price}>
-              {formatCompactPrice(listing.price_per_month)}
+              {formatCompactPrice(listing.pricePerMonth)}
             </Text>
           </View>
           <View style={styles.badge}>
             <FontAwesome name="star" color="#f59e0b" size={10} />
             <Text style={styles.badgeText}>
-              {listing.rating_overall
-                ? listing.rating_overall.toFixed(1)
+              {listing.ratingOverall
+                ? listing.ratingOverall.toFixed(1)
                 : "New"}
             </Text>
           </View>

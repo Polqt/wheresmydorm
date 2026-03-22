@@ -1,5 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useMemo, useState } from "react";
@@ -11,9 +11,13 @@ import {
 
 import { AppLogo } from "@/components/ui/app-logo";
 import { ROLE_CARDS } from "@/lib/auth";
+import { useAuth } from "@/providers/auth-provider";
+import {
+  getOrCreateCurrentProfile,
+  setCurrentProfileRole,
+} from "@/services/profile";
 import { useAuthFlowStore } from "@/stores/auth";
 import type { RoleCardProps, RoleOption } from "@/types/auth";
-import { trpc } from "@/utils/trpc";
 
 const RoleCard = React.memo(function RoleCard({
   card,
@@ -62,12 +66,26 @@ const RoleCard = React.memo(function RoleCard({
 
 export default function RoleSelectScreen() {
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [selectedRole, setSelectedRole] = useState<RoleOption | null>(null);
   const setAwaitingRoleSync = useAuthFlowStore(
     (state) => state.setAwaitingRoleSync,
   );
-  const profileQuery = useQuery(trpc.profiles.me.queryOptions());
-  const setRoleMutation = useMutation(trpc.profiles.setRole.mutationOptions());
+  const profileQuery = useQuery({
+    enabled: Boolean(user),
+    queryFn: () => getOrCreateCurrentProfile(user!),
+    queryKey: ["auth-profile", user?.id],
+  });
+  const setRoleMutation = useMutation({
+    mutationFn: async ({ role }: { role: RoleOption }) => {
+      if (!user) {
+        throw new Error("Your session expired. Please sign in again.");
+      }
+
+      return setCurrentProfileRole(user.id, role);
+    },
+  });
 
   const bottomAreaStyle = useMemo(
     () => ({
@@ -85,9 +103,10 @@ export default function RoleSelectScreen() {
   }, []);
 
   const handleRoleSuccess = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["auth-profile"] });
     setAwaitingRoleSync();
     router.replace("/onboarding");
-  }, [setAwaitingRoleSync]);
+  }, [queryClient, setAwaitingRoleSync]);
 
   const handleContinue = useCallback(() => {
     if (!selectedRole) {

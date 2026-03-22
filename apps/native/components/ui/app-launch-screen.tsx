@@ -1,6 +1,6 @@
-import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { AppLogo } from "./app-logo";
 
 type AppLaunchScreenProps = {
   body: string;
@@ -12,11 +12,9 @@ export function AppLaunchScreen({ body, title, actions }: AppLaunchScreenProps) 
   return (
     <View className="flex-1 items-center justify-center bg-[#04170E] px-8">
       <StatusBar style="light" />
-      <Image
-        accessibilityLabel="WheresMyDorm splash animation"
-        className="h-48 w-48"
-        contentFit="contain"
-        source={require("../../assets/animations/animation.gif")}
+      <AppLogo
+        className="h-20 w-20"
+        containerClassName="rounded-[32px] border border-white/15 bg-white/10 p-4"
       />
       <ActivityIndicator className="mt-6" color="#ffffff" size="small" />
       <Text className="mt-6 text-center font-semibold text-2xl text-white">

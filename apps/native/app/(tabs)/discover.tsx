@@ -2,8 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { Container } from "@/components/container";
+import { getNearbyListings } from "@/services/listings";
 import { useMapStore } from "@/stores/map";
-import { trpc } from "@/utils/trpc";
 
 const FALLBACK_LAT = 10.6765;
 const FALLBACK_LNG = 122.9511;
@@ -18,13 +18,15 @@ function formatCurrency(price: string) {
 
 export default function DiscoverTabScreen() {
   const filters = useMapStore((state) => state.filters);
-  const listingsQuery = useQuery(
-    trpc.listings.getNearby.queryOptions({
-      lat: FALLBACK_LAT,
-      lng: FALLBACK_LNG,
-      filters,
-    }),
-  );
+  const listingsQuery = useQuery({
+    queryFn: () =>
+      getNearbyListings({
+        filters,
+        lat: FALLBACK_LAT,
+        lng: FALLBACK_LNG,
+      }),
+    queryKey: ["nearby-listings", FALLBACK_LAT, FALLBACK_LNG, filters],
+  });
 
   return (
     <Container>
@@ -43,7 +45,7 @@ export default function DiscoverTabScreen() {
             <View style={styles.cardHeader}>
               <Text style={styles.cardTitle}>{listing.title}</Text>
               <Text style={styles.cardPrice}>
-                {formatCurrency(listing.price_per_month)}
+                {formatCurrency(listing.pricePerMonth)}
               </Text>
             </View>
             <Text style={styles.cardMeta}>
@@ -51,10 +53,10 @@ export default function DiscoverTabScreen() {
               {listing.barangay ? ` • ${listing.barangay}` : ""}
             </Text>
             <Text style={styles.cardMeta}>
-              {listing.rating_overall
-                ? `${listing.rating_overall.toFixed(1)} stars`
+              {listing.ratingOverall
+                ? `${listing.ratingOverall.toFixed(1)} stars`
                 : "New listing"}{" "}
-              • {listing.review_count} reviews
+              • {listing.reviewCount} reviews
             </Text>
           </View>
         ))}
