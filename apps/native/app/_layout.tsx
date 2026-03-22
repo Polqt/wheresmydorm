@@ -78,6 +78,10 @@ export default function RootLayout() {
                 name="modal"
                 options={{ title: "Modal", presentation: "modal" }}
               />
+              <Stack.Screen
+                name="profile"
+                options={{ headerShown: false }}
+              />
             </Stack>
           </AuthProvider>
         </GestureHandlerRootView>

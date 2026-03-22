@@ -1,14 +1,43 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { Tabs } from "expo-router";
-import { Platform } from "react-native";
+import { Platform, View } from "react-native";
 
+import { ProfileAvatar } from "@/components/profile/profile-avatar";
 import { TabBarIcon } from "@/components/tabbar-icon";
+import { useAuth } from "@/providers/auth-provider";
+import type { NativeProfile } from "@/services/profile";
 
 const tabIconByRoute = {
   discover: "search",
   feed: "rss",
   map: "map-marker",
-  profile: "user-circle",
 } as const;
+
+function ProfileTabIcon({ color, focused }: { color: string; focused: boolean }) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const profile = queryClient.getQueryData<NativeProfile>(["auth-profile", user?.id]);
+
+  const initials =
+    `${profile?.firstName?.[0] ?? "W"}${profile?.lastName?.[0] ?? "D"}`.toUpperCase();
+
+  return (
+    <View
+      style={{
+        borderRadius: 12,
+        borderWidth: focused ? 2 : 0,
+        borderColor: focused ? "#0B2D23" : "transparent",
+        padding: focused ? 1 : 0,
+      }}
+    >
+      <ProfileAvatar
+        avatarUrl={profile?.avatarUrl ?? null}
+        initials={initials}
+        size={24}
+      />
+    </View>
+  );
+}
 
 export default function NativeTabsLayout() {
   return (
@@ -44,7 +73,15 @@ export default function NativeTabsLayout() {
       <Tabs.Screen name="map" options={{ title: "Map" }} />
       <Tabs.Screen name="discover" options={{ title: "Discover" }} />
       <Tabs.Screen name="feed" options={{ title: "Feed" }} />
-      <Tabs.Screen name="profile" options={{ title: "Profile" }} />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color, focused }) => (
+            <ProfileTabIcon color={color} focused={focused} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }
