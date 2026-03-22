@@ -20,6 +20,7 @@ import { AppLogo } from "@/components/ui/app-logo";
 import { isValidEmail } from "@/lib/auth";
 import { sendEmailOtp, tryRestoreSession } from "@/services/auth";
 import { useAuthFlowStore } from "@/stores/auth";
+import { supabase } from "@/utils/supabase";
 
 export default function EmailSignInScreen() {
   const insets = useSafeAreaInsets();
@@ -48,12 +49,19 @@ export default function EmailSignInScreen() {
       // If the user already has a valid session for this email, skip OTP entirely
       const restored = await tryRestoreSession(email);
       if (restored) {
-        // AuthProvider will detect the existing session and route automatically
         router.replace("/");
         return;
       }
 
       const normalizedEmail = await sendEmailOtp(email);
+
+      // In dev mode, password auth signs in immediately — no code needed
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        router.replace("/");
+        return;
+      }
+
       setPendingEmail(normalizedEmail);
       router.push("/auth/email-code");
     } catch (error) {

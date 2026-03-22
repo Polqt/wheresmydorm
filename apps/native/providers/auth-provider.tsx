@@ -16,6 +16,7 @@ import {
   AppLaunchScreen,
   LaunchScreenButton,
 } from "@/components/ui/app-launch-screen";
+import { saveSessionForRestore } from "@/services/auth";
 import { getOnboardingCompletion } from "@/services/onboarding";
 import { getOrCreateCurrentProfile } from "@/services/profile";
 import { useAuthFlowStore } from "@/stores/auth";
@@ -32,6 +33,9 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 const SPLASH_MS = 6200;
 const LOADING_TIMEOUT_MS = 10_000;
+
+// Once the splash plays once per app launch, skip the GIF on subsequent loads.
+let hasShownInitialSplash = false;
 
 const SETUP_SCREENS = new Set([
   "role-select",
@@ -64,9 +68,16 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
   });
 
-  // Splash timer
+  // Splash timer — skip GIF if it already played this app session
   useEffect(() => {
-    const id = setTimeout(() => setSplashDone(true), SPLASH_MS);
+    if (hasShownInitialSplash) {
+      setSplashDone(true);
+      return;
+    }
+    const id = setTimeout(() => {
+      hasShownInitialSplash = true;
+      setSplashDone(true);
+    }, SPLASH_MS);
     return () => clearTimeout(id);
   }, []);
 
@@ -199,9 +210,13 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const signOut = useCallback(async () => {
     clearAwaitingRoleSync();
     clearPendingEmail();
+    // Save the refresh token before clearing the session so tryRestoreSession()
+    // can restore it on quick re-login, avoiding Supabase's email OTP rate limit.
+    await saveSessionForRestore();
     await supabase.auth.signOut({ scope: "local" });
+    queryClient.removeQueries({ queryKey: ["auth-profile"] });
     startTransition(() => router.replace("/auth/sign-in"));
-  }, [clearAwaitingRoleSync, clearPendingEmail]);
+  }, [clearAwaitingRoleSync, clearPendingEmail, queryClient]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -217,11 +232,12 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   // --- Loading / splash screens ---
   if (!isReady || !splashDone) {
     if (!splashDone) {
-      return <AppLaunchScreen body="" title="" />;
+      return <AppLaunchScreen body="" title="" showGif />;
     }
 
     return (
       <AppLaunchScreen
+        showGif={false}
         body={
           loadingTooLong
             ? "Having trouble loading your profile. You can retry or sign out."

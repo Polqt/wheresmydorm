@@ -1,9 +1,12 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 
 import { getAuthRedirectUrl, normalizeAuthEmail } from "@/lib/auth";
 import type { OAuthProvider } from "@/types/auth";
 import { supabase } from "@/utils/supabase";
+
+const RESTORE_KEY = "wmd:last_session";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -82,27 +85,55 @@ export async function signInWithOAuth(provider: OAuthProvider) {
 }
 
 /**
- * Try to restore an existing session for this email.
- * If the user logged out softly and the refresh token is still valid,
- * this avoids hitting the OTP rate limit entirely.
+ * Save the current session's refresh token before sign-out.
+ * Called by the AuthProvider so tryRestoreSession() can
+ * skip OTP on quick re-login with the same email.
+ */
+export async function saveSessionForRestore(): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.refresh_token || !session.user.email) return;
+
+  await AsyncStorage.setItem(
+    RESTORE_KEY,
+    JSON.stringify({
+      email: session.user.email.toLowerCase(),
+      refreshToken: session.refresh_token,
+    }),
+  );
+}
+
+/**
+ * Try to restore a previous session for this email.
+ * Uses the refresh token saved at sign-out to get a fresh session,
+ * avoiding Supabase's email OTP rate limit entirely.
  */
 export async function tryRestoreSession(email: string): Promise<boolean> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return false;
+  try {
+    const raw = await AsyncStorage.getItem(RESTORE_KEY);
+    if (!raw) return false;
 
-  // Verify the session belongs to this email
-  if (session.user.email?.toLowerCase() !== normalizeAuthEmail(email)) {
+    const { email: savedEmail, refreshToken } = JSON.parse(raw) as {
+      email: string;
+      refreshToken: string;
+    };
+
+    if (savedEmail !== normalizeAuthEmail(email)) return false;
+
+    const { data, error } = await supabase.auth.refreshSession({
+      refresh_token: refreshToken,
+    });
+
+    if (error || !data.session) {
+      await AsyncStorage.removeItem(RESTORE_KEY);
+      return false;
+    }
+
+    // Session restored — clean up the stored token
+    await AsyncStorage.removeItem(RESTORE_KEY);
+    return true;
+  } catch {
     return false;
   }
-
-  // Validate with server — token might be expired
-  const { error } = await supabase.auth.getUser();
-  if (error) {
-    await supabase.auth.signOut({ scope: "local" });
-    return false;
-  }
-
-  return true;
 }
 
 export async function sendEmailOtp(email: string) {
@@ -113,7 +144,16 @@ export async function sendEmailOtp(email: string) {
     options: { shouldCreateUser: true },
   });
 
-  if (error) throw error;
+  if (error) {
+    if (error.message.toLowerCase().includes("rate limit")) {
+      throw new Error(
+        "Too many sign-in attempts. Please wait 60 seconds and try again.\n\n" +
+        "Tip: Go to Supabase Dashboard → Authentication → SMTP Settings " +
+        "and add a custom SMTP provider (e.g. Resend) to remove this limit.",
+      );
+    }
+    throw error;
+  }
   return normalizedEmail;
 }
 

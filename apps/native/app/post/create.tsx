@@ -5,7 +5,6 @@ import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
-import { haptics } from "@/services/haptics";
 import { getNearbyListings } from "@/services/listings";
 import { uploadPickedAsset } from "@/services/storage";
 import { trpc } from "@/utils/trpc";
@@ -44,7 +43,6 @@ export default function CreatePostScreen() {
   const createPost = useMutation(
     trpc.posts.create.mutationOptions({
       onSuccess: () => {
-        haptics.success();
         router.back();
       },
     }),

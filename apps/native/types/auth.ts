@@ -13,18 +13,3 @@ export type RoleCard = {
   subtitle: string;
   title: string;
 };
-
-export type RoleCardProps = {
-  card: RoleCard;
-  disabled: boolean;
-  isSelected: boolean;
-  onSelect: (role: RoleOption) => void;
-};
-
-export type SignInFormProps = {
-  activeProvider: ActiveProvider;
-  errorMessage: string | null;
-  onContinueWithEmail: () => void;
-  onContinueWithFacebook: () => void;
-  onContinueWithGoogle: () => void;
-};

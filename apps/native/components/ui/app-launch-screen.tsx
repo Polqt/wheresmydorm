@@ -15,9 +15,10 @@ type AppLaunchScreenProps = {
   body: string;
   title: string;
   actions?: React.ReactNode;
+  showGif?: boolean;
 };
 
-export function AppLaunchScreen({ body, title, actions }: AppLaunchScreenProps) {
+export function AppLaunchScreen({ body, title, actions, showGif = true }: AppLaunchScreenProps) {
   const insets = useSafeAreaInsets();
   const [didAnimationFail, setDidAnimationFail] = useState(false);
 
@@ -25,9 +26,7 @@ export function AppLaunchScreen({ body, title, actions }: AppLaunchScreenProps) 
     <View className="flex-1 items-center justify-center bg-[#04170E]">
       <StatusBar style="light" />
 
-      {didAnimationFail ? (
-        <AppLogo containerClassName="h-[200px] w-[200px]" size={112} />
-      ) : (
+      {showGif && !didAnimationFail ? (
         <Image
           accessibilityLabel="WheresMyDorm"
           fadeDuration={0}
@@ -36,6 +35,8 @@ export function AppLaunchScreen({ body, title, actions }: AppLaunchScreenProps) 
           source={require("../../assets/animations/animation.gif")}
           style={{ height: 200, width: 200 }}
         />
+      ) : (
+        <AppLogo containerClassName="h-[200px] w-[200px]" size={112} />
       )}
 
       {title ? (
