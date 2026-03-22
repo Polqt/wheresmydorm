@@ -11,14 +11,13 @@ import {
   Text,
   View,
 } from "react-native";
-import ClusteredMapView from "react-native-map-clustering";
-import { PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { PROVIDER_GOOGLE } from "react-native-maps";
 
 import { FilterBar } from "@/components/map/FilterBar";
 import { ListingSheet } from "@/components/map/ListingSheet";
 import { PropertyPin } from "@/components/map/PropertyPin";
+import { getListingById, getNearbyListings } from "@/services/listings";
 import { useMapStore } from "@/stores/map";
-import { trpc } from "@/utils/trpc";
 
 const FALLBACK_COORDINATES = {
   latitude: 10.6765,
@@ -52,7 +51,7 @@ export default function MapTabScreen() {
       if (status !== "granted") {
         if (isMounted) {
           setLocationLabel(
-            "Location permission denied. Showing Bacolod launch-area listings.",
+            "Location access is off, so we're showing nearby Bacolod listings instead.",
           );
         }
         return;
@@ -77,7 +76,7 @@ export default function MapTabScreen() {
     loadLocation().catch(() => {
       if (isMounted) {
         setLocationLabel(
-          "We couldn't read your GPS yet, so the map is using Bacolod.",
+          "We couldn't read your GPS yet, so the map is using Bacolod for now.",
         );
       }
     });
@@ -87,27 +86,27 @@ export default function MapTabScreen() {
     };
   }, []);
 
-  const nearbyQuery = useQuery(
-    trpc.listings.getNearby.queryOptions(
-      {
+  const nearbyQuery = useQuery({
+    placeholderData: (previousData) => previousData,
+    queryFn: () =>
+      getNearbyListings({
+        filters,
         lat: coordinates.latitude,
         lng: coordinates.longitude,
-        filters,
-      },
-      {
-        placeholderData: (previousData) => previousData,
-      },
-    ),
-  );
+      }),
+    queryKey: [
+      "nearby-listings",
+      coordinates.latitude,
+      coordinates.longitude,
+      filters,
+    ],
+  });
 
-  const selectedListingQuery = useQuery(
-    trpc.listings.getById.queryOptions(
-      { id: selectedListingId ?? "00000000-0000-0000-0000-000000000000" },
-      {
-        enabled: Boolean(selectedListingId),
-      },
-    ),
-  );
+  const selectedListingQuery = useQuery({
+    enabled: Boolean(selectedListingId),
+    queryFn: () => getListingById(selectedListingId!),
+    queryKey: ["listing-detail", selectedListingId],
+  });
 
   const results = nearbyQuery.data ?? [];
   const isSheetOpen = Boolean(selectedListingId);
@@ -128,12 +127,10 @@ export default function MapTabScreen() {
 
   return (
     <View style={styles.container}>
-      <ClusteredMapView
-        animationEnabled
-        clusterColor="#0f766e"
-        clusterTextColor="#ffffff"
-        region={coordinates}
+      <MapView
+        initialRegion={coordinates}
         provider={PROVIDER_GOOGLE}
+        region={coordinates}
         style={StyleSheet.absoluteFill}
       >
         {results.map((listing) => (
@@ -144,7 +141,7 @@ export default function MapTabScreen() {
             onPress={() => setSelectedListingId(listing.id)}
           />
         ))}
-      </ClusteredMapView>
+      </MapView>
 
       <FilterBar
         filters={filters}
@@ -159,14 +156,14 @@ export default function MapTabScreen() {
         <View style={styles.statusHeader}>
           <Text style={styles.statusTitle}>Live search area</Text>
           {nearbyQuery.isFetching ? (
-            <ActivityIndicator color="#0f766e" size="small" />
+            <ActivityIndicator color="#0B2D23" size="small" />
           ) : null}
         </View>
         <Text style={styles.statusBody}>{locationLabel}</Text>
         {nearbyQuery.error ? (
           <Text style={styles.errorText}>
-            We couldn't load nearby listings yet. Pull fresh auth or try again
-            in a moment.
+            We couldn't load nearby listings yet. Refresh auth or try again in
+            a moment.
           </Text>
         ) : null}
       </View>
@@ -193,15 +190,17 @@ export default function MapTabScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#e2e8f0",
+    backgroundColor: "#ebe7de",
   },
   statusCard: {
     position: "absolute",
     left: 14,
     right: 14,
     bottom: 110,
-    borderRadius: 20,
-    backgroundColor: "rgba(15, 23, 42, 0.88)",
+    borderRadius: 24,
+    backgroundColor: "rgba(255, 253, 249, 0.94)",
+    borderWidth: 1,
+    borderColor: "#ece3d8",
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
@@ -212,19 +211,19 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   statusTitle: {
-    color: "#f8fafc",
+    color: "#0f172a",
     fontSize: 14,
     fontWeight: "800",
   },
   statusBody: {
     marginTop: 6,
-    color: "#cbd5e1",
+    color: "#5F5A51",
     fontSize: 13,
     lineHeight: 20,
   },
   errorText: {
     marginTop: 8,
-    color: "#fdba74",
+    color: "#c2410c",
     fontSize: 12,
     lineHeight: 18,
   },
@@ -233,10 +232,10 @@ const styles = StyleSheet.create({
     right: 18,
     bottom: 42,
     borderRadius: 999,
-    backgroundColor: "#ea580c",
+    backgroundColor: "#0B2D23",
     paddingHorizontal: 18,
     paddingVertical: 14,
-    shadowColor: "#7c2d12",
+    shadowColor: "#0B2D23",
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.18,
     shadowRadius: 16,
@@ -253,7 +252,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 28,
-    backgroundColor: "#fff7ed",
+    backgroundColor: "#f7f4ee",
   },
   webTitle: {
     color: "#0f172a",

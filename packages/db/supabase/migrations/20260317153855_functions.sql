@@ -71,7 +71,7 @@ CREATE TRIGGER set_updated_at_payments
 
 -- ---------------------------------------------------------------------------
 -- TRIGGER FUNCTION: auto-create a profile row when a new Supabase auth user
--- signs up via Google OAuth. Pulls display_name and avatar_url from
+-- signs up via Google OAuth. Pulls first_name, last_name, and avatar_url from
 -- raw_user_meta_data populated by the OAuth provider.
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -79,19 +79,25 @@ RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = public
 AS $$
+DECLARE
+  resolved_name text;
 BEGIN
+  resolved_name := COALESCE(
+    NEW.raw_user_meta_data->>'full_name',
+    NEW.raw_user_meta_data->>'name',
+    split_part(NEW.email, '@', 1)
+  );
+
   INSERT INTO public.profiles (
     id,
-    display_name,
+    first_name,
+    last_name,
     avatar_url,
     role
   ) VALUES (
     NEW.id,
-    COALESCE(
-      NEW.raw_user_meta_data->>'full_name',
-      NEW.raw_user_meta_data->>'name',
-      split_part(NEW.email, '@', 1)
-    ),
+    COALESCE(NULLIF(split_part(trim(resolved_name), ' ', 1), ''), 'Member'),
+    NULLIF(trim(regexp_replace(trim(resolved_name), '^\S+\s*', '')), ''),
     NEW.raw_user_meta_data->>'avatar_url',
     'finder'  -- default role; user selects Finder/Lister on first login
   )

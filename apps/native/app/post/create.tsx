@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
 import { haptics } from "@/services/haptics";
+import { getNearbyListings } from "@/services/listings";
 import { uploadPickedAsset } from "@/services/storage";
 import { trpc } from "@/utils/trpc";
 
@@ -36,9 +37,10 @@ export default function CreatePostScreen() {
   >();
   const [assets, setAssets] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const nearbyListings = useQuery(
-    trpc.listings.getNearby.queryOptions(listingSeedCoordinates),
-  );
+  const nearbyListings = useQuery({
+    queryFn: () => getNearbyListings(listingSeedCoordinates),
+    queryKey: ["nearby-listings", listingSeedCoordinates],
+  });
   const createPost = useMutation(
     trpc.posts.create.mutationOptions({
       onSuccess: () => {

@@ -1,3 +1,4 @@
+import "../global.css";
 import {
   DarkTheme,
   DefaultTheme,
@@ -10,13 +11,12 @@ import { StatusBar } from "expo-status-bar";
 import React, { useRef } from "react";
 import { Platform, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-
-import "../global.css";
-import { setAndroidNavigationBar } from "@/lib/android-navigation-bar";
+import { setAndroidNavigationBar } from "@/lib/navigation-bar";
 import { NAV_THEME } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 import { AuthProvider } from "@/providers/auth-provider";
 import { queryClient } from "@/utils/trpc";
+
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -70,6 +70,10 @@ export default function RootLayout() {
               <Stack.Screen name="index" options={{ headerShown: false }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="auth" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="onboarding"
+                options={{ headerShown: false }}
+              />
               <Stack.Screen
                 name="modal"
                 options={{ title: "Modal", presentation: "modal" }}

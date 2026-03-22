@@ -10,9 +10,9 @@ import { userRoleEnum } from "./config";
 
 export const profiles = pgTable("profiles", {
   id: uuid("id").primaryKey(),
-  displayName: text("display_name").notNull(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name"),
   avatarUrl: text("avatar_url"),
-  bio: text("bio"),
   role: userRoleEnum("role"),
 
   isPaidFinder: boolean("is_paid_finder").notNull().default(false),
@@ -26,8 +26,6 @@ export const profiles = pgTable("profiles", {
 
   contactEmail: text("contact_email"),
   contactPhone: text("contact_phone"),
-  contactViber: text("contact_viber"),
-  contactMessenger: text("contact_messenger"),
 
   fcmToken: text("fcm_token"),
 

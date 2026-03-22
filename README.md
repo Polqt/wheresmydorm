@@ -30,6 +30,8 @@ pnpm install
 
 This project uses PostgreSQL with Drizzle ORM.
 
+For repo-specific Supabase local/hosted setup, RLS notes, and migration workflow, see [docs/SUPABASE_DEVELOPMENT.md](./docs/SUPABASE_DEVELOPMENT.md).
+
 1. Make sure you have a PostgreSQL database set up.
 2. Update your `apps/web/.env` file with your PostgreSQL connection details.
 

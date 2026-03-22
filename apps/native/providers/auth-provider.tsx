@@ -1,27 +1,25 @@
 import type { Session, User } from "@supabase/supabase-js";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, useSegments } from "expo-router";
 import {
   createContext,
   startTransition,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
-
-import { NAV_THEME } from "@/lib/constants";
-import { useColorScheme } from "@/lib/use-color-scheme";
+  AppLaunchScreen,
+  LaunchScreenButton,
+} from "@/components/ui/app-launch-screen";
+import { getOnboardingCompletion } from "@/services/onboarding";
+import { getOrCreateCurrentProfile } from "@/services/profile";
+import { useAuthFlowStore } from "@/stores/auth";
 import { supabase } from "@/utils/supabase";
-import { trpc } from "@/utils/trpc";
 
 type AuthContextValue = {
   session: Session | null;
@@ -32,105 +30,178 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+const SPLASH_MS = 6200;
+const LOADING_TIMEOUT_MS = 10_000;
+
+const SETUP_SCREENS = new Set([
+  "role-select",
+  "profile-setup",
+  "avatar-setup",
+  "contact-info",
+  "permissions",
+]);
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const segments = useSegments();
   const [firstSegment, secondSegment] = segments as string[];
-  const { colorScheme } = useColorScheme();
-  const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
+
   const [session, setSession] = useState<Session | null>(null);
   const [isSessionReady, setIsSessionReady] = useState(false);
-  const [isProfileSynced, setIsProfileSynced] = useState(false);
+  const [splashDone, setSplashDone] = useState(false);
+  const [loadingTooLong, setLoadingTooLong] = useState(false);
+  const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const syncProfile = useMutation(
-    trpc.profiles.sync.mutationOptions({
-      onSuccess: () => {
-        setIsProfileSynced(true);
-        queryClient.invalidateQueries();
-      },
-    }),
-  );
+  const isAwaitingRoleSync = useAuthFlowStore((s) => s.isAwaitingRoleSync);
+  const clearAwaitingRoleSync = useAuthFlowStore((s) => s.clearAwaitingRoleSync);
+  const clearPendingEmail = useAuthFlowStore((s) => s.clearPendingEmail);
 
-  const profileQuery = useQuery(
-    trpc.profiles.me.queryOptions(undefined, {
-      enabled: Boolean(session) && isProfileSynced,
-      retry: false,
-    }),
-  );
+  const profileQuery = useQuery({
+    enabled: Boolean(session),
+    queryFn: () => getOrCreateCurrentProfile(session!.user),
+    queryKey: ["auth-profile", session?.user.id],
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
+  });
 
+  // Splash timer
   useEffect(() => {
-    let isMounted = true;
+    const id = setTimeout(() => setSplashDone(true), SPLASH_MS);
+    return () => clearTimeout(id);
+  }, []);
+
+  // Session listener
+  useEffect(() => {
+    let mounted = true;
 
     supabase.auth.getSession().then(({ data }) => {
-      if (!isMounted) {
-        return;
+      if (mounted) {
+        setSession(data.session);
+        setIsSessionReady(true);
       }
-
-      setSession(data.session);
-      setIsProfileSynced(!data.session);
-      setIsSessionReady(true);
     });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession);
-      setIsProfileSynced(!nextSession);
-      queryClient.invalidateQueries();
-    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, nextSession) => {
+        setSession(nextSession);
+        queryClient.invalidateQueries({ queryKey: ["auth-profile"] });
+      },
+    );
 
     return () => {
-      isMounted = false;
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [queryClient]);
 
-  useEffect(() => {
-    if (!session || isProfileSynced || syncProfile.isPending) {
-      return;
-    }
-
-    startTransition(() => {
-      syncProfile.mutate(undefined, {
-        onError: () => {
-          setIsProfileSynced(true);
-        },
-      });
-    });
-  }, [isProfileSynced, session, syncProfile]);
-
   const role = profileQuery.data?.role ?? null;
   const isReady =
-    isSessionReady &&
-    (!session ||
-      (isProfileSynced && !profileQuery.isLoading && !syncProfile.isPending));
+    isSessionReady && (!session || (!profileQuery.isLoading && !profileQuery.error));
   const isInAuth = firstSegment === "auth";
-  const isRoleSelectRoute = isInAuth && secondSegment === "role-select";
+  const isIndexRoute = firstSegment === undefined;
+  const isOnboardingRoute = firstSegment === "onboarding";
+  const isSetupRoute = isInAuth && SETUP_SCREENS.has(secondSegment ?? "");
 
+  // Loading timeout
   useEffect(() => {
-    if (!isReady) {
+    if (isReady) {
+      setLoadingTooLong(false);
+      if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current);
+      loadingTimerRef.current = null;
       return;
     }
 
-    if (!session) {
-      if (!isInAuth || isRoleSelectRoute) {
-        router.replace("/auth/sign-in");
+    if (!isSessionReady || loadingTooLong) return;
+
+    loadingTimerRef.current = setTimeout(
+      () => setLoadingTooLong(true),
+      LOADING_TIMEOUT_MS,
+    );
+
+    return () => {
+      if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current);
+      loadingTimerRef.current = null;
+    };
+  }, [isReady, isSessionReady, loadingTooLong]);
+
+  // Route sync
+  useEffect(() => {
+    if (!isReady || !splashDone) return;
+
+    let cancelled = false;
+
+    const sync = async () => {
+      let onboardingDone = false;
+      try {
+        onboardingDone = await getOnboardingCompletion(session?.user.id);
+      } catch {
+        // treat as not done
       }
-      return;
-    }
 
-    if (!role) {
-      if (!isRoleSelectRoute) {
-        router.replace("/auth/role-select");
+      if (cancelled) return;
+
+      // --- Not signed in ---
+      if (!session) {
+        if (!onboardingDone && !isOnboardingRoute) {
+          startTransition(() => router.replace("/onboarding"));
+        } else if (onboardingDone && !isInAuth) {
+          startTransition(() => router.replace("/auth/sign-in"));
+        }
+        return;
       }
-      return;
-    }
 
-    if (isInAuth || firstSegment === undefined) {
-      router.replace("/(tabs)/map");
-    }
-  }, [firstSegment, isInAuth, isReady, isRoleSelectRoute, role, session]);
+      // --- Signed in, no role yet ---
+      if (!role) {
+        if (isAwaitingRoleSync) return;
+        if (secondSegment !== "role-select") {
+          startTransition(() => router.replace("/auth/role-select"));
+        }
+        return;
+      }
+
+      if (isAwaitingRoleSync) clearAwaitingRoleSync();
+
+      // Let users finish the setup flow without interruption
+      if (isSetupRoute) return;
+
+      // --- Signed in, has role, check onboarding ---
+      if (!onboardingDone && !isOnboardingRoute) {
+        startTransition(() => router.replace("/onboarding"));
+        return;
+      }
+
+      if ((isInAuth || isIndexRoute || isOnboardingRoute) && onboardingDone) {
+        startTransition(() => router.replace("/(tabs)/map"));
+      }
+    };
+
+    void sync();
+    return () => { cancelled = true; };
+  }, [
+    clearAwaitingRoleSync,
+    isAwaitingRoleSync,
+    isInAuth,
+    isIndexRoute,
+    isOnboardingRoute,
+    isReady,
+    isSetupRoute,
+    role,
+    secondSegment,
+    session,
+    splashDone,
+  ]);
+
+  const handleRetry = useCallback(() => {
+    setLoadingTooLong(false);
+    queryClient.invalidateQueries({ queryKey: ["auth-profile"] });
+  }, [queryClient]);
+
+  const signOut = useCallback(async () => {
+    clearAwaitingRoleSync();
+    clearPendingEmail();
+    await supabase.auth.signOut({ scope: "local" });
+    startTransition(() => router.replace("/auth/sign-in"));
+  }, [clearAwaitingRoleSync, clearPendingEmail]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -138,54 +209,34 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       user: session?.user ?? null,
       role,
       isReady,
-      signOut: async () => {
-        await supabase.auth.signOut();
-        router.replace("/auth/sign-in");
-      },
+      signOut,
     }),
-    [isReady, role, session],
+    [isReady, role, session, signOut],
   );
 
-  if (!isReady) {
-    return (
-      <View style={[styles.stateScreen, { backgroundColor: theme.background }]}>
-        <ActivityIndicator color={theme.primary} size="large" />
-        <Text style={[styles.stateTitle, { color: theme.text }]}>
-          Preparing your account
-        </Text>
-        <Text style={[styles.stateBody, { color: theme.text }]}>
-          We're checking your session and loading your role.
-        </Text>
-      </View>
-    );
-  }
+  // --- Loading / splash screens ---
+  if (!isReady || !splashDone) {
+    if (!splashDone) {
+      return <AppLaunchScreen body="" title="" />;
+    }
 
-  if (session && profileQuery.error) {
     return (
-      <View style={[styles.stateScreen, { backgroundColor: theme.background }]}>
-        <Text style={[styles.stateTitle, { color: theme.text }]}>
-          We couldn't load your profile
-        </Text>
-        <Text style={[styles.stateBody, { color: theme.text }]}>
-          Please try again or sign out and reconnect your account.
-        </Text>
-        <View style={styles.actions}>
-          <Pressable
-            onPress={() => profileQuery.refetch()}
-            style={[styles.primaryButton, { backgroundColor: theme.primary }]}
-          >
-            <Text style={styles.primaryButtonText}>Retry</Text>
-          </Pressable>
-          <Pressable
-            onPress={value.signOut}
-            style={[styles.secondaryButton, { borderColor: theme.border }]}
-          >
-            <Text style={[styles.secondaryButtonText, { color: theme.text }]}>
-              Sign out
-            </Text>
-          </Pressable>
-        </View>
-      </View>
+      <AppLaunchScreen
+        body={
+          loadingTooLong
+            ? "Having trouble loading your profile. You can retry or sign out."
+            : "Checking your session..."
+        }
+        title={loadingTooLong ? "Taking longer than expected" : "Preparing your account"}
+        actions={
+          loadingTooLong ? (
+            <>
+              <LaunchScreenButton label="Retry" onPress={handleRetry} />
+              <LaunchScreenButton label="Sign out" onPress={signOut} variant="ghost" />
+            </>
+          ) : undefined
+        }
+      />
     );
   }
 
@@ -198,59 +249,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
-
+  if (!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
 }
-
-const styles = StyleSheet.create({
-  stateScreen: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 32,
-  },
-  stateTitle: {
-    marginTop: 16,
-    fontSize: 24,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  stateBody: {
-    marginTop: 8,
-    fontSize: 14,
-    lineHeight: 22,
-    opacity: 0.78,
-    textAlign: "center",
-  },
-  actions: {
-    marginTop: 20,
-    width: "100%",
-    gap: 12,
-  },
-  primaryButton: {
-    alignItems: "center",
-    borderRadius: 18,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-  },
-  primaryButtonText: {
-    color: "#ffffff",
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  secondaryButton: {
-    alignItems: "center",
-    borderRadius: 18,
-    borderWidth: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-  },
-  secondaryButtonText: {
-    fontSize: 15,
-    fontWeight: "700",
-  },
-});

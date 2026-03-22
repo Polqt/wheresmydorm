@@ -8,7 +8,6 @@ import {
   View,
 } from "react-native";
 
-
 const propertyTypes: PropertyTypeFilter[] = [
   "dorm",
   "apartment",
@@ -67,7 +66,7 @@ export function FilterBar({
     formatDistance(filters.distanceMeters),
   ]
     .filter(Boolean)
-    .join(" • ");
+    .join(" - ");
 
   return (
     <>
@@ -98,6 +97,7 @@ export function FilterBar({
             style={styles.backdrop}
             onPress={() => onOpenChange(false)}
           />
+
           <View style={styles.sheet}>
             <ScrollView contentContainerStyle={styles.sheetContent}>
               <Text style={styles.sheetTitle}>Filter listings</Text>
@@ -307,7 +307,9 @@ const styles = StyleSheet.create({
     left: 14,
     right: 14,
     borderRadius: 24,
-    backgroundColor: "rgba(255, 253, 248, 0.94)",
+    backgroundColor: "rgba(255, 253, 249, 0.96)",
+    borderWidth: 1,
+    borderColor: "#ece3d8",
     paddingHorizontal: 16,
     paddingVertical: 14,
     shadowColor: "#0f172a",
@@ -333,7 +335,7 @@ const styles = StyleSheet.create({
   },
   primaryPill: {
     borderRadius: 999,
-    backgroundColor: "#0f766e",
+    backgroundColor: "#0B2D23",
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
@@ -345,7 +347,7 @@ const styles = StyleSheet.create({
   secondaryPill: {
     flex: 1,
     borderRadius: 999,
-    backgroundColor: "#ffffff",
+    backgroundColor: "#F8F4EC",
     justifyContent: "center",
     paddingHorizontal: 14,
   },
@@ -360,11 +362,11 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(15, 23, 42, 0.34)",
+    backgroundColor: "rgba(15, 23, 42, 0.24)",
   },
   sheet: {
     width: "86%",
-    backgroundColor: "#fffdf8",
+    backgroundColor: "#fffdf9",
     paddingTop: 24,
   },
   sheetContent: {
@@ -418,10 +420,10 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#ecfeff",
+    backgroundColor: "#EEF5F1",
   },
   stepperButtonText: {
-    color: "#155e75",
+    color: "#0B2D23",
     fontSize: 20,
     fontWeight: "700",
   },
@@ -445,8 +447,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   chipSelected: {
-    borderColor: "#0f766e",
-    backgroundColor: "#ccfbf1",
+    borderColor: "#0B2D23",
+    backgroundColor: "#EEF5F1",
   },
   chipText: {
     color: "#475569",
@@ -455,7 +457,7 @@ const styles = StyleSheet.create({
     textTransform: "capitalize",
   },
   chipTextSelected: {
-    color: "#134e4a",
+    color: "#0B2D23",
   },
   footer: {
     marginTop: 28,
@@ -466,7 +468,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     borderRadius: 18,
-    backgroundColor: "#0f172a",
+    backgroundColor: "#0B2D23",
     paddingVertical: 14,
   },
   primaryActionText: {

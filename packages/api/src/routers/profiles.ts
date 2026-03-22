@@ -3,6 +3,7 @@ import { db, follows, profiles } from "@wheresmydorm/db";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
+import { getProfileNamePartsFromUser } from "../lib/profile.js";
 import { protectedProcedure, router } from "../index.js";
 
 const roleInputSchema = z.object({
@@ -14,11 +15,7 @@ const followInputSchema = z.object({
 
 export const profilesRouter = router({
   sync: protectedProcedure.mutation(async ({ ctx }) => {
-    const fallbackName = ctx.user.email?.split("@")[0] ?? "WheresMyDorm user";
-    const displayName =
-      (ctx.user.user_metadata.full_name as string | undefined) ??
-      (ctx.user.user_metadata.name as string | undefined) ??
-      fallbackName;
+    const { firstName, lastName } = getProfileNamePartsFromUser(ctx.user);
     const avatarUrl =
       (ctx.user.user_metadata.avatar_url as string | undefined) ?? null;
 
@@ -26,13 +23,15 @@ export const profilesRouter = router({
       .insert(profiles)
       .values({
         id: ctx.userId,
-        displayName,
+        firstName,
+        lastName,
         avatarUrl,
       })
       .onConflictDoUpdate({
         target: profiles.id,
         set: {
-          displayName,
+          firstName,
+          lastName,
           avatarUrl,
         },
       })
