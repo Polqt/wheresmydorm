@@ -14,8 +14,16 @@ import {
 } from "react-native-safe-area-context";
 
 import { AUTH_TERMS_COPY } from "@/lib/auth";
-import type { SignInFormProps } from "@/types/auth";
+import type { ActiveProvider } from "@/types/auth";
 import { AppLogo } from "./ui/app-logo";
+
+type SignInFormProps = {
+  activeProvider: ActiveProvider;
+  errorMessage: string | null;
+  onContinueWithEmail: () => void;
+  onContinueWithFacebook: () => void;
+  onContinueWithGoogle: () => void;
+};
 
 type SocialButtonProps = {
   disabled: boolean;

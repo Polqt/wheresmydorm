@@ -19,7 +19,14 @@ import { ROLE_CARDS } from "@/lib/auth";
 import { useAuth } from "@/providers/auth-provider";
 import { setCurrentProfileRole } from "@/services/profile";
 import { useAuthFlowStore } from "@/stores/auth";
-import type { RoleCardProps, RoleOption } from "@/types/auth";
+import type { RoleCard as RoleCardType, RoleOption } from "@/types/auth";
+
+type RoleCardProps = {
+  card: RoleCardType;
+  disabled: boolean;
+  isSelected: boolean;
+  onSelect: (role: RoleOption) => void;
+};
 
 const RoleCard = React.memo(function RoleCard({
   card,

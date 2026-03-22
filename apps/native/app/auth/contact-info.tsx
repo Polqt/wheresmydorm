@@ -85,7 +85,7 @@ export default function ContactInfoScreen() {
           <View className="flex-row items-center justify-between px-4 pt-3">
             <Pressable
               className="h-10 w-10 items-center justify-center rounded-full bg-[#F4F0EA]"
-              onPress={() => router.back()}
+              onPress={() => router.replace("/auth/avatar-setup")}
             >
               <Ionicons color="#1A1A1A" name="chevron-back" size={20} />
             </Pressable>

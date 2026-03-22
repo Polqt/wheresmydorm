@@ -4,7 +4,6 @@ import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
-import { PostCard } from "@/components/feed/PostCard";
 import { supabase } from "@/utils/supabase";
 import { trpc } from "@/utils/trpc";
 
@@ -58,7 +57,11 @@ export default function PostDetailScreen() {
       className="flex-1 bg-[#f8fafc]"
       contentContainerStyle={{ padding: 16 }}
     >
-      {postQuery.data ? <PostCard post={postQuery.data} /> : null}
+      {postQuery.data ? (
+        <View className="mb-4 rounded-[28px] border border-stone-200 bg-white px-4 py-4">
+          <Text className="font-bold text-[16px] text-slate-900">{postQuery.data.body}</Text>
+        </View>
+      ) : null}
 
       <View className="rounded-[28px] border border-stone-200 bg-white px-4 py-4">
         <Text className="font-extrabold text-brand-teal text-xs uppercase tracking-[1.2px]">
