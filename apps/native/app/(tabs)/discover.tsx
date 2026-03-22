@@ -32,31 +32,41 @@ export default function DiscoverTabScreen() {
     <Container>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.eyebrow}>Discover</Text>
-        <Text style={styles.title}>
-          Curated places worth checking this week
-        </Text>
+        <Text style={styles.title}>Shortlist places that feel promising</Text>
         <Text style={styles.subtitle}>
-          This tab turns the same nearby inventory into a scrollable shortlist
-          for faster browsing.
+          Browse the same nearby inventory in a calmer, card-first view inspired
+          by travel and outdoor discovery apps.
         </Text>
 
         {(listingsQuery.data ?? []).slice(0, 8).map((listing) => (
           <View key={listing.id} style={styles.card}>
+            <View style={styles.badgeRow}>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>
+                  {listing.isFeatured ? "Featured" : "Near you"}
+                </Text>
+              </View>
+              <Text style={styles.rating}>
+                {listing.ratingOverall
+                  ? `${listing.ratingOverall.toFixed(1)} stars`
+                  : "New listing"}
+              </Text>
+            </View>
+
             <View style={styles.cardHeader}>
               <Text style={styles.cardTitle}>{listing.title}</Text>
               <Text style={styles.cardPrice}>
                 {formatCurrency(listing.pricePerMonth)}
               </Text>
             </View>
+
             <Text style={styles.cardMeta}>
               {listing.city}
-              {listing.barangay ? ` • ${listing.barangay}` : ""}
+              {listing.barangay ? ` - ${listing.barangay}` : ""}
             </Text>
             <Text style={styles.cardMeta}>
-              {listing.ratingOverall
-                ? `${listing.ratingOverall.toFixed(1)} stars`
-                : "New listing"}{" "}
-              • {listing.reviewCount} reviews
+              {listing.reviewCount} reviews -{" "}
+              {listing.propertyType.replaceAll("_", " ")}
             </Text>
           </View>
         ))}
@@ -89,11 +99,38 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   card: {
-    borderRadius: 24,
-    backgroundColor: "#fffdf8",
+    borderRadius: 28,
+    backgroundColor: "#fffdf9",
+    borderWidth: 1,
+    borderColor: "#ece3d8",
     padding: 18,
   },
+  badgeRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 10,
+  },
+  badge: {
+    borderRadius: 999,
+    backgroundColor: "#EEF5F1",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  badgeText: {
+    color: "#0B2D23",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+  rating: {
+    color: "#6C6A64",
+    fontSize: 12,
+    fontWeight: "700",
+  },
   cardHeader: {
+    marginTop: 12,
     flexDirection: "row",
     justifyContent: "space-between",
     gap: 12,
@@ -105,7 +142,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   cardPrice: {
-    color: "#ea580c",
+    color: "#0B2D23",
     fontSize: 15,
     fontWeight: "800",
   },
@@ -113,5 +150,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: "#475569",
     fontSize: 13,
+    textTransform: "capitalize",
   },
 });

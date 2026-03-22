@@ -3,6 +3,7 @@ import { db, messages, userBlocks } from "@wheresmydorm/db";
 import { and, asc, desc, eq, or } from "drizzle-orm";
 import { z } from "zod";
 
+import { formatProfileName } from "../lib/profile.js";
 import { protectedProcedure, router } from "../index.js";
 
 const threadIdSeparator = "__";
@@ -67,14 +68,16 @@ export const messagesRouter = router({
           columns: {
             id: true,
             avatarUrl: true,
-            displayName: true,
+            firstName: true,
+            lastName: true,
           },
         },
         receiver: {
           columns: {
             id: true,
             avatarUrl: true,
-            displayName: true,
+            firstName: true,
+            lastName: true,
           },
         },
       },
@@ -103,7 +106,23 @@ export const messagesRouter = router({
 
     for (const message of messageList) {
       const otherUser =
-        message.senderId === ctx.userId ? message.receiver : message.sender;
+        message.senderId === ctx.userId
+          ? {
+              avatarUrl: message.receiver.avatarUrl,
+              displayName: formatProfileName({
+                firstName: message.receiver.firstName,
+                lastName: message.receiver.lastName,
+              }),
+              id: message.receiver.id,
+            }
+          : {
+              avatarUrl: message.sender.avatarUrl,
+              displayName: formatProfileName({
+                firstName: message.sender.firstName,
+                lastName: message.sender.lastName,
+              }),
+              id: message.sender.id,
+            };
       const threadId = encodeThreadId(message.listingId, otherUser.id);
       const currentThread = threadMap.get(threadId);
 
@@ -169,14 +188,16 @@ export const messagesRouter = router({
             columns: {
               id: true,
               avatarUrl: true,
-              displayName: true,
+              firstName: true,
+              lastName: true,
             },
           },
           receiver: {
             columns: {
               id: true,
               avatarUrl: true,
-              displayName: true,
+              firstName: true,
+              lastName: true,
             },
           },
         },
@@ -189,9 +210,41 @@ export const messagesRouter = router({
           threadMessages[0] == null
             ? null
             : threadMessages[0].senderId === ctx.userId
-              ? threadMessages[0].receiver
-              : threadMessages[0].sender,
-        items: threadMessages,
+              ? {
+                  avatarUrl: threadMessages[0].receiver.avatarUrl,
+                  displayName: formatProfileName({
+                    firstName: threadMessages[0].receiver.firstName,
+                    lastName: threadMessages[0].receiver.lastName,
+                  }),
+                  id: threadMessages[0].receiver.id,
+                }
+              : {
+                  avatarUrl: threadMessages[0].sender.avatarUrl,
+                  displayName: formatProfileName({
+                    firstName: threadMessages[0].sender.firstName,
+                    lastName: threadMessages[0].sender.lastName,
+                  }),
+                  id: threadMessages[0].sender.id,
+                },
+        items: threadMessages.map((message) => ({
+          ...message,
+          receiver: {
+            avatarUrl: message.receiver.avatarUrl,
+            displayName: formatProfileName({
+              firstName: message.receiver.firstName,
+              lastName: message.receiver.lastName,
+            }),
+            id: message.receiver.id,
+          },
+          sender: {
+            avatarUrl: message.sender.avatarUrl,
+            displayName: formatProfileName({
+              firstName: message.sender.firstName,
+              lastName: message.sender.lastName,
+            }),
+            id: message.sender.id,
+          },
+        })),
       };
     }),
 

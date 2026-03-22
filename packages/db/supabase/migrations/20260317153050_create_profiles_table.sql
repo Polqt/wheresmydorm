@@ -6,9 +6,9 @@
 
 CREATE TABLE IF NOT EXISTS public.profiles (
   id                       uuid        PRIMARY KEY,  -- same as auth.users.id
-  display_name             text        NOT NULL,
+  first_name               text        NOT NULL,
+  last_name                text,
   avatar_url               text,
-  bio                      text,
   role                     user_role   NOT NULL DEFAULT 'finder',
  
   -- Monetization state
@@ -20,8 +20,6 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   -- Contact preferences (user-controlled visibility)
   contact_email            text,
   contact_phone            text,
-  contact_viber            text,
-  contact_messenger        text,
  
   -- Push notifications
   fcm_token                text,

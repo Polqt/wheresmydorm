@@ -1,7 +1,13 @@
+import { Image } from "expo-image";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { StatusBar } from "expo-status-bar";
 import React, { useMemo } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  Text,
+  View,
+} from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -28,21 +34,21 @@ const SocialButton = React.memo(function SocialButton({
 }: SocialButtonProps) {
   return (
     <Pressable
-      className="mt-3 h-14 w-full justify-center rounded-full border border-[#E0E0E0] bg-white px-5"
+      className="h-[52px] w-full flex-row items-center rounded-xl border border-[#E8E3DC] bg-white"
       disabled={disabled}
       onPress={onPress}
     >
       {isLoading ? (
-        <View className="w-full items-center">
-          <ActivityIndicator color="#04170E" size="small" />
+        <View className="flex-1 items-center">
+          <ActivityIndicator color="#1A1A1A" size="small" />
         </View>
       ) : (
         <>
-          <View className="absolute left-5 h-8 w-8 items-center justify-center">
+          <View className="absolute left-4 h-6 w-6 items-center justify-center">
             {icon}
           </View>
-          <View className="w-full items-center">
-            <Text className="font-semibold text-[16px] text-[#1A1A1A]">
+          <View className="flex-1 items-center">
+            <Text className="font-semibold text-[15px] text-[#1A1A1A]">
               {label}
             </Text>
           </View>
@@ -61,10 +67,9 @@ export function SignInForm({
 }: SignInFormProps) {
   const insets = useSafeAreaInsets();
   const isLoading = activeProvider !== null;
+
   const footerStyle = useMemo(
-    () => ({
-      bottom: insets.bottom + 12,
-    }),
+    () => ({ paddingBottom: Math.max(insets.bottom + 8, 24) }),
     [insets.bottom],
   );
 
@@ -72,18 +77,25 @@ export function SignInForm({
     <SafeAreaView className="flex-1 bg-white">
       <StatusBar style="dark" />
 
-      <View className="flex-1 px-6 pt-6">
-        <View className="items-center mt-8">
-          <AppLogo className="h-12 w-12" containerClassName="h-[72px] w-[72px]" />
-          <Text className="mt-7 text-center font-bold text-[28px] text-[#1A1A1A] leading-[34px]">
-            Sign up or log in{"\n"}to start exploring
-          </Text>
+      <View className="flex-1 px-6">
+        <View className="items-center pt-10">
+          <AppLogo containerClassName="h-200 w-200 rounded-[22px]" size={38} />
         </View>
 
-        <View className="mt-10">
+        <Text className="mt-7 text-center font-bold text-[26px] leading-[32px] text-[#1A1A1A]">
+          Sign up or log in{"\n"}to start exploring
+        </Text>
+
+        <View className="mt-9 gap-[10px]">
           <SocialButton
             disabled={isLoading}
-            icon={<Ionicons color="#DB4437" name="logo-google" size={20} />}
+            icon={
+              <Image
+                contentFit="contain"
+                source={require("../assets/icons/google.svg")}
+                style={{ height: 20, width: 20 }}
+              />
+            }
             isLoading={activeProvider === "google"}
             label="Continue with Google"
             onPress={onContinueWithGoogle}
@@ -96,41 +108,45 @@ export function SignInForm({
             label="Continue with Facebook"
             onPress={onContinueWithFacebook}
           />
-
-          <View className="mt-5 flex-row items-center">
-            <View className="flex-1 h-[1px] bg-[#E0E0E0]" />
-            <Text className="mx-4 text-[#9A9A9A] text-sm">or</Text>
-            <View className="flex-1 h-[1px] bg-[#E0E0E0]" />
-          </View>
-
-          <Pressable
-            className="mt-5 h-14 w-full items-center justify-center rounded-full bg-[#04170E]"
-            disabled={isLoading}
-            onPress={onContinueWithEmail}
-          >
-            {isLoading && activeProvider === null ? (
-              <ActivityIndicator color="#ffffff" size="small" />
-            ) : (
-              <Text className="font-semibold text-[16px] text-white">
-                Continue with email
-              </Text>
-            )}
-          </Pressable>
-
-          {errorMessage ? (
-            <View className="mt-4 rounded-xl bg-red-500/10 px-4 py-3">
-              <Text className="text-center text-red-600 text-sm leading-5">
-                {errorMessage}
-              </Text>
-            </View>
-          ) : null}
         </View>
 
+        {/* Divider */}
+        <View className="my-5 flex-row items-center gap-3">
+          <View className="h-[1px] flex-1 bg-[#E8E3DC]" />
+          <Text className="text-[13px] text-[#A09A90]">or</Text>
+          <View className="h-[1px] flex-1 bg-[#E8E3DC]" />
+        </View>
+
+        {/* Email CTA */}
+        <Pressable
+          className="h-[52px] w-full items-center justify-center rounded-xl bg-[#04170E]"
+          disabled={isLoading}
+          onPress={onContinueWithEmail}
+        >
+          {isLoading && activeProvider === null ? (
+            <ActivityIndicator color="#ffffff" size="small" />
+          ) : (
+            <Text className="font-semibold text-[15px] text-white">
+              Continue with email
+            </Text>
+          )}
+        </Pressable>
+
+        {errorMessage ? (
+          <View className="mt-4 rounded-xl bg-red-50 px-4 py-3">
+            <Text className="text-center text-[13px] leading-5 text-red-600">
+              {errorMessage}
+            </Text>
+          </View>
+        ) : null}
+
+        {/* Spacer */}
         <View className="flex-1" />
       </View>
 
-      <View className="absolute right-0 left-0 px-8" style={footerStyle}>
-        <Text className="text-center text-[#B0B0B0] text-xs leading-5">
+      {/* Terms */}
+      <View className="px-8" style={footerStyle}>
+        <Text className="text-center text-[11px] leading-[18px] text-[#B0A898]">
           {AUTH_TERMS_COPY}
         </Text>
       </View>

@@ -6,7 +6,6 @@ export type RoleOption = Extract<
   NonNullable<Profile["role"]>,
   "finder" | "lister"
 >;
-export type PendingAuthEmail = NonNullable<Profile["contactEmail"]>;
 
 export type RoleCard = {
   emoji: string;
@@ -28,9 +27,4 @@ export type SignInFormProps = {
   onContinueWithEmail: () => void;
   onContinueWithFacebook: () => void;
   onContinueWithGoogle: () => void;
-};
-
-export type EmailOtpSendResult = {
-  email: PendingAuthEmail;
-  resendAvailableAt: number;
 };

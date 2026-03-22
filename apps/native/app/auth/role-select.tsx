@@ -1,9 +1,14 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  Text,
+  View,
+} from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -12,10 +17,7 @@ import {
 import { AppLogo } from "@/components/ui/app-logo";
 import { ROLE_CARDS } from "@/lib/auth";
 import { useAuth } from "@/providers/auth-provider";
-import {
-  getOrCreateCurrentProfile,
-  setCurrentProfileRole,
-} from "@/services/profile";
+import { setCurrentProfileRole } from "@/services/profile";
 import { useAuthFlowStore } from "@/stores/auth";
 import type { RoleCardProps, RoleOption } from "@/types/auth";
 
@@ -26,40 +28,38 @@ const RoleCard = React.memo(function RoleCard({
   onSelect,
 }: RoleCardProps) {
   const { emoji, role, subtitle, title } = card;
-  const handlePress = useCallback(() => {
-    onSelect(role);
-  }, [onSelect, role]);
-
-  const cardClassName = isSelected
-    ? "w-full flex-row items-start gap-4 rounded-2xl border-2 border-[#04170E] bg-[#F0F7F4] p-5"
-    : "w-full flex-row items-start gap-4 rounded-2xl border border-[#E0E0E0] bg-white p-5";
+  const handlePress = useCallback(() => onSelect(role), [onSelect, role]);
 
   return (
     <Pressable
-      className={cardClassName}
+      className={`w-full flex-row items-center gap-4 rounded-2xl border p-5 ${
+        isSelected
+          ? "border-[#0B2D23] bg-[#EEF5F1]"
+          : "border-[#EAE5DE] bg-white"
+      }`}
       disabled={disabled}
       onPress={handlePress}
     >
-      <View className="h-12 w-12 items-center justify-center rounded-2xl bg-[#F0F7F4]">
+      <View className="h-12 w-12 items-center justify-center rounded-2xl bg-[#F5F0E8]">
         <Text className="text-2xl">{emoji}</Text>
       </View>
 
       <View className="flex-1">
-        <Text className="font-bold text-[#1A1A1A] text-lg">
-          {title}
-        </Text>
-        <Text className="mt-1 text-[#7A7A7A] text-sm leading-5">
+        <Text className="font-bold text-[16px] text-[#1A1A1A]">{title}</Text>
+        <Text className="mt-0.5 text-[13px] leading-5 text-[#8A8480]">
           {subtitle}
         </Text>
       </View>
 
-      {isSelected ? (
-        <View className="h-6 w-6 items-center justify-center rounded-full bg-[#04170E]">
-          <Ionicons color="#ffffff" name="checkmark" size={14} />
-        </View>
-      ) : (
-        <View className="h-6 w-6 rounded-full border border-[#E0E0E0]" />
-      )}
+      <View
+        className={`h-6 w-6 items-center justify-center rounded-full border-2 ${
+          isSelected ? "border-[#0B2D23] bg-[#0B2D23]" : "border-[#D0C9C0]"
+        }`}
+      >
+        {isSelected ? (
+          <Ionicons color="#ffffff" name="checkmark" size={13} />
+        ) : null}
+      </View>
     </Pressable>
   );
 });
@@ -72,89 +72,70 @@ export default function RoleSelectScreen() {
   const setAwaitingRoleSync = useAuthFlowStore(
     (state) => state.setAwaitingRoleSync,
   );
-  const profileQuery = useQuery({
-    enabled: Boolean(user),
-    queryFn: () => getOrCreateCurrentProfile(user!),
-    queryKey: ["auth-profile", user?.id],
-  });
+
   const setRoleMutation = useMutation({
     mutationFn: async ({ role }: { role: RoleOption }) => {
-      if (!user) {
-        throw new Error("Your session expired. Please sign in again.");
-      }
-
+      if (!user) throw new Error("Session expired. Please sign in again.");
       return setCurrentProfileRole(user.id, role);
     },
   });
 
   const bottomAreaStyle = useMemo(
-    () => ({
-      paddingBottom: insets.bottom + 12,
-    }),
+    () => ({ paddingBottom: Math.max(insets.bottom + 8, 24) }),
     [insets.bottom],
   );
 
-  const handleBack = useCallback(() => {
-    router.replace("/auth/sign-in");
-  }, []);
+  const handleBack = useCallback(() => router.replace("/auth/sign-in"), []);
 
-  const handleSelectRole = useCallback((nextRole: RoleOption) => {
-    setSelectedRole(nextRole);
-  }, []);
-
-  const handleRoleSuccess = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ["auth-profile"] });
-    setAwaitingRoleSync();
-    router.replace("/onboarding");
-  }, [queryClient, setAwaitingRoleSync]);
+  const handleSelectRole = useCallback(
+    (nextRole: RoleOption) => setSelectedRole(nextRole),
+    [],
+  );
 
   const handleContinue = useCallback(() => {
-    if (!selectedRole) {
-      return;
-    }
-
+    if (!selectedRole) return;
     setRoleMutation.mutate(
       { role: selectedRole },
       {
-        onSuccess: handleRoleSuccess,
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["auth-profile"] });
+          setAwaitingRoleSync();
+          router.replace("/auth/profile-setup");
+        },
       },
     );
-  }, [handleRoleSuccess, selectedRole, setRoleMutation]);
+  }, [queryClient, selectedRole, setAwaitingRoleSync, setRoleMutation]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-[#FAF8F5]">
       <StatusBar style="dark" />
 
       <View className="flex-1">
-        <View className="flex-row items-center justify-between px-4 pt-2">
+        {/* Nav */}
+        <View className="flex-row items-center px-4 pt-2">
           <Pressable
-            className="h-11 w-11 items-center justify-center rounded-full"
+            className="h-10 w-10 items-center justify-center rounded-full bg-white border border-[#EAE5DE]"
             onPress={handleBack}
           >
-            <Ionicons color="#1A1A1A" name="chevron-back" size={24} />
+            <Ionicons color="#1A1A1A" name="chevron-back" size={20} />
           </Pressable>
-
-          <View className="h-11 w-11" />
         </View>
 
-        <View className="flex-1 items-center px-6">
-          <AppLogo className="mt-6 h-12 w-12" />
+        <View className="flex-1 px-5 pt-6">
+          {/* Logo + header */}
+          <View className="items-center">
+            <AppLogo containerClassName="h-[60px] w-[60px] rounded-[18px]" size={32} />
+          </View>
 
-          <Text className="mt-6 text-center font-bold text-[24px] text-[#1A1A1A]">
+          <Text className="mt-6 text-center font-bold text-[28px] leading-[34px] text-[#1A1A1A]">
             How will you use{"\n"}WheresMyDorm?
           </Text>
-
-          <Text className="mt-2 text-center text-[#7A7A7A] text-sm">
-            You can switch roles anytime in Settings.
+          <Text className="mt-2 text-center text-[14px] leading-6 text-[#8A8480]">
+            Pick the path that fits you best. You can switch roles later in settings.
           </Text>
 
-          {profileQuery.isLoading ? (
-            <Text className="mt-4 text-[#9A9A9A] text-sm">
-              Loading your profile...
-            </Text>
-          ) : null}
-
-          <View className="mt-8 w-full gap-4">
+          {/* Role cards */}
+          <View className="mt-8 gap-3">
             {ROLE_CARDS.map((card) => (
               <RoleCard
                 key={card.role}
@@ -165,31 +146,31 @@ export default function RoleSelectScreen() {
               />
             ))}
           </View>
-        </View>
 
-        <View
-          className="w-full px-6 pt-4"
-          style={bottomAreaStyle}
-        >
           {setRoleMutation.error ? (
-            <Text className="mb-3 text-center text-red-500 text-sm leading-5">
+            <Text className="mt-4 text-center text-[13px] text-red-500">
               {setRoleMutation.error.message}
             </Text>
           ) : null}
+        </View>
 
+        {/* Continue button */}
+        <View className="px-5" style={bottomAreaStyle}>
           <Pressable
-            className={`h-14 w-full items-center justify-center rounded-full ${
-              selectedRole ? "bg-[#04170E]" : "bg-[#E5E5E5]"
+            className={`h-[52px] w-full items-center justify-center rounded-xl ${
+              selectedRole && !setRoleMutation.isPending
+                ? "bg-[#04170E]"
+                : "bg-[#E8E3DC]"
             }`}
             disabled={!selectedRole || setRoleMutation.isPending}
             onPress={handleContinue}
           >
             {setRoleMutation.isPending ? (
-              <ActivityIndicator color="#ffffff" />
+              <ActivityIndicator color="#ffffff" size="small" />
             ) : (
               <Text
-                className={`font-semibold text-base ${
-                  selectedRole ? "text-white" : "text-[#9A9A9A]"
+                className={`font-semibold text-[15px] ${
+                  selectedRole ? "text-white" : "text-[#A09A90]"
                 }`}
               >
                 Continue

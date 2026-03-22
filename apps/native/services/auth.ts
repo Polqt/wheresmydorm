@@ -1,16 +1,8 @@
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 
-import {
-  EMAIL_OTP_COOLDOWN_MS,
-  getAuthRedirectUrl,
-  normalizeAuthEmail,
-} from "@/lib/auth";
-import type {
-  EmailOtpSendResult,
-  OAuthProvider,
-  PendingAuthEmail,
-} from "@/types/auth";
+import { getAuthRedirectUrl, normalizeAuthEmail } from "@/lib/auth";
+import type { OAuthProvider } from "@/types/auth";
 import { supabase } from "@/utils/supabase";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -27,22 +19,16 @@ function parseOAuthResponse(url: string) {
       ? new URLSearchParams(url.split("#")[1] ?? "")
       : new URLSearchParams();
 
-  const code = parseParamValue(query.code) ?? hashParams.get("code");
-  const accessToken =
-    parseParamValue(query.access_token) ?? hashParams.get("access_token");
-  const refreshToken =
-    parseParamValue(query.refresh_token) ?? hashParams.get("refresh_token");
-  const errorDescription =
-    parseParamValue(query.error_description) ??
-    hashParams.get("error_description");
-  const error = parseParamValue(query.error) ?? hashParams.get("error");
-
   return {
-    accessToken,
-    code,
-    error,
-    errorDescription,
-    refreshToken,
+    accessToken:
+      parseParamValue(query.access_token) ?? hashParams.get("access_token"),
+    code: parseParamValue(query.code) ?? hashParams.get("code"),
+    error: parseParamValue(query.error) ?? hashParams.get("error"),
+    errorDescription:
+      parseParamValue(query.error_description) ??
+      hashParams.get("error_description"),
+    refreshToken:
+      parseParamValue(query.refresh_token) ?? hashParams.get("refresh_token"),
   };
 }
 
@@ -50,43 +36,28 @@ export async function signInWithOAuth(provider: OAuthProvider) {
   const redirectTo = getAuthRedirectUrl();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
-    options: {
-      redirectTo,
-      skipBrowserRedirect: true,
-    },
+    options: { redirectTo, skipBrowserRedirect: true },
   });
 
-  if (error) {
-    throw error;
-  }
-
-  if (!data.url) {
-    throw new Error("No OAuth URL returned.");
-  }
+  if (error) throw error;
+  if (!data.url) throw new Error("No OAuth URL returned.");
 
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
 
   if (result.type !== "success") {
-    // On Android, the custom tab closes via deep link before openAuthSessionAsync
-    // signals "success". The callback screen may have already set the session.
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (session) {
-      return true;
-    }
-
-    return false;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) return true;
+    throw new Error(
+      "Sign-in finished in the browser but the app didn't receive the callback. " +
+      `Make sure ${redirectTo} is in your Supabase Auth redirect URLs.`,
+    );
   }
 
   const { accessToken, code, error: oauthError, errorDescription, refreshToken } =
     parseOAuthResponse(result.url);
 
   if (oauthError || errorDescription) {
-    throw new Error(
-      errorDescription ?? oauthError ?? "OAuth sign-in was denied.",
-    );
+    throw new Error(errorDescription ?? oauthError ?? "OAuth sign-in was denied.");
   }
 
   if (accessToken && refreshToken) {
@@ -94,63 +65,63 @@ export async function signInWithOAuth(provider: OAuthProvider) {
       access_token: accessToken,
       refresh_token: refreshToken,
     });
-
-    if (setSessionError) {
-      throw setSessionError;
-    }
-
+    if (setSessionError) throw setSessionError;
     return true;
   }
 
   if (!code) {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (session) {
-      return true;
-    }
-
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) return true;
     throw new Error("Missing OAuth callback data.");
   }
 
   const { error: exchangeError } =
     await supabase.auth.exchangeCodeForSession(code);
+  if (exchangeError) throw exchangeError;
+  return true;
+}
 
-  if (exchangeError) {
-    throw exchangeError;
+/**
+ * Try to restore an existing session for this email.
+ * If the user logged out softly and the refresh token is still valid,
+ * this avoids hitting the OTP rate limit entirely.
+ */
+export async function tryRestoreSession(email: string): Promise<boolean> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return false;
+
+  // Verify the session belongs to this email
+  if (session.user.email?.toLowerCase() !== normalizeAuthEmail(email)) {
+    return false;
+  }
+
+  // Validate with server — token might be expired
+  const { error } = await supabase.auth.getUser();
+  if (error) {
+    await supabase.auth.signOut({ scope: "local" });
+    return false;
   }
 
   return true;
 }
 
-export async function sendEmailOtp(email: string): Promise<EmailOtpSendResult> {
+export async function sendEmailOtp(email: string) {
   const normalizedEmail = normalizeAuthEmail(email);
+
   const { error } = await supabase.auth.signInWithOtp({
     email: normalizedEmail,
-    options: {
-      shouldCreateUser: true,
-    },
+    options: { shouldCreateUser: true },
   });
 
-  if (error) {
-    throw error;
-  }
-
-  return {
-    email: normalizedEmail,
-    resendAvailableAt: Date.now() + EMAIL_OTP_COOLDOWN_MS,
-  };
+  if (error) throw error;
+  return normalizedEmail;
 }
 
-export async function verifyEmailOtp(email: PendingAuthEmail, token: string) {
+export async function verifyEmailOtp(email: string, token: string) {
   const { error } = await supabase.auth.verifyOtp({
-    email,
+    email: normalizeAuthEmail(email),
     token,
     type: "email",
   });
-
-  if (error) {
-    throw error;
-  }
+  if (error) throw error;
 }

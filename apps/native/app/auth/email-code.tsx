@@ -4,6 +4,8 @@ import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   Text,
   TextInput,
@@ -14,134 +16,63 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
-import { AppLaunchScreen } from "@/components/ui/app-launch-screen";
 import { AppLogo } from "@/components/ui/app-logo";
-import {
-  EMAIL_CODE_LENGTH,
-  getEmailOtpRateLimitMessage,
-  parseEmailOtpRetryAfterSeconds,
-} from "@/lib/auth";
+import { EMAIL_CODE_LENGTH } from "@/lib/auth";
 import { sendEmailOtp, verifyEmailOtp } from "@/services/auth";
 import { useAuthFlowStore } from "@/stores/auth";
 
 export default function EmailCodeScreen() {
   const insets = useSafeAreaInsets();
-  const clearOtpCooldown = useAuthFlowStore((state) => state.clearOtpCooldown);
-  const pendingEmail = useAuthFlowStore((state) => state.pendingEmail);
-  const resendAvailableAt = useAuthFlowStore(
-    (state) => state.resendAvailableAt,
-  );
-  const clearPendingEmail = useAuthFlowStore(
-    (state) => state.clearPendingEmail,
-  );
-  const setOtpCooldown = useAuthFlowStore((state) => state.setOtpCooldown);
+  const pendingEmail = useAuthFlowStore((s) => s.pendingEmail);
+  const clearPendingEmail = useAuthFlowStore((s) => s.clearPendingEmail);
   const [code, setCode] = useState("");
-  const [currentTime, setCurrentTime] = useState(Date.now());
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
 
-  const secondsRemaining =
-    resendAvailableAt && resendAvailableAt > currentTime
-      ? Math.ceil((resendAvailableAt - currentTime) / 1000)
-      : 0;
-  const canContinue = code.trim().length === EMAIL_CODE_LENGTH && !isSubmitting;
+  const canContinue = code.length === EMAIL_CODE_LENGTH && !isSubmitting;
+
   const bottomAreaStyle = useMemo(
-    () => ({
-      paddingBottom: insets.bottom + 12,
-    }),
+    () => ({ paddingBottom: Math.max(insets.bottom + 8, 24) }),
     [insets.bottom],
   );
 
   useEffect(() => {
-    if (!pendingEmail) {
-      router.replace("/auth/email");
-    }
+    if (!pendingEmail) router.replace("/auth/email");
   }, [pendingEmail]);
 
-  useEffect(() => {
-    if (resendAvailableAt === null) {
-      return;
-    }
-
-    const intervalId = setInterval(() => {
-      setCurrentTime(Date.now());
-    }, 1000);
-
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [resendAvailableAt]);
-
-  const handleBack = useCallback(() => {
-    router.replace("/auth/email");
-  }, []);
-
   const handleCodeChange = useCallback((nextCode: string) => {
-    const sanitizedCode = nextCode
-      .replace(/\D/g, "")
-      .slice(0, EMAIL_CODE_LENGTH);
-    setCode(sanitizedCode);
+    setCode(nextCode.replace(/\D/g, "").slice(0, EMAIL_CODE_LENGTH));
     setErrorMessage(null);
   }, []);
 
   const handleResend = useCallback(async () => {
-    if (!pendingEmail) {
-      router.replace("/auth/email");
-      return;
-    }
-
+    if (!pendingEmail) return;
     setIsResending(true);
     setErrorMessage(null);
-
     try {
-      if (resendAvailableAt !== null && resendAvailableAt > Date.now()) {
-        setErrorMessage(getEmailOtpRateLimitMessage(secondsRemaining));
-        return;
-      }
-
-      const result = await sendEmailOtp(pendingEmail);
-      setOtpCooldown(result.resendAvailableAt);
+      await sendEmailOtp(pendingEmail);
+      setErrorMessage(null);
     } catch (error) {
-      const retryAfterSeconds =
-        error instanceof Error
-          ? parseEmailOtpRetryAfterSeconds(error.message)
-          : null;
-
-      if (retryAfterSeconds !== null) {
-        setOtpCooldown(Date.now() + retryAfterSeconds * 1000);
-        setErrorMessage(getEmailOtpRateLimitMessage(retryAfterSeconds));
-        return;
-      }
-
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to resend your code.",
+        error instanceof Error ? error.message : "Unable to resend code.",
       );
     } finally {
       setIsResending(false);
     }
-  }, [pendingEmail, resendAvailableAt, secondsRemaining, setOtpCooldown]);
+  }, [pendingEmail]);
 
   const handleContinue = useCallback(async () => {
-    if (!pendingEmail) {
-      router.replace("/auth/email");
-      return;
-    }
-
-    if (code.trim().length !== EMAIL_CODE_LENGTH) {
-      setErrorMessage(`Enter the ${EMAIL_CODE_LENGTH}-digit code from your email.`);
-      return;
-    }
+    if (!pendingEmail || code.length !== EMAIL_CODE_LENGTH) return;
 
     setIsSubmitting(true);
     setErrorMessage(null);
 
     try {
       await verifyEmailOtp(pendingEmail, code);
-      clearOtpCooldown();
       clearPendingEmail();
-      setIsVerified(true);
+      // AuthProvider detects the new session via onAuthStateChange
+      // and routes to role-select or (tabs)/map automatically.
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "Unable to verify your code.",
@@ -149,106 +80,105 @@ export default function EmailCodeScreen() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [clearOtpCooldown, clearPendingEmail, code, pendingEmail]);
-
-  if (isVerified) {
-    return (
-      <AppLaunchScreen
-        body="We're setting up your account."
-        title="Email verified!"
-      />
-    );
-  }
+  }, [clearPendingEmail, code, pendingEmail]);
 
   return (
     <SafeAreaView className="flex-1 bg-white">
       <StatusBar style="dark" />
 
-      <View className="flex-1">
-        <View className="flex-row items-center justify-between px-4 pt-2">
-          <Pressable
-            className="h-11 w-11 items-center justify-center rounded-full"
-            onPress={handleBack}
-          >
-            <Ionicons color="#1A1A1A" name="chevron-back" size={24} />
-          </Pressable>
-
-          <View className="h-11 w-11" />
-        </View>
-
-        <View className="flex-1 items-center px-6">
-          <AppLogo className="mt-6 h-12 w-12" />
-
-          <Text className="mt-6 text-center font-bold text-[24px] text-[#1A1A1A]">
-            Enter your code
-          </Text>
-          <Text className="mt-2 text-center text-[#7A7A7A] text-sm">
-            We sent a code to {pendingEmail}
-          </Text>
-
-          <View className="mt-8 w-full">
-            <Text className="text-[#555555] text-sm font-medium">
-              Verification code
-            </Text>
-            <TextInput
-              autoCapitalize="none"
-              autoCorrect={false}
-              className="mt-2 h-14 w-full rounded-2xl border border-[#E0E0E0] bg-white px-4 text-base text-[#1A1A1A]"
-              keyboardType="number-pad"
-              maxLength={EMAIL_CODE_LENGTH}
-              onChangeText={handleCodeChange}
-              placeholder="12345678"
-              placeholderTextColor="#B0B0B0"
-              value={code}
-            />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        className="flex-1"
+      >
+        <View className="flex-1">
+          <View className="flex-row items-center px-4 pt-2">
+            <Pressable
+              className="h-10 w-10 items-center justify-center rounded-full bg-[#F4F0EA]"
+              onPress={() => router.replace("/auth/email")}
+            >
+              <Ionicons color="#1A1A1A" name="chevron-back" size={20} />
+            </Pressable>
           </View>
 
-          <Pressable
-            className="mt-4"
-            disabled={isResending || secondsRemaining > 0}
-            onPress={handleResend}
-          >
-            <Text className="font-semibold text-[#1B5E3A] text-sm">
-              {isResending
-                ? "Sending a new code..."
-                : secondsRemaining > 0
-                  ? `Resend available in ${secondsRemaining}s`
-                  : "Resend code"}
-            </Text>
-          </Pressable>
+          <View className="flex-1 px-6 pt-6">
+            <View className="items-center">
+              <AppLogo containerClassName="h-[68px] w-[68px] rounded-[22px]" size={38} />
+            </View>
 
-          {errorMessage ? (
-            <Text className="mt-4 text-center text-red-500 text-sm leading-5">
-              {errorMessage}
+            <Text className="mt-6 text-center font-bold text-[26px] leading-[32px] text-[#1A1A1A]">
+              Enter your code
             </Text>
-          ) : null}
-        </View>
+            <Text className="mt-2 text-center text-[14px] leading-5 text-[#8A8480]">
+              We sent a {EMAIL_CODE_LENGTH}-digit code to{"\n"}
+              <Text className="font-semibold text-[#1A1A1A]">{pendingEmail}</Text>
+            </Text>
 
-        <View
-          className="w-full px-6 pt-4"
-          style={bottomAreaStyle}
-        >
-          <Pressable
-            className={`h-14 w-full items-center justify-center rounded-full ${
-              canContinue ? "bg-[#04170E]" : "bg-[#E5E5E5]"
-            }`}
-            disabled={!canContinue}
-            onPress={handleContinue}
-          >
-            {isSubmitting ? (
-              <ActivityIndicator color="#ffffff" size="small" />
-            ) : (
+            <View className="mt-8">
+              <Text className="mb-2 text-[13px] font-semibold text-[#4A4540]">
+                Verification code
+              </Text>
+              <TextInput
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoFocus
+                className="h-[52px] w-full rounded-xl border border-[#D8D2CA] bg-white px-4 text-center text-[20px] font-bold tracking-[6px] text-[#1A1A1A]"
+                keyboardType="number-pad"
+                maxLength={EMAIL_CODE_LENGTH}
+                onChangeText={handleCodeChange}
+                onSubmitEditing={handleContinue}
+                placeholder="––––––––"
+                placeholderTextColor="#C0B8B0"
+                returnKeyType="done"
+                value={code}
+              />
+            </View>
+
+            <Pressable
+              className="mt-4 self-center"
+              disabled={isResending}
+              onPress={handleResend}
+            >
               <Text
-                className={`font-semibold text-base ${
-                  canContinue ? "text-white" : "text-[#9A9A9A]"
+                className={`text-[13px] font-semibold ${
+                  isResending ? "text-[#B0A898]" : "text-[#1D5B43]"
                 }`}
               >
-                Continue
+                {isResending ? "Sending a new code..." : "Resend code"}
               </Text>
-            )}
-          </Pressable>
+            </Pressable>
+
+            {errorMessage ? (
+              <Text className="mt-4 text-center text-[13px] leading-5 text-red-500">
+                {errorMessage}
+              </Text>
+            ) : null}
+
+            <View className="flex-1" />
+          </View>
+
+          <View className="px-6" style={bottomAreaStyle}>
+            <Pressable
+              className={`h-[52px] w-full items-center justify-center rounded-xl ${
+                canContinue ? "bg-[#04170E]" : "bg-[#E8E3DC]"
+              }`}
+              disabled={!canContinue}
+              onPress={handleContinue}
+            >
+              {isSubmitting ? (
+                <ActivityIndicator color="#ffffff" size="small" />
+              ) : (
+                <Text
+                  className={`font-semibold text-[15px] ${
+                    canContinue ? "text-white" : "text-[#A09A90]"
+                  }`}
+                >
+                  Continue
+                </Text>
+              )}
+            </Pressable>
+          </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

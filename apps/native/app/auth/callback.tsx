@@ -6,12 +6,19 @@ import { AppLaunchScreen } from "@/components/ui/app-launch-screen";
 import { supabase } from "@/utils/supabase";
 
 export default function AuthCallbackScreen() {
-  const { access_token: accessToken, code, refresh_token: refreshToken } =
-    useLocalSearchParams<{
-      access_token?: string;
-      code?: string;
-      refresh_token?: string;
-    }>();
+  const {
+    access_token: accessToken,
+    code,
+    error,
+    error_description: errorDescription,
+    refresh_token: refreshToken,
+  } = useLocalSearchParams<{
+    access_token?: string;
+    code?: string;
+    error?: string;
+    error_description?: string;
+    refresh_token?: string;
+  }>();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -19,23 +26,30 @@ export default function AuthCallbackScreen() {
 
     const completeAuth = async () => {
       try {
+        if (typeof errorDescription === "string" || typeof error === "string") {
+          throw new Error(
+            errorDescription ?? error ?? "Unable to complete sign-in.",
+          );
+        }
+
         if (
           typeof accessToken === "string" &&
           typeof refreshToken === "string"
         ) {
-          const { error } = await supabase.auth.setSession({
+          const { error: setSessionError } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           });
 
-          if (error) {
-            throw error;
+          if (setSessionError) {
+            throw setSessionError;
           }
         } else if (typeof code === "string") {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          const { error: exchangeError } =
+            await supabase.auth.exchangeCodeForSession(code);
 
-          if (error) {
-            throw error;
+          if (exchangeError) {
+            throw exchangeError;
           }
         } else {
           throw new Error("Missing OAuth callback data.");
@@ -44,11 +58,11 @@ export default function AuthCallbackScreen() {
         if (!isCancelled) {
           router.replace("/");
         }
-      } catch (error) {
+      } catch (authError) {
         if (!isCancelled) {
           setErrorMessage(
-            error instanceof Error
-              ? error.message
+            authError instanceof Error
+              ? authError.message
               : "Unable to complete sign-in.",
           );
           router.replace("/auth/sign-in");
@@ -61,7 +75,7 @@ export default function AuthCallbackScreen() {
     return () => {
       isCancelled = true;
     };
-  }, [accessToken, code, refreshToken]);
+  }, [accessToken, code, error, errorDescription, refreshToken]);
 
   if (!errorMessage) {
     return (

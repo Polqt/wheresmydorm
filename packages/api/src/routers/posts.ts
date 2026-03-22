@@ -10,6 +10,7 @@ import {
 import { and, asc, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import { z } from "zod";
 
+import { formatProfileName } from "../lib/profile.js";
 import { protectedProcedure, router } from "../index.js";
 
 const reactionValues = ["like", "helpful", "funny"] as const;
@@ -201,7 +202,8 @@ export const postsRouter = router({
             columns: {
               id: true,
               avatarUrl: true,
-              displayName: true,
+              firstName: true,
+              lastName: true,
             },
           },
           listing: {
@@ -213,8 +215,22 @@ export const postsRouter = router({
         },
       });
 
-      const hasNextPage = postList.length > input.limit;
-      const items = hasNextPage ? postList.slice(0, input.limit) : postList;
+      const normalizedPostList = postList.map((post) => ({
+        ...post,
+        author: {
+          avatarUrl: post.author.avatarUrl,
+          displayName: formatProfileName({
+            firstName: post.author.firstName,
+            lastName: post.author.lastName,
+          }),
+          id: post.author.id,
+        },
+      }));
+
+      const hasNextPage = normalizedPostList.length > input.limit;
+      const items = hasNextPage
+        ? normalizedPostList.slice(0, input.limit)
+        : normalizedPostList;
       const enrichedItems = await enrichPosts(items, ctx.userId);
 
       return {
@@ -235,7 +251,8 @@ export const postsRouter = router({
             columns: {
               id: true,
               avatarUrl: true,
-              displayName: true,
+              firstName: true,
+              lastName: true,
             },
           },
           listing: {
@@ -251,7 +268,22 @@ export const postsRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Post not found." });
       }
 
-      const [enrichedPost] = await enrichPosts([post], ctx.userId);
+      const [enrichedPost] = await enrichPosts(
+        [
+          {
+            ...post,
+            author: {
+              avatarUrl: post.author.avatarUrl,
+              displayName: formatProfileName({
+                firstName: post.author.firstName,
+                lastName: post.author.lastName,
+              }),
+              id: post.author.id,
+            },
+          },
+        ],
+        ctx.userId,
+      );
       return enrichedPost;
     }),
 
@@ -269,13 +301,24 @@ export const postsRouter = router({
             columns: {
               id: true,
               avatarUrl: true,
-              displayName: true,
+              firstName: true,
+              lastName: true,
             },
           },
         },
       });
 
-      return comments;
+      return comments.map((comment) => ({
+        ...comment,
+        author: {
+          avatarUrl: comment.author.avatarUrl,
+          displayName: formatProfileName({
+            firstName: comment.author.firstName,
+            lastName: comment.author.lastName,
+          }),
+          id: comment.author.id,
+        },
+      }));
     }),
 
   react: protectedProcedure

@@ -28,7 +28,7 @@ export const AnimatedDot = React.memo(function AnimatedDot({
 
   return (
     <Animated.View
-      className="h-2 w-6 rounded-full bg-white"
+      className="h-2 w-6 rounded-full bg-[#0B2D23]"
       style={animatedStyle}
     />
   );

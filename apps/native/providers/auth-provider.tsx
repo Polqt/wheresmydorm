@@ -30,22 +30,31 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+const SPLASH_MS = 6200;
 const LOADING_TIMEOUT_MS = 10_000;
+
+const SETUP_SCREENS = new Set([
+  "role-select",
+  "profile-setup",
+  "avatar-setup",
+  "contact-info",
+  "permissions",
+]);
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const segments = useSegments();
   const [firstSegment, secondSegment] = segments as string[];
+
   const [session, setSession] = useState<Session | null>(null);
   const [isSessionReady, setIsSessionReady] = useState(false);
+  const [splashDone, setSplashDone] = useState(false);
   const [loadingTooLong, setLoadingTooLong] = useState(false);
   const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const clearAwaitingRoleSync = useAuthFlowStore(
-    (state) => state.clearAwaitingRoleSync,
-  );
-  const isAwaitingRoleSync = useAuthFlowStore(
-    (state) => state.isAwaitingRoleSync,
-  );
+
+  const isAwaitingRoleSync = useAuthFlowStore((s) => s.isAwaitingRoleSync);
+  const clearAwaitingRoleSync = useAuthFlowStore((s) => s.clearAwaitingRoleSync);
+  const clearPendingEmail = useAuthFlowStore((s) => s.clearPendingEmail);
 
   const profileQuery = useQuery({
     enabled: Boolean(session),
@@ -55,33 +64,32 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
   });
 
+  // Splash timer
   useEffect(() => {
-    let isMounted = true;
+    const id = setTimeout(() => setSplashDone(true), SPLASH_MS);
+    return () => clearTimeout(id);
+  }, []);
+
+  // Session listener
+  useEffect(() => {
+    let mounted = true;
 
     supabase.auth.getSession().then(({ data }) => {
-      if (!isMounted) {
-        return;
+      if (mounted) {
+        setSession(data.session);
+        setIsSessionReady(true);
       }
-
-      setSession(data.session);
-      setIsSessionReady(true);
     });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, nextSession) => {
-      // TOKEN_REFRESHED just updates the token, no need to re-sync the profile.
-      // Only a real sign-in or sign-out should reset the sync state.
-      if (event === "TOKEN_REFRESHED") {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, nextSession) => {
         setSession(nextSession);
-        return;
-      }
-      setSession(nextSession);
-      queryClient.invalidateQueries({ queryKey: ["auth-profile"] });
-    });
+        queryClient.invalidateQueries({ queryKey: ["auth-profile"] });
+      },
+    );
 
     return () => {
-      isMounted = false;
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [queryClient]);
@@ -92,93 +100,71 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const isInAuth = firstSegment === "auth";
   const isIndexRoute = firstSegment === undefined;
   const isOnboardingRoute = firstSegment === "onboarding";
-  const isRoleSelectRoute = isInAuth && secondSegment === "role-select";
+  const isSetupRoute = isInAuth && SETUP_SCREENS.has(secondSegment ?? "");
 
-  // Loading timeout: if isReady hasn't become true within LOADING_TIMEOUT_MS, show escape hatch.
-  // loadingTooLong is included in deps so the timer restarts when the user clicks "Retry"
-  // (which resets loadingTooLong to false, re-running this effect and starting a fresh timer).
+  // Loading timeout
   useEffect(() => {
     if (isReady) {
       setLoadingTooLong(false);
-      if (loadingTimerRef.current) {
-        clearTimeout(loadingTimerRef.current);
-        loadingTimerRef.current = null;
-      }
+      if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current);
+      loadingTimerRef.current = null;
       return;
     }
 
-    if (!isSessionReady || loadingTooLong) {
-      return;
-    }
+    if (!isSessionReady || loadingTooLong) return;
 
-    loadingTimerRef.current = setTimeout(() => {
-      setLoadingTooLong(true);
-    }, LOADING_TIMEOUT_MS);
+    loadingTimerRef.current = setTimeout(
+      () => setLoadingTooLong(true),
+      LOADING_TIMEOUT_MS,
+    );
 
     return () => {
-      if (loadingTimerRef.current) {
-        clearTimeout(loadingTimerRef.current);
-        loadingTimerRef.current = null;
-      }
+      if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current);
+      loadingTimerRef.current = null;
     };
   }, [isReady, isSessionReady, loadingTooLong]);
 
+  // Route sync
   useEffect(() => {
-    let isCancelled = false;
+    if (!isReady || !splashDone) return;
 
-    if (!isReady) {
-      return () => {
-        isCancelled = true;
-      };
-    }
+    let cancelled = false;
 
-    const syncRoute = async () => {
+    const sync = async () => {
       let onboardingDone = false;
-
       try {
-        onboardingDone = await getOnboardingCompletion();
+        onboardingDone = await getOnboardingCompletion(session?.user.id);
       } catch {
-        onboardingDone = false;
+        // treat as not done
       }
 
-      if (isCancelled) {
-        return;
-      }
+      if (cancelled) return;
 
+      // --- Not signed in ---
       if (!session) {
-        if (!onboardingDone) {
-          if (!isOnboardingRoute) {
-            startTransition(() => router.replace("/onboarding"));
-          }
-          return;
-        }
-
-        if (
-          isIndexRoute ||
-          isOnboardingRoute ||
-          (!isInAuth && !isIndexRoute) ||
-          isRoleSelectRoute
-        ) {
+        if (!onboardingDone && !isOnboardingRoute) {
+          startTransition(() => router.replace("/onboarding"));
+        } else if (onboardingDone && !isInAuth) {
           startTransition(() => router.replace("/auth/sign-in"));
         }
         return;
       }
 
+      // --- Signed in, no role yet ---
       if (!role) {
-        if (isAwaitingRoleSync) {
-          return;
-        }
-
-        if (!isRoleSelectRoute) {
+        if (isAwaitingRoleSync) return;
+        if (secondSegment !== "role-select") {
           startTransition(() => router.replace("/auth/role-select"));
         }
         return;
       }
 
-      if (isAwaitingRoleSync) {
-        clearAwaitingRoleSync();
-      }
+      if (isAwaitingRoleSync) clearAwaitingRoleSync();
 
+      // Let users finish the setup flow without interruption
+      if (isSetupRoute) return;
+
+      // --- Signed in, has role, check onboarding ---
       if (!onboardingDone && !isOnboardingRoute) {
         startTransition(() => router.replace("/onboarding"));
         return;
@@ -189,32 +175,33 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       }
     };
 
-    void syncRoute();
-
-    return () => {
-      isCancelled = true;
-    };
+    void sync();
+    return () => { cancelled = true; };
   }, [
-    isInAuth,
-    isAwaitingRoleSync,
-    isIndexRoute,
-    isReady,
-    isOnboardingRoute,
-    isRoleSelectRoute,
     clearAwaitingRoleSync,
+    isAwaitingRoleSync,
+    isInAuth,
+    isIndexRoute,
+    isOnboardingRoute,
+    isReady,
+    isSetupRoute,
     role,
+    secondSegment,
     session,
+    splashDone,
   ]);
 
-  const handleRetryProfile = useCallback(() => {
+  const handleRetry = useCallback(() => {
     setLoadingTooLong(false);
     queryClient.invalidateQueries({ queryKey: ["auth-profile"] });
   }, [queryClient]);
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
+    clearAwaitingRoleSync();
+    clearPendingEmail();
+    await supabase.auth.signOut({ scope: "local" });
     startTransition(() => router.replace("/auth/sign-in"));
-  }, []);
+  }, [clearAwaitingRoleSync, clearPendingEmail]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -227,24 +214,25 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     [isReady, role, session, signOut],
   );
 
-  if (!isReady) {
+  // --- Loading / splash screens ---
+  if (!isReady || !splashDone) {
+    if (!splashDone) {
+      return <AppLaunchScreen body="" title="" />;
+    }
+
     return (
       <AppLaunchScreen
         body={
           loadingTooLong
-            ? "We're having trouble loading your profile from Supabase. You can retry or sign out and try again."
-            : "We're checking your session and loading your role."
+            ? "Having trouble loading your profile. You can retry or sign out."
+            : "Checking your session..."
         }
         title={loadingTooLong ? "Taking longer than expected" : "Preparing your account"}
         actions={
           loadingTooLong ? (
             <>
-              <LaunchScreenButton label="Retry" onPress={handleRetryProfile} />
-              <LaunchScreenButton
-                label="Sign out"
-                onPress={signOut}
-                variant="ghost"
-              />
+              <LaunchScreenButton label="Retry" onPress={handleRetry} />
+              <LaunchScreenButton label="Sign out" onPress={signOut} variant="ghost" />
             </>
           ) : undefined
         }
@@ -261,10 +249,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
-
+  if (!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
 }

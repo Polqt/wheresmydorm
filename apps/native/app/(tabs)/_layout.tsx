@@ -1,8 +1,7 @@
 import { Tabs } from "expo-router";
+import { Platform } from "react-native";
 
 import { TabBarIcon } from "@/components/tabbar-icon";
-import { NAV_THEME } from "@/lib/constants";
-import { useColorScheme } from "@/lib/use-color-scheme";
 
 const tabIconByRoute = {
   discover: "search",
@@ -12,21 +11,23 @@ const tabIconByRoute = {
 } as const;
 
 export default function NativeTabsLayout() {
-  const { isDarkColorScheme } = useColorScheme();
-  const theme = isDarkColorScheme ? NAV_THEME.dark : NAV_THEME.light;
-
   return (
     <Tabs
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: "#ea580c",
-        tabBarInactiveTintColor: theme.text,
+        tabBarActiveTintColor: "#0B2D23",
+        tabBarInactiveTintColor: "#706A5F",
         tabBarStyle: {
-          backgroundColor: theme.background,
-          borderTopColor: theme.border,
-          height: 78,
-          paddingBottom: 10,
+          backgroundColor: "#fffdf9",
+          borderTopColor: "#E7E0D5",
+          height: Platform.select({ ios: 86, default: 78 }),
+          paddingBottom: Platform.select({ ios: 14, default: 10 }),
           paddingTop: 8,
+          shadowColor: "#1A1A1A",
+          shadowOffset: { width: 0, height: -8 },
+          shadowOpacity: 0.06,
+          shadowRadius: 14,
+          elevation: 12,
         },
         tabBarLabelStyle: {
           fontSize: 11,

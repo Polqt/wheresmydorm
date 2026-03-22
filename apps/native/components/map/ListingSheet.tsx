@@ -158,12 +158,12 @@ export function ListingSheet({
 
 const styles = StyleSheet.create({
   sheetBackground: {
-    backgroundColor: "#fffdf8",
+    backgroundColor: "#fffdf9",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
   },
   handle: {
-    backgroundColor: "#cbd5e1",
+    backgroundColor: "#d8d0c6",
     width: 44,
   },
   content: {
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   price: {
-    color: "#0f766e",
+    color: "#0B2D23",
     fontSize: 22,
     fontWeight: "800",
   },
@@ -203,19 +203,19 @@ const styles = StyleSheet.create({
   },
   ratingBadge: {
     borderRadius: 20,
-    backgroundColor: "#fef3c7",
+    backgroundColor: "#F3ECE0",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
   ratingValue: {
-    color: "#92400e",
+    color: "#0B2D23",
     fontSize: 18,
     fontWeight: "800",
   },
   ratingLabel: {
-    color: "#a16207",
+    color: "#6C6A64",
     fontSize: 11,
     textTransform: "uppercase",
     letterSpacing: 0.8,
@@ -228,12 +228,12 @@ const styles = StyleSheet.create({
   },
   specPill: {
     borderRadius: 999,
-    backgroundColor: "#ecfeff",
+    backgroundColor: "#EEF5F1",
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   specLabel: {
-    color: "#155e75",
+    color: "#0B2D23",
     fontSize: 12,
     fontWeight: "700",
     textTransform: "capitalize",
@@ -259,13 +259,13 @@ const styles = StyleSheet.create({
   amenityChip: {
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "#fed7aa",
-    backgroundColor: "#fff7ed",
+    borderColor: "#d9d1c6",
+    backgroundColor: "#F7F2E9",
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   amenityText: {
-    color: "#9a3412",
+    color: "#5F5A51",
     fontSize: 12,
     fontWeight: "700",
     textTransform: "capitalize",
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
     marginTop: 22,
     alignItems: "center",
     borderRadius: 18,
-    backgroundColor: "#0f172a",
+    backgroundColor: "#0B2D23",
     paddingVertical: 14,
   },
   closeButtonText: {

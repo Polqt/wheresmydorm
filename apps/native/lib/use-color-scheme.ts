@@ -1,22 +1,26 @@
-import { useColorScheme as useRNColorScheme } from "react-native";
+type ColorScheme = "light" | "dark";
 
-export function useColorScheme() {
-  const systemColorScheme = useRNColorScheme();
-  const colorScheme = systemColorScheme ?? "light";
+type ColorSchemeState = {
+  colorScheme: ColorScheme;
+  isDarkColorScheme: boolean;
+  setColorScheme: () => void;
+  toggleColorScheme: () => void;
+};
+
+export function useColorScheme(): ColorSchemeState {
+  const colorScheme = "light" as ColorScheme;
 
   return {
-    colorScheme: colorScheme as "light" | "dark",
-    isDarkColorScheme: colorScheme === "dark",
+    colorScheme,
+    isDarkColorScheme: false,
     setColorScheme: () => {
-      // Color scheme is managed by the system in bare mode
       console.warn(
-        "setColorScheme is not available in bare mode. Color scheme is managed by the system.",
+        "WheresMyDorm currently ships in light mode only.",
       );
     },
     toggleColorScheme: () => {
-      // Color scheme is managed by the system in bare mode
       console.warn(
-        "toggleColorScheme is not available in bare mode. Color scheme is managed by the system.",
+        "WheresMyDorm currently ships in light mode only.",
       );
     },
   };

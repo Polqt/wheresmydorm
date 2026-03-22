@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm add:*)",
+      "Bash(npx supabase:*)",
+      "Bash(pnpm supabase:*)",
+      "Bash(supabase --version)",
+      "Bash(supabase migration:*)"
+    ]
+  }
+}

@@ -7,9 +7,8 @@ const config: ExpoConfig = {
   slug: "wheresmydorm",
   version: "1.0.0",
   orientation: "portrait",
-  icon: "./assets/images/icon.png",
-  scheme: "mybettertapp",
-  userInterfaceStyle: "automatic",
+  scheme: "mybetterapp",
+  userInterfaceStyle: "light",
   newArchEnabled: true,
   ios: {
     supportsTablet: true,
@@ -20,12 +19,6 @@ const config: ExpoConfig = {
       : undefined,
   },
   android: {
-    adaptiveIcon: {
-      backgroundColor: "#E6F4FE",
-      foregroundImage: "./assets/images/android-icon-foreground.png",
-      backgroundImage: "./assets/images/android-icon-background.png",
-      monochromeImage: "./assets/images/android-icon-monochrome.png",
-    },
     edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
     package: "com.anonymous.wheresmydorm",
@@ -39,14 +32,14 @@ const config: ExpoConfig = {
   },
   web: {
     output: "static",
-    favicon: "./assets/images/favicon.png",
   },
   plugins: [
     "expo-router",
+    "expo-notifications",
     [
       "expo-splash-screen",
       {
-        image: "./assets/animations/animation.gif",
+        image: "./assets/animations/splash.png",
         imageWidth: 200,
         resizeMode: "contain",
         backgroundColor: "#04170E",

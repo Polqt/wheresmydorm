@@ -1,3 +1,4 @@
+import { formatProfileName } from "@/lib/profile";
 import type { MapFilters, PropertyTypeFilter } from "@/types/map";
 import { supabase } from "@/utils/supabase";
 
@@ -31,8 +32,9 @@ type ListingPhotoRow = {
 };
 
 type ProfileRow = {
-  display_name: string;
+  first_name: string;
   id: string;
+  last_name: string | null;
 };
 
 export type NearbyListing = {
@@ -217,7 +219,7 @@ export async function getListingById(id: string) {
         .returns<ListingPhotoRow[]>(),
       supabase
         .from("profiles")
-        .select("id, display_name")
+        .select("id, first_name, last_name")
         .eq("id", listingRow.lister_id)
         .maybeSingle<ProfileRow>(),
     ]);
@@ -237,7 +239,12 @@ export async function getListingById(id: string) {
     address: listingRow.address,
     description: listingRow.description,
     lister: {
-      displayName: listerRow?.display_name ?? "Unknown lister",
+      displayName: listerRow
+        ? formatProfileName({
+            firstName: listerRow.first_name,
+            lastName: listerRow.last_name,
+          })
+        : "Unknown lister",
       id: listingRow.lister_id,
     },
     maxOccupants: listingRow.max_occupants,
