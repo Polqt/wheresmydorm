@@ -60,3 +60,6 @@ dev-dist
 .open-next
 
 wrangler.jsonc
+
+# Sentry Config File
+.env.sentry-build-plugin

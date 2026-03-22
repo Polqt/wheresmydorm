@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 import { Container } from "@/components/container";
 import { NAV_THEME } from "@/lib/constants";
