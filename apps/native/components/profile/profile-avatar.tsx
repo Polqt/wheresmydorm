@@ -1,6 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Image } from "expo-image";
-import React from "react";
+import { memo } from "react";
 import { Pressable, Text, View } from "react-native";
 
 type ProfileAvatarProps = {
@@ -10,7 +10,7 @@ type ProfileAvatarProps = {
   size?: number;
 };
 
-export const ProfileAvatar = React.memo(function ProfileAvatar({
+export const ProfileAvatar = memo(function ProfileAvatar({
   avatarUrl,
   initials,
   onPress,
@@ -39,10 +39,7 @@ export const ProfileAvatar = React.memo(function ProfileAvatar({
           className="items-center justify-center bg-[#0B2D23]"
           style={{ width: size, height: size, borderRadius: radius }}
         >
-          <Text
-            className="font-bold text-white"
-            style={{ fontSize: size * 0.3 }}
-          >
+          <Text className="font-bold text-white" style={{ fontSize: size * 0.3 }}>
             {initials}
           </Text>
         </View>

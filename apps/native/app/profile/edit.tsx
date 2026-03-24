@@ -1,8 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -18,45 +17,29 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { ProfileAvatar } from "@/components/profile/profile-avatar";
 import { useAuth } from "@/providers/auth-provider";
-import { getOrCreateCurrentProfile } from "@/services/profile";
-import { updateCurrentProfile, uploadAvatar } from "@/services/profile";
-import { useQuery } from "@tanstack/react-query";
+import {
+  getOrCreateCurrentProfile,
+  updateCurrentProfile,
+  uploadAvatar,
+} from "@/services/profile";
+import { getInitials } from "@/utils/profile";
+
+type FieldKey = "firstName" | "lastName" | "contactEmail" | "contactPhone";
 
 type Field = {
-  key: string;
+  key: FieldKey;
   label: string;
   placeholder: string;
   keyboardType?: "default" | "email-address" | "phone-pad";
-  autoCapitalize?: "none" | "words" | "sentences";
+  autoCapitalize?: "none" | "words";
+  required?: boolean;
 };
 
 const FIELDS: Field[] = [
-  {
-    key: "firstName",
-    label: "First name",
-    placeholder: "Alex",
-    autoCapitalize: "words",
-  },
-  {
-    key: "lastName",
-    label: "Last name",
-    placeholder: "Smith",
-    autoCapitalize: "words",
-  },
-  {
-    key: "contactEmail",
-    label: "Contact email",
-    placeholder: "shown only to connections",
-    keyboardType: "email-address",
-    autoCapitalize: "none",
-  },
-  {
-    key: "contactPhone",
-    label: "Phone number",
-    placeholder: "+63 912 345 6789",
-    keyboardType: "phone-pad",
-    autoCapitalize: "none",
-  },
+  { key: "firstName", label: "First name", placeholder: "Alex", autoCapitalize: "words", required: true },
+  { key: "lastName", label: "Last name", placeholder: "Smith", autoCapitalize: "words" },
+  { key: "contactEmail", label: "Contact email", placeholder: "Shown to connections only", keyboardType: "email-address", autoCapitalize: "none" },
+  { key: "contactPhone", label: "Phone number", placeholder: "+63 912 345 6789", keyboardType: "phone-pad", autoCapitalize: "none" },
 ];
 
 export default function EditProfileScreen() {
@@ -64,14 +47,13 @@ export default function EditProfileScreen() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const profileQuery = useQuery({
+  const { data: profile } = useQuery({
     enabled: Boolean(user),
     queryFn: () => getOrCreateCurrentProfile(user!),
     queryKey: ["auth-profile", user?.id],
   });
-  const profile = profileQuery.data;
 
-  const [form, setForm] = useState({
+  const [form, setFormState] = useState<Record<FieldKey, string>>({
     firstName: profile?.firstName ?? "",
     lastName: profile?.lastName ?? "",
     contactEmail: profile?.contactEmail ?? "",
@@ -81,22 +63,20 @@ export default function EditProfileScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refs = useRef<Record<string, TextInput | null>>({});
+  const inputRefs = useRef<Partial<Record<FieldKey, TextInput | null>>>({});
 
   const initials = useMemo(
-    () =>
-      `${form.firstName?.[0] ?? profile?.firstName?.[0] ?? "W"}${form.lastName?.[0] ?? profile?.lastName?.[0] ?? "D"}`.toUpperCase(),
+    () => getInitials(form.firstName || profile?.firstName, form.lastName || profile?.lastName),
     [form.firstName, form.lastName, profile?.firstName, profile?.lastName],
   );
 
   const avatarUrl = localAvatarUri ?? profile?.avatarUrl ?? null;
-
   const canSave = form.firstName.trim().length > 0 && !isSaving;
 
-  const bottomStyle = useMemo(
-    () => ({ paddingBottom: Math.max(insets.bottom + 8, 24) }),
-    [insets.bottom],
-  );
+  const setField = useCallback((key: FieldKey, value: string) => {
+    setFormState((prev) => ({ ...prev, [key]: value }));
+    setError(null);
+  }, []);
 
   const handlePickAvatar = useCallback(async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -116,10 +96,9 @@ export default function EditProfileScreen() {
     setError(null);
 
     try {
-      let avatarUrl: string | null | undefined = undefined;
-
+      let newAvatarUrl: string | undefined;
       if (localAvatarUri) {
-        avatarUrl = await uploadAvatar(user.id, localAvatarUri);
+        newAvatarUrl = await uploadAvatar(user.id, localAvatarUri);
       }
 
       const updated = await updateCurrentProfile(user.id, {
@@ -127,7 +106,7 @@ export default function EditProfileScreen() {
         lastName: form.lastName.trim() || null,
         contactEmail: form.contactEmail.trim() || null,
         contactPhone: form.contactPhone.trim() || null,
-        ...(avatarUrl !== undefined ? { avatarUrl } : {}),
+        ...(newAvatarUrl !== undefined ? { avatarUrl: newAvatarUrl } : {}),
       });
 
       queryClient.setQueryData(["auth-profile", user.id], updated);
@@ -139,16 +118,24 @@ export default function EditProfileScreen() {
     }
   }, [form, localAvatarUri, queryClient, user]);
 
+  const focusNext = useCallback((current: FieldKey) => {
+    const idx = FIELDS.findIndex((f) => f.key === current);
+    const next = FIELDS[idx + 1];
+    if (next) {
+      inputRefs.current[next.key]?.focus();
+    } else {
+      handleSave();
+    }
+  }, [handleSave]);
+
   return (
     <SafeAreaView className="flex-1 bg-[#FAF8F5]" edges={["top"]}>
-      <StatusBar style="dark" />
-
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
       >
-        {/* ── Nav ── */}
-        <View className="flex-row items-center justify-between px-5 py-4">
+        {/* ── Nav bar ── */}
+        <View className="flex-row items-center justify-between px-5 py-3">
           <Pressable
             className="h-9 w-9 items-center justify-center rounded-full bg-[#EFECE7]"
             hitSlop={8}
@@ -157,93 +144,89 @@ export default function EditProfileScreen() {
             <Ionicons color="#1A1A1A" name="chevron-back" size={18} />
           </Pressable>
 
-          <Text className="text-[16px] font-bold text-[#1A1A1A]">
+          <Text className="text-[16px] font-semibold tracking-tight text-[#1A1A1A]">
             Edit profile
           </Text>
 
-          <Pressable
-            disabled={!canSave}
-            hitSlop={8}
-            onPress={handleSave}
-          >
-            <Text
-              className="text-[15px] font-semibold"
-              style={{ color: canSave ? "#0B4A30" : "#C0B8B0" }}
-            >
-              Save
-            </Text>
-          </Pressable>
+          {isSaving ? (
+            <ActivityIndicator color="#0B4A30" size="small" />
+          ) : (
+            <Pressable disabled={!canSave} hitSlop={8} onPress={handleSave}>
+              <Text
+                className="text-[15px] font-semibold"
+                style={{ color: canSave ? "#0B4A30" : "#C8C0B8" }}
+              >
+                Save
+              </Text>
+            </Pressable>
+          )}
         </View>
 
         <ScrollView
           className="flex-1"
-          contentContainerStyle={{ paddingBottom: 32 }}
+          contentContainerStyle={{ paddingBottom: 40 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           {/* ── Avatar ── */}
-          <View className="mt-4 items-center">
+          <View className="items-center pt-6 pb-8">
             <ProfileAvatar
               avatarUrl={avatarUrl}
               initials={initials}
               onPress={handlePickAvatar}
-              size={96}
+              size={100}
             />
-            <Pressable hitSlop={8} onPress={handlePickAvatar}>
-              <Text className="mt-3 text-[13px] font-medium text-[#0B4A30]">
+            <Pressable className="mt-3" hitSlop={8} onPress={handlePickAvatar}>
+              <Text className="text-[13px] font-semibold text-[#0B4A30]">
                 Change photo
               </Text>
             </Pressable>
           </View>
 
-          {/* ── Divider ── */}
-          <View className="mx-5 mt-7 h-px bg-[#EAE5DE]" />
-
           {/* ── Fields ── */}
-          <View className="mt-6 px-5 gap-5">
+          <View className="border-t border-[#EAE5DE]">
             {FIELDS.map((field, i) => (
-              <View key={field.key}>
-                <Text className="mb-1.5 text-[12px] font-semibold uppercase tracking-[1px] text-[#A09A90]">
+              <View
+                key={field.key}
+                className={`flex-row items-center px-5 ${i < FIELDS.length - 1 ? "border-b border-[#EAE5DE]" : ""}`}
+                style={{ minHeight: 58 }}
+              >
+                <Text className="w-[130px] text-[15px] text-[#1A1A1A]">
                   {field.label}
-                  {field.key === "firstName" ? (
-                    <Text className="text-red-400"> *</Text>
+                  {field.required ? (
+                    <Text className="text-[#0B4A30]"> *</Text>
                   ) : null}
                 </Text>
                 <TextInput
-                  ref={(r) => {
-                    refs.current[field.key] = r;
-                  }}
+                  ref={(r) => { inputRefs.current[field.key] = r; }}
                   autoCapitalize={field.autoCapitalize ?? "sentences"}
                   autoCorrect={false}
-                  className="h-[50px] w-full rounded-xl border border-[#E0D8CE] bg-white px-4 text-[15px] text-[#1A1A1A]"
+                  submitBehavior={i === FIELDS.length - 1 ? "blurAndSubmit" : "submit"}
+                  className="flex-1 py-4 text-right text-[15px] text-[#1A1A1A]"
                   keyboardType={field.keyboardType ?? "default"}
-                  onChangeText={(v) => {
-                    setForm((prev) => ({ ...prev, [field.key]: v }));
-                    setError(null);
-                  }}
-                  onSubmitEditing={() => {
-                    const nextKey = FIELDS[i + 1]?.key;
-                    if (nextKey) refs.current[nextKey]?.focus();
-                    else handleSave();
-                  }}
+                  onChangeText={(v) => setField(field.key, v)}
+                  onSubmitEditing={() => focusNext(field.key)}
                   placeholder={field.placeholder}
                   placeholderTextColor="#C8C0B8"
                   returnKeyType={i < FIELDS.length - 1 ? "next" : "done"}
-                  value={form[field.key as keyof typeof form]}
+                  value={form[field.key]}
                 />
               </View>
             ))}
-
-            {error ? (
-              <Text className="text-[13px] text-red-500">{error}</Text>
-            ) : null}
           </View>
+
+          {error ? (
+            <Text className="mt-4 px-5 text-[13px] text-red-500">{error}</Text>
+          ) : null}
         </ScrollView>
 
-        {/* ── Save button (bottom) ── */}
-        <View className="px-5" style={bottomStyle}>
+        {/* ── Save button ── */}
+        <View
+          className="px-5"
+          style={{ paddingBottom: Math.max(insets.bottom + 8, 24) }}
+        >
           <Pressable
-            className="h-[52px] w-full items-center justify-center rounded-xl"
+            className="h-[52px] w-full items-center justify-center rounded-2xl"
             disabled={!canSave}
             onPress={handleSave}
             style={{ backgroundColor: canSave ? "#0B2D23" : "#E8E3DC" }}
@@ -252,7 +235,7 @@ export default function EditProfileScreen() {
               <ActivityIndicator color="#ffffff" size="small" />
             ) : (
               <Text
-                className="text-[15px] font-semibold"
+                className="text-[15px] font-semibold tracking-wide"
                 style={{ color: canSave ? "#ffffff" : "#A09A90" }}
               >
                 Save changes

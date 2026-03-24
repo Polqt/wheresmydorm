@@ -1,15 +1,9 @@
-import React from "react";
+import { memo } from "react";
 import { Text, View } from "react-native";
 
-type ProfileStatProps = {
-  label: string;
-  value: string;
-};
+type Stat = { label: string; value: string };
 
-export const ProfileStat = React.memo(function ProfileStat({
-  label,
-  value,
-}: ProfileStatProps) {
+const ProfileStat = memo(function ProfileStat({ label, value }: Stat) {
   return (
     <View className="flex-1 items-center">
       <Text className="text-[20px] font-bold text-[#1A1A1A]">{value}</Text>
@@ -18,22 +12,16 @@ export const ProfileStat = React.memo(function ProfileStat({
   );
 });
 
-type ProfileStatsRowProps = {
-  stats: ProfileStatProps[];
-};
+type ProfileStatsRowProps = { stats: Stat[] };
 
-export const ProfileStatsRow = React.memo(function ProfileStatsRow({
-  stats,
-}: ProfileStatsRowProps) {
+export const ProfileStatsRow = memo(function ProfileStatsRow({ stats }: ProfileStatsRowProps) {
   return (
     <View className="flex-row items-center">
       {stats.map((stat, i) => (
-        <React.Fragment key={stat.label}>
-          {i > 0 ? (
-            <View className="h-8 w-px bg-[#EAE5DE]" />
-          ) : null}
+        <View key={stat.label} className="flex-row flex-1 items-center">
+          {i > 0 ? <View className="h-8 w-px bg-[#EAE5DE]" /> : null}
           <ProfileStat label={stat.label} value={stat.value} />
-        </React.Fragment>
+        </View>
       ))}
     </View>
   );

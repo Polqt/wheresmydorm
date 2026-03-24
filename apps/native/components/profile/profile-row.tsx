@@ -1,5 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import React from "react";
+import { memo } from "react";
 import { Pressable, Text, View } from "react-native";
 
 type ProfileRowProps = {
@@ -11,7 +11,7 @@ type ProfileRowProps = {
   last?: boolean;
 };
 
-export const ProfileRow = React.memo(function ProfileRow({
+export const ProfileRow = memo(function ProfileRow({
   icon,
   label,
   value,
@@ -19,29 +19,22 @@ export const ProfileRow = React.memo(function ProfileRow({
   destructive = false,
   last = false,
 }: ProfileRowProps) {
+  const labelColor = destructive ? "#EF4444" : "#1A1A1A";
+  const iconColor = destructive ? "#EF4444" : "#A09A90";
+
   return (
     <Pressable
-      className={`flex-row items-center py-4 ${last ? "" : "border-b border-[#F5F0EA]"}`}
+      className={`flex-row items-center py-3.5 ${last ? "" : "border-b border-[#F5F0EA]"}`}
       onPress={onPress}
     >
-      <View className="mr-3.5 h-8 w-8 items-center justify-center">
-        <Ionicons
-          color={destructive ? "#EF4444" : "#A09A90"}
-          name={icon}
-          size={19}
-        />
+      <View className="mr-3 h-8 w-8 items-center justify-center">
+        <Ionicons color={iconColor} name={icon} size={19} />
       </View>
-      <Text
-        className="flex-1 text-[15px] font-medium"
-        style={{ color: destructive ? "#EF4444" : "#1A1A1A" }}
-      >
+      <Text className="flex-1 text-[15px] font-medium" style={{ color: labelColor }}>
         {label}
       </Text>
       {value != null ? (
-        <Text
-          className="mr-2 max-w-[44%] text-right text-[13px] text-[#A09A90]"
-          numberOfLines={1}
-        >
+        <Text className="mr-2 max-w-[44%] text-right text-[13px] text-[#A09A90]" numberOfLines={1}>
           {value || "Not set"}
         </Text>
       ) : null}
