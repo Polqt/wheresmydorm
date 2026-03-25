@@ -119,6 +119,30 @@ export type ProfileUpdateData = {
   contactPhone?: string | null;
 };
 
+export async function uploadAvatar(
+  userId: string,
+  uri: string,
+): Promise<string> {
+  const ext = uri.split(".").pop()?.toLowerCase() ?? "jpg";
+  const mime = ext === "png" ? "image/png" : "image/jpeg";
+  const path = `${userId}/avatar.${ext}`;
+
+  const response = await fetch(uri);
+  const blob = await response.blob();
+
+  const { error } = await supabase.storage
+    .from("avatars")
+    .upload(path, blob, {
+      contentType: mime,
+      upsert: true,
+    });
+
+  if (error) throw error;
+
+  const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+  return `${data.publicUrl}?t=${Date.now()}`;
+}
+
 export async function updateCurrentProfile(
   userId: string,
   updates: ProfileUpdateData,

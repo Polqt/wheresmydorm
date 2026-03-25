@@ -1,275 +1,163 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useQuery } from "@tanstack/react-query";
-import { Image } from "expo-image";
+import { router } from "expo-router";
 import { useMemo } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { ProfileAvatar } from "@/components/profile/profile-avatar";
+import { ProfileRow } from "@/components/profile/profile-row";
+import { ProfileSection } from "@/components/profile/profile-section";
+import { ProfileStatsRow } from "@/components/profile/profile-stat";
 import { useAuth } from "@/providers/auth-provider";
 import { getOrCreateCurrentProfile } from "@/services/profile";
-
-function formatMemberSince(dateStr: string | undefined) {
-  if (!dateStr) return "Member";
-  const d = new Date(dateStr);
-  return `Member since ${d.toLocaleDateString("en-US", { month: "long", year: "numeric" })}`;
-}
-
-function MenuItem({
-  icon,
-  label,
-  detail,
-  onPress,
-  last = false,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  detail?: string;
-  onPress?: () => void;
-  last?: boolean;
-}) {
-  return (
-    <Pressable
-      className={`flex-row items-center px-5 py-[15px] ${last ? "" : "border-b border-[#F2EDE7]"}`}
-      onPress={onPress}
-    >
-      <View className="mr-3.5 h-9 w-9 items-center justify-center rounded-xl bg-[#F4F0EA]">
-        <Ionicons color="#5A5550" name={icon} size={17} />
-      </View>
-      <Text className="flex-1 text-[15px] font-medium text-[#1A1A1A]">
-        {label}
-      </Text>
-      {detail ? (
-        <Text className="mr-1.5 max-w-[45%] text-right text-[13px] text-[#8A8480]" numberOfLines={1}>
-          {detail}
-        </Text>
-      ) : null}
-      <Ionicons color="#C0B8B0" name="chevron-forward" size={16} />
-    </Pressable>
-  );
-}
+import { formatMemberSince, getInitials } from "@/utils/profile";
 
 export default function ProfileTabScreen() {
   const { signOut, user, role } = useAuth();
 
-  const profileQuery = useQuery({
+  const { data: profile } = useQuery({
     enabled: Boolean(user),
     queryFn: () => getOrCreateCurrentProfile(user!),
     queryKey: ["auth-profile", user?.id],
   });
-  const profile = profileQuery.data;
 
   const initials = useMemo(
-    () =>
-      `${profile?.firstName?.[0] ?? "W"}${profile?.lastName?.[0] ?? "D"}`.toUpperCase(),
+    () => getInitials(profile?.firstName, profile?.lastName),
     [profile?.firstName, profile?.lastName],
   );
 
-  const displayName =
-    profile?.fullName ?? user?.email?.split("@")[0] ?? "Member";
+  const displayName = profile?.fullName ?? user?.email?.split("@")[0] ?? "Member";
 
-  const roleLabel =
-    role === "finder"
-      ? "Looking for housing"
-      : role === "lister"
-        ? "Listing property"
-        : null;
+  const stats = useMemo(() => {
+    const base = [
+      { label: role === "lister" ? "Listings" : "Saved", value: "0" },
+      { label: "Reviews", value: "0" },
+      { label: "Member since", value: formatMemberSince(profile?.createdAt) },
+    ];
+    return base;
+  }, [role, profile?.createdAt]);
 
-  const memberSince = formatMemberSince(profile?.createdAt);
+  const goEdit = () => router.push("/profile/edit");
 
   return (
     <SafeAreaView className="flex-1 bg-[#FAF8F5]" edges={["top"]}>
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 48 }}
+        contentContainerStyle={{ paddingBottom: 56 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View className="px-5 pb-2 pt-5">
-          <Text className="font-bold text-[28px] text-[#1A1A1A]">Profile</Text>
-        </View>
-
-        {/* Profile hero */}
-        <View className="mx-5 mt-3 rounded-3xl bg-white px-5 pb-5 pt-6"
-          style={{
-            shadowColor: "#1A1A1A",
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.04,
-            shadowRadius: 12,
-            elevation: 2,
-          }}
-        >
-          <View className="flex-row items-center">
-            {/* Avatar */}
-            {profile?.avatarUrl ? (
-              <Image
-                source={{ uri: profile.avatarUrl }}
-                style={{ height: 68, width: 68, borderRadius: 34 }}
-                transition={200}
-              />
-            ) : (
-              <View
-                className="items-center justify-center rounded-full bg-[#0B2D23]"
-                style={{ height: 68, width: 68 }}
-              >
-                <Text className="font-bold text-[24px] text-white">
-                  {initials}
-                </Text>
-              </View>
-            )}
-
-            <View className="ml-4 flex-1">
-              <View className="flex-row items-center gap-1.5">
-                <Text className="font-bold text-[20px] text-[#1A1A1A]" numberOfLines={1}>
-                  {displayName}
-                </Text>
-                {profile?.isVerifiedMember ? (
-                  <Ionicons color="#0B4A30" name="checkmark-circle" size={18} />
-                ) : null}
-              </View>
-              <Text className="mt-0.5 text-[13px] text-[#8A8480]" numberOfLines={1}>
-                {user?.email ?? ""}
-              </Text>
-            </View>
-          </View>
-
-          {/* Role + member since */}
-          <View className="mt-4 flex-row items-center gap-2">
-            {roleLabel ? (
-              <View className="rounded-full bg-[#EEF5F1] px-3 py-1.5">
-                <Text className="text-[12px] font-semibold text-[#0B4A30]">
-                  {roleLabel}
-                </Text>
-              </View>
-            ) : null}
-            <View className="rounded-full bg-[#F4F0EA] px-3 py-1.5">
-              <Text className="text-[12px] font-medium text-[#8A8480]">
-                {memberSince}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Account section */}
-        <View className="mt-6 px-5">
-          <Text className="mb-2 px-1 text-[12px] font-bold uppercase tracking-[1.2px] text-[#A09A90]">
-            Account
-          </Text>
-          <View className="overflow-hidden rounded-2xl bg-white"
-            style={{
-              shadowColor: "#1A1A1A",
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.03,
-              shadowRadius: 8,
-              elevation: 1,
-            }}
-          >
-            <MenuItem
-              icon="person-outline"
-              label="Name"
-              detail={profile?.fullName ?? "Not set"}
-            />
-            <MenuItem
-              icon="mail-outline"
-              label="Email"
-              detail={user?.email ?? "Not set"}
-            />
-            <MenuItem
-              icon="call-outline"
-              label="Phone"
-              detail={profile?.contactPhone ?? "Not set"}
-            />
-            <MenuItem
-              icon="at-outline"
-              label="Contact email"
-              detail={profile?.contactEmail ?? "Not set"}
-              last
-            />
-          </View>
-        </View>
-
-        {/* Preferences section */}
-        <View className="mt-6 px-5">
-          <Text className="mb-2 px-1 text-[12px] font-bold uppercase tracking-[1.2px] text-[#A09A90]">
-            Preferences
-          </Text>
-          <View className="overflow-hidden rounded-2xl bg-white"
-            style={{
-              shadowColor: "#1A1A1A",
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.03,
-              shadowRadius: 8,
-              elevation: 1,
-            }}
-          >
-            <MenuItem
-              icon="notifications-outline"
-              label="Notifications"
-            />
-            <MenuItem
-              icon="location-outline"
-              label="Location"
-            />
-            <MenuItem
-              icon="moon-outline"
-              label="Appearance"
-              last
-            />
-          </View>
-        </View>
-
-        {/* Support section */}
-        <View className="mt-6 px-5">
-          <Text className="mb-2 px-1 text-[12px] font-bold uppercase tracking-[1.2px] text-[#A09A90]">
-            Support
-          </Text>
-          <View className="overflow-hidden rounded-2xl bg-white"
-            style={{
-              shadowColor: "#1A1A1A",
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.03,
-              shadowRadius: 8,
-              elevation: 1,
-            }}
-          >
-            <MenuItem
-              icon="help-circle-outline"
-              label="Help center"
-            />
-            <MenuItem
-              icon="document-text-outline"
-              label="Terms of service"
-            />
-            <MenuItem
-              icon="shield-checkmark-outline"
-              label="Privacy policy"
-              last
-            />
-          </View>
-        </View>
-
-        {/* Sign out */}
-        <View className="mt-8 px-5">
+        {/* Edit button top-right */}
+        <View className="flex-row justify-end px-5 pt-5">
           <Pressable
-            className="h-[52px] w-full items-center justify-center rounded-2xl bg-white"
-            onPress={signOut}
-            style={{
-              shadowColor: "#1A1A1A",
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.03,
-              shadowRadius: 8,
-              elevation: 1,
-            }}
+            className="h-9 w-9 items-center justify-center rounded-full bg-[#EFECE7]"
+            hitSlop={8}
+            onPress={goEdit}
           >
-            <Text className="font-semibold text-[15px] text-red-500">
-              Sign out
-            </Text>
+            <Ionicons color="#1A1A1A" name="pencil" size={15} />
           </Pressable>
         </View>
 
-        {/* Version */}
-        <Text className="mt-5 text-center text-[12px] text-[#C0B8B0]">
-          WheresMyDorm v1.0.0
-        </Text>
+        {/* Avatar + name */}
+        <View className="mt-2 items-center px-5">
+          <ProfileAvatar
+            avatarUrl={profile?.avatarUrl ?? null}
+            initials={initials}
+            size={96}
+          />
+
+          <View className="mt-4 items-center gap-1">
+            <View className="flex-row items-center gap-1.5">
+              <Text className="text-[22px] font-bold tracking-tight text-[#1A1A1A]">
+                {displayName}
+              </Text>
+              {profile?.isVerifiedMember ? (
+                <Ionicons color="#0B4A30" name="checkmark-circle" size={18} />
+              ) : null}
+            </View>
+            <Text className="text-[14px] text-[#A09A90]">
+              {user?.email ?? ""}
+            </Text>
+          </View>
+        </View>
+
+        {/* Stats */}
+        <View className="mx-5 mt-7 h-px bg-[#EAE5DE]" />
+        <View className="mx-5 mt-5">
+          <ProfileStatsRow stats={stats} />
+        </View>
+        <View className="mx-5 mt-5 h-px bg-[#EAE5DE]" />
+
+        {/* Account */}
+        <ProfileSection title="Account">
+          <ProfileRow
+            icon="person-outline"
+            label="Name"
+            onPress={goEdit}
+            value={profile?.fullName ?? null}
+          />
+          <ProfileRow
+            icon="mail-outline"
+            label="Email"
+            value={user?.email ?? null}
+          />
+          <ProfileRow
+            icon="call-outline"
+            label="Phone"
+            onPress={goEdit}
+            value={profile?.contactPhone ?? null}
+          />
+          <ProfileRow
+            icon="at-outline"
+            label="Contact"
+            last
+            onPress={goEdit}
+            value={profile?.contactEmail ?? null}
+          />
+        </ProfileSection>
+
+        <View className="mx-5 mt-5 h-px bg-[#EAE5DE]" />
+
+        {/* Role-specific */}
+        {role === "lister" ? (
+          <>
+            <ProfileSection title="Listings">
+              <ProfileRow icon="home-outline" label="My listings" onPress={() => {}} />
+              <ProfileRow icon="star-outline" label="Reviews received" last onPress={() => {}} />
+            </ProfileSection>
+            <View className="mx-5 mt-5 h-px bg-[#EAE5DE]" />
+          </>
+        ) : role === "finder" ? (
+          <>
+            <ProfileSection title="Activity">
+              <ProfileRow icon="bookmark-outline" label="Saved listings" onPress={() => {}} />
+              <ProfileRow icon="chatbubble-outline" label="My reviews" last onPress={() => {}} />
+            </ProfileSection>
+            <View className="mx-5 mt-5 h-px bg-[#EAE5DE]" />
+          </>
+        ) : null}
+
+        {/* Preferences */}
+        <ProfileSection title="Preferences">
+          <ProfileRow icon="notifications-outline" label="Notifications" onPress={() => {}} />
+          <ProfileRow icon="moon-outline" label="Appearance" last onPress={() => {}} />
+        </ProfileSection>
+
+        <View className="mx-5 mt-5 h-px bg-[#EAE5DE]" />
+
+        {/* Support */}
+        <ProfileSection title="Support">
+          <ProfileRow icon="help-circle-outline" label="Help center" onPress={() => {}} />
+          <ProfileRow icon="document-text-outline" label="Terms of service" onPress={() => {}} />
+          <ProfileRow icon="shield-checkmark-outline" label="Privacy policy" last onPress={() => {}} />
+        </ProfileSection>
+
+        <View className="mx-5 mt-5 h-px bg-[#EAE5DE]" />
+
+        {/* Sign out */}
+        <ProfileSection>
+          <ProfileRow destructive icon="log-out-outline" label="Sign out" last onPress={signOut} />
+        </ProfileSection>
       </ScrollView>
     </SafeAreaView>
   );
