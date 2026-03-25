@@ -1,6 +1,6 @@
 import { useVideoPlayer, VideoView } from "expo-video";
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -19,14 +19,25 @@ type AppLaunchScreenProps = {
   title: string;
   actions?: React.ReactNode;
   showGif?: boolean;
+  onVideoEnd?: () => void;
 };
 
-function SplashVideo({ onError }: { onError: () => void }) {
-  const player = useVideoPlayer(splashVideo, (p) => {
-    p.loop = false;
-    p.muted = true;
-    p.play();
-  });
+function SplashVideo({
+  onError,
+  onEnd,
+}: {
+  onError: () => void;
+  onEnd?: () => void;
+}) {
+  const player = useVideoPlayer(splashVideo);
+
+  useEffect(() => {
+    player.play();
+    const subscription = player.addListener("playToEnd", () => {
+      onEnd?.();
+    });
+    return () => subscription.remove();
+  }, [player, onEnd]);
 
   return (
     <VideoView
@@ -39,7 +50,13 @@ function SplashVideo({ onError }: { onError: () => void }) {
   );
 }
 
-export function AppLaunchScreen({ body, title, actions, showGif = true }: AppLaunchScreenProps) {
+export function AppLaunchScreen({
+  body,
+  title,
+  actions,
+  showGif = true,
+  onVideoEnd,
+}: AppLaunchScreenProps) {
   const insets = useSafeAreaInsets();
   const [didAnimationFail, setDidAnimationFail] = useState(false);
 
@@ -48,7 +65,10 @@ export function AppLaunchScreen({ body, title, actions, showGif = true }: AppLau
       <StatusBar style="light" />
 
       {showGif && !didAnimationFail ? (
-        <SplashVideo onError={() => setDidAnimationFail(true)} />
+        <SplashVideo
+          onError={() => setDidAnimationFail(true)}
+          onEnd={onVideoEnd}
+        />
       ) : (
         <AppLogo containerClassName="h-[200px] w-[200px]" size={112} />
       )}

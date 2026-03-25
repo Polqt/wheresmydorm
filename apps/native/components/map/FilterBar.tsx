@@ -1,5 +1,7 @@
 import { MapFilters, PropertyTypeFilter } from "@/types/map";
+import { useEffect, useState } from "react";
 import {
+  Dimensions,
   Modal,
   Pressable,
   ScrollView,
@@ -7,6 +9,16 @@ import {
   Text,
   View,
 } from "react-native";
+import Animated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+const SCREEN_WIDTH = Dimensions.get("window").width;
+const SHEET_WIDTH = SCREEN_WIDTH * 0.84;
 
 const propertyTypes: PropertyTypeFilter[] = [
   "dorm",
@@ -29,10 +41,7 @@ const ratingOptions = [3.5, 4, 4.5];
 const distanceOptions = [1000, 2000, 4000, 8000];
 
 function formatCurrency(value?: number) {
-  if (value === undefined) {
-    return "Any";
-  }
-
+  if (value === undefined) return "Any";
   return `P${value.toLocaleString("en-PH")}`;
 }
 
@@ -57,196 +66,158 @@ export function FilterBar({
   onChange: (filters: MapFilters) => void;
   onReset: () => void;
 }) {
-  const activeLabel = [
-    filters.propertyTypes.length
-      ? `${filters.propertyTypes.length} type`
-      : null,
-    filters.amenities.length ? `${filters.amenities.length} amenity` : null,
-    filters.minRating ? `${filters.minRating}+ stars` : null,
-    formatDistance(filters.distanceMeters),
-  ]
-    .filter(Boolean)
-    .join(" - ");
+  const insets = useSafeAreaInsets();
+  const [modalVisible, setModalVisible] = useState(false);
+  const translateX = useSharedValue(SHEET_WIDTH);
+
+  useEffect(() => {
+    if (isOpen) {
+      setModalVisible(true);
+      translateX.value = withTiming(0, { duration: 280 });
+    } else {
+      translateX.value = withTiming(SHEET_WIDTH, { duration: 240 }, (finished) => {
+        if (finished) runOnJS(setModalVisible)(false);
+      });
+    }
+  }, [isOpen]);
+
+  const sheetAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
 
   return (
-    <>
-      <View style={styles.bar}>
-        <Text style={styles.heading}>Map filters</Text>
-        <Text style={styles.subheading}>{resultCount} properties nearby</Text>
-        <View style={styles.pillRow}>
-          <Pressable
-            onPress={() => onOpenChange(true)}
-            style={styles.primaryPill}
-          >
-            <Text style={styles.primaryPillText}>Tune search</Text>
-          </Pressable>
-          <View style={styles.secondaryPill}>
-            <Text style={styles.secondaryPillText}>{activeLabel}</Text>
-          </View>
-        </View>
+    <Modal
+      animationType="none"
+      transparent
+      visible={modalVisible}
+      onRequestClose={() => onOpenChange(false)}
+    >
+      <View style={styles.modalFrame}>
+        <Pressable style={styles.backdrop} onPress={() => onOpenChange(false)} />
+
+        <Animated.View style={[styles.sheet, { paddingTop: insets.top + 24 }, sheetAnimStyle]}>
+          <ScrollView contentContainerStyle={styles.sheetContent}>
+            <View style={styles.sheetHeader}>
+              <View>
+                <Text style={styles.sheetTitle}>Filters</Text>
+                <Text style={styles.sheetBody}>
+                  {resultCount} properties match your search
+                </Text>
+              </View>
+              <Pressable onPress={() => onOpenChange(false)} style={styles.closeBtn}>
+                <Text style={styles.closeBtnText}>✕</Text>
+              </Pressable>
+            </View>
+
+            <Text style={styles.sectionTitle}>Price range</Text>
+            <View style={styles.priceGrid}>
+              <Stepper
+                label="Min monthly rent"
+                value={filters.minPrice}
+                onDecrease={() =>
+                  onChange({ ...filters, minPrice: Math.max(0, (filters.minPrice ?? 0) - 500) })
+                }
+                onIncrease={() =>
+                  onChange({ ...filters, minPrice: (filters.minPrice ?? 0) + 500 })
+                }
+              />
+              <Stepper
+                label="Max monthly rent"
+                value={filters.maxPrice}
+                onDecrease={() =>
+                  onChange({ ...filters, maxPrice: Math.max(500, (filters.maxPrice ?? 12000) - 500) })
+                }
+                onIncrease={() =>
+                  onChange({ ...filters, maxPrice: (filters.maxPrice ?? 12000) + 500 })
+                }
+              />
+            </View>
+
+            <Text style={styles.sectionTitle}>Property type</Text>
+            <View style={styles.optionGrid}>
+              {propertyTypes.map((propertyType) => {
+                const isSelected = filters.propertyTypes.includes(propertyType);
+                return (
+                  <Chip
+                    key={propertyType}
+                    label={propertyType.replaceAll("_", " ")}
+                    selected={isSelected}
+                    onPress={() =>
+                      onChange({
+                        ...filters,
+                        propertyTypes: isSelected
+                          ? filters.propertyTypes.filter((t) => t !== propertyType)
+                          : [...filters.propertyTypes, propertyType],
+                      })
+                    }
+                  />
+                );
+              })}
+            </View>
+
+            <Text style={styles.sectionTitle}>Amenities</Text>
+            <View style={styles.optionGrid}>
+              {amenities.map((amenity) => {
+                const isSelected = filters.amenities.includes(amenity);
+                return (
+                  <Chip
+                    key={amenity}
+                    label={amenity.replaceAll("_", " ")}
+                    selected={isSelected}
+                    onPress={() =>
+                      onChange({
+                        ...filters,
+                        amenities: isSelected
+                          ? filters.amenities.filter((a) => a !== amenity)
+                          : [...filters.amenities, amenity],
+                      })
+                    }
+                  />
+                );
+              })}
+            </View>
+
+            <Text style={styles.sectionTitle}>Minimum rating</Text>
+            <View style={styles.optionGrid}>
+              {ratingOptions.map((rating) => (
+                <Chip
+                  key={rating}
+                  label={`${rating}+ stars`}
+                  selected={filters.minRating === rating}
+                  onPress={() =>
+                    onChange({
+                      ...filters,
+                      minRating: filters.minRating === rating ? undefined : rating,
+                    })
+                  }
+                />
+              ))}
+            </View>
+
+            <Text style={styles.sectionTitle}>Distance</Text>
+            <View style={styles.optionGrid}>
+              {distanceOptions.map((distance) => (
+                <Chip
+                  key={distance}
+                  label={formatDistance(distance)}
+                  selected={filters.distanceMeters === distance}
+                  onPress={() => onChange({ ...filters, distanceMeters: distance })}
+                />
+              ))}
+            </View>
+
+            <View style={styles.footer}>
+              <Pressable onPress={onReset} style={styles.secondaryAction}>
+                <Text style={styles.secondaryActionText}>Reset</Text>
+              </Pressable>
+              <Pressable onPress={() => onOpenChange(false)} style={styles.primaryAction}>
+                <Text style={styles.primaryActionText}>Apply filters</Text>
+              </Pressable>
+            </View>
+          </ScrollView>
+        </Animated.View>
       </View>
-
-      <Modal
-        animationType="slide"
-        transparent
-        visible={isOpen}
-        onRequestClose={() => onOpenChange(false)}
-      >
-        <View style={styles.modalFrame}>
-          <Pressable
-            style={styles.backdrop}
-            onPress={() => onOpenChange(false)}
-          />
-
-          <View style={styles.sheet}>
-            <ScrollView contentContainerStyle={styles.sheetContent}>
-              <Text style={styles.sheetTitle}>Filter listings</Text>
-              <Text style={styles.sheetBody}>
-                Narrow the map by budget, property type, amenities, rating, and
-                search radius.
-              </Text>
-
-              <Text style={styles.sectionTitle}>Price range</Text>
-              <View style={styles.priceGrid}>
-                <Stepper
-                  label="Min monthly rent"
-                  value={filters.minPrice}
-                  onDecrease={() =>
-                    onChange({
-                      ...filters,
-                      minPrice: Math.max(0, (filters.minPrice ?? 0) - 500),
-                    })
-                  }
-                  onIncrease={() =>
-                    onChange({
-                      ...filters,
-                      minPrice: (filters.minPrice ?? 0) + 500,
-                    })
-                  }
-                />
-                <Stepper
-                  label="Max monthly rent"
-                  value={filters.maxPrice}
-                  onDecrease={() =>
-                    onChange({
-                      ...filters,
-                      maxPrice: Math.max(
-                        500,
-                        (filters.maxPrice ?? 12000) - 500,
-                      ),
-                    })
-                  }
-                  onIncrease={() =>
-                    onChange({
-                      ...filters,
-                      maxPrice: (filters.maxPrice ?? 12000) + 500,
-                    })
-                  }
-                />
-              </View>
-
-              <Text style={styles.sectionTitle}>Property type</Text>
-              <View style={styles.optionGrid}>
-                {propertyTypes.map((propertyType) => {
-                  const isSelected =
-                    filters.propertyTypes.includes(propertyType);
-
-                  return (
-                    <Chip
-                      key={propertyType}
-                      label={propertyType.replaceAll("_", " ")}
-                      selected={isSelected}
-                      onPress={() =>
-                        onChange({
-                          ...filters,
-                          propertyTypes: isSelected
-                            ? filters.propertyTypes.filter(
-                                (item) => item !== propertyType,
-                              )
-                            : [...filters.propertyTypes, propertyType],
-                        })
-                      }
-                    />
-                  );
-                })}
-              </View>
-
-              <Text style={styles.sectionTitle}>Amenities</Text>
-              <View style={styles.optionGrid}>
-                {amenities.map((amenity) => {
-                  const isSelected = filters.amenities.includes(amenity);
-
-                  return (
-                    <Chip
-                      key={amenity}
-                      label={amenity.replaceAll("_", " ")}
-                      selected={isSelected}
-                      onPress={() =>
-                        onChange({
-                          ...filters,
-                          amenities: isSelected
-                            ? filters.amenities.filter(
-                                (item) => item !== amenity,
-                              )
-                            : [...filters.amenities, amenity],
-                        })
-                      }
-                    />
-                  );
-                })}
-              </View>
-
-              <Text style={styles.sectionTitle}>Minimum rating</Text>
-              <View style={styles.optionGrid}>
-                {ratingOptions.map((rating) => (
-                  <Chip
-                    key={rating}
-                    label={`${rating}+ stars`}
-                    selected={filters.minRating === rating}
-                    onPress={() =>
-                      onChange({
-                        ...filters,
-                        minRating:
-                          filters.minRating === rating ? undefined : rating,
-                      })
-                    }
-                  />
-                ))}
-              </View>
-
-              <Text style={styles.sectionTitle}>Distance</Text>
-              <View style={styles.optionGrid}>
-                {distanceOptions.map((distance) => (
-                  <Chip
-                    key={distance}
-                    label={formatDistance(distance)}
-                    selected={filters.distanceMeters === distance}
-                    onPress={() =>
-                      onChange({
-                        ...filters,
-                        distanceMeters: distance,
-                      })
-                    }
-                  />
-                ))}
-              </View>
-
-              <View style={styles.footer}>
-                <Pressable onPress={onReset} style={styles.secondaryAction}>
-                  <Text style={styles.secondaryActionText}>Reset</Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => onOpenChange(false)}
-                  style={styles.primaryAction}
-                >
-                  <Text style={styles.primaryActionText}>Apply filters</Text>
-                </Pressable>
-              </View>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-    </>
+    </Modal>
   );
 }
 
@@ -266,7 +237,7 @@ function Stepper({
       <Text style={styles.stepperLabel}>{label}</Text>
       <View style={styles.stepperRow}>
         <Pressable onPress={onDecrease} style={styles.stepperButton}>
-          <Text style={styles.stepperButtonText}>-</Text>
+          <Text style={styles.stepperButtonText}>−</Text>
         </Pressable>
         <Text style={styles.stepperValue}>{formatCurrency(value)}</Text>
         <Pressable onPress={onIncrease} style={styles.stepperButton}>
@@ -289,11 +260,9 @@ function Chip({
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.chip, selected ? styles.chipSelected : null]}
+      style={[styles.chip, selected && styles.chipSelected]}
     >
-      <Text
-        style={[styles.chipText, selected ? styles.chipTextSelected : null]}
-      >
+      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
         {label}
       </Text>
     </Pressable>
@@ -301,109 +270,74 @@ function Chip({
 }
 
 const styles = StyleSheet.create({
-  bar: {
-    position: "absolute",
-    top: 14,
-    left: 14,
-    right: 14,
-    borderRadius: 24,
-    backgroundColor: "rgba(255, 253, 249, 0.96)",
-    borderWidth: 1,
-    borderColor: "#ece3d8",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    shadowColor: "#0f172a",
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    elevation: 8,
-  },
-  heading: {
-    color: "#0f172a",
-    fontSize: 15,
-    fontWeight: "800",
-  },
-  subheading: {
-    marginTop: 2,
-    color: "#475569",
-    fontSize: 12,
-  },
-  pillRow: {
-    marginTop: 12,
-    flexDirection: "row",
-    gap: 8,
-  },
-  primaryPill: {
-    borderRadius: 999,
-    backgroundColor: "#0B2D23",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  primaryPillText: {
-    color: "#ffffff",
-    fontSize: 12,
-    fontWeight: "800",
-  },
-  secondaryPill: {
-    flex: 1,
-    borderRadius: 999,
-    backgroundColor: "#F8F4EC",
-    justifyContent: "center",
-    paddingHorizontal: 14,
-  },
-  secondaryPillText: {
-    color: "#475569",
-    fontSize: 12,
-    fontWeight: "600",
-  },
   modalFrame: {
     flex: 1,
     flexDirection: "row",
   },
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(15, 23, 42, 0.24)",
+    backgroundColor: "rgba(15, 23, 42, 0.30)",
   },
   sheet: {
-    width: "86%",
+    width: "84%",
     backgroundColor: "#fffdf9",
-    paddingTop: 24,
   },
   sheetContent: {
     paddingHorizontal: 20,
-    paddingBottom: 32,
+    paddingBottom: 40,
+  },
+  sheetHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
   },
   sheetTitle: {
     color: "#0f172a",
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "800",
   },
   sheetBody: {
-    marginTop: 8,
+    marginTop: 4,
     color: "#475569",
-    fontSize: 14,
-    lineHeight: 22,
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 4,
+    backgroundColor: "#F0EBE3",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2,
+  },
+  closeBtnText: {
+    color: "#475569",
+    fontSize: 13,
+    fontWeight: "700",
   },
   sectionTitle: {
     marginTop: 24,
+    marginBottom: 10,
     color: "#0f172a",
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
   },
   priceGrid: {
-    marginTop: 12,
-    gap: 12,
+    gap: 10,
   },
   stepper: {
-    borderRadius: 20,
+    borderRadius: 4,
     borderWidth: 1,
     borderColor: "#e2e8f0",
     backgroundColor: "#ffffff",
     padding: 14,
   },
   stepperLabel: {
-    color: "#475569",
-    fontSize: 12,
+    color: "#706A5F",
+    fontSize: 11,
     fontWeight: "700",
     textTransform: "uppercase",
     letterSpacing: 0.8,
@@ -415,16 +349,16 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   stepperButton: {
-    height: 34,
-    width: 34,
-    borderRadius: 999,
+    height: 32,
+    width: 32,
+    borderRadius: 4,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#EEF5F1",
   },
   stepperButtonText: {
     color: "#0B2D23",
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "700",
   },
   stepperValue: {
@@ -433,15 +367,14 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   optionGrid: {
-    marginTop: 12,
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
   },
   chip: {
-    borderRadius: 999,
+    borderRadius: 4,
     borderWidth: 1,
-    borderColor: "#cbd5e1",
+    borderColor: "#DDD8CF",
     backgroundColor: "#ffffff",
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -451,7 +384,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#EEF5F1",
   },
   chipText: {
-    color: "#475569",
+    color: "#706A5F",
     fontSize: 12,
     fontWeight: "700",
     textTransform: "capitalize",
@@ -467,7 +400,7 @@ const styles = StyleSheet.create({
   primaryAction: {
     flex: 1,
     alignItems: "center",
-    borderRadius: 18,
+    borderRadius: 4,
     backgroundColor: "#0B2D23",
     paddingVertical: 14,
   },
@@ -479,14 +412,14 @@ const styles = StyleSheet.create({
   secondaryAction: {
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 18,
+    borderRadius: 4,
     borderWidth: 1,
-    borderColor: "#cbd5e1",
+    borderColor: "#DDD8CF",
     paddingHorizontal: 18,
   },
   secondaryActionText: {
-    color: "#475569",
+    color: "#706A5F",
     fontSize: 14,
-    fontWeight: "800",
+    fontWeight: "700",
   },
 });

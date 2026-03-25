@@ -1,18 +1,34 @@
 import type BottomSheet from "@gorhom/bottom-sheet";
+import type MapView from "react-native-maps";
 
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useQuery } from "@tanstack/react-query";
 import * as Location from "expo-location";
-import { useEffect, useRef, useState } from "react";
+import { router } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
-import MapView, { PROVIDER_GOOGLE } from "react-native-maps";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
+import MapViewComponent, { Callout, Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import LocationIcon from "@/assets/icons/location.svg";
+import PinIcon from "@/assets/icons/pin.svg";
+import SearchIcon from "@/assets/icons/search.svg";
 import { FilterBar } from "@/components/map/FilterBar";
 import { ListingSheet } from "@/components/map/ListingSheet";
 import { PropertyPin } from "@/components/map/PropertyPin";
@@ -26,80 +42,136 @@ const FALLBACK_COORDINATES = {
   longitudeDelta: 0.05,
 };
 
+// Sliders icon
+function SlidersIcon() {
+  return (
+    <View style={sliderStyles.root}>
+      <View style={sliderStyles.row}>
+        <View style={sliderStyles.dot} />
+        <View style={[sliderStyles.track, { flex: 1 }]} />
+      </View>
+      <View style={sliderStyles.row}>
+        <View style={[sliderStyles.track, { flex: 1 }]} />
+        <View style={sliderStyles.dot} />
+      </View>
+      <View style={sliderStyles.row}>
+        <View style={[sliderStyles.track, { flex: 0.45 }]} />
+        <View style={sliderStyles.dot} />
+        <View style={[sliderStyles.track, { flex: 0.45 }]} />
+      </View>
+    </View>
+  );
+}
+
+const sliderStyles = StyleSheet.create({
+  root: { width: 22, height: 18, gap: 4, justifyContent: "center" },
+  row: { flexDirection: "row", alignItems: "center", height: 3, gap: 3 },
+  track: { height: 2, backgroundColor: "#ffffff", borderRadius: 1 },
+  dot: {
+    width: 7, height: 7, borderRadius: 4,
+    backgroundColor: "#0B2D23", borderWidth: 1.5, borderColor: "#ffffff",
+  },
+});
+
+// Location button with bounce + orange flash
+function LocationButton({ onPress }: { onPress: () => void }) {
+  const scale = useSharedValue(1);
+  const [active, setActive] = useState(false);
+
+  const handlePress = useCallback(() => {
+    scale.value = withSequence(
+      withTiming(1.2, { duration: 120, easing: Easing.out(Easing.quad) }),
+      withSpring(1.0, { damping: 6, stiffness: 80 }),
+    );
+    setActive(true);
+    setTimeout(() => setActive(false), 1000);
+    onPress();
+  }, [onPress, scale]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Pressable onPress={handlePress} style={styles.squareBtn}>
+      <Animated.View style={animStyle}>
+        <LocationIcon width={22} height={22} color={active ? "#EA580C" : "#0B2D23"} />
+      </Animated.View>
+    </Pressable>
+  );
+}
+
 export default function MapTabScreen() {
+  const insets = useSafeAreaInsets();
   const bottomSheetRef = useRef<BottomSheet | null>(null);
-  const filters = useMapStore((state) => state.filters);
-  const selectedListingId = useMapStore((state) => state.selectedListingId);
-  const isFilterOpen = useMapStore((state) => state.isFilterOpen);
-  const setFilters = useMapStore((state) => state.setFilters);
-  const setSelectedListingId = useMapStore(
-    (state) => state.setSelectedListingId,
-  );
-  const setFilterOpen = useMapStore((state) => state.setFilterOpen);
-  const resetFilters = useMapStore((state) => state.resetFilters);
+  const mapRef = useRef<MapView | null>(null);
+  const userMarkerRef = useRef<any>(null);
+
+  const filters = useMapStore((s) => s.filters);
+  const selectedListingId = useMapStore((s) => s.selectedListingId);
+  const isFilterOpen = useMapStore((s) => s.isFilterOpen);
+  const setFilters = useMapStore((s) => s.setFilters);
+  const setSelectedListingId = useMapStore((s) => s.setSelectedListingId);
+  const setFilterOpen = useMapStore((s) => s.setFilterOpen);
+  const resetFilters = useMapStore((s) => s.resetFilters);
+
   const [coordinates, setCoordinates] = useState(FALLBACK_COORDINATES);
-  const [locationLabel, setLocationLabel] = useState(
-    "Using Bacolod as the launch city fallback.",
-  );
+  const [userCoords, setUserCoords] = useState<typeof FALLBACK_COORDINATES | null>(null);
+  const [searchText, setSearchText] = useState("");
+  const [calloutVisible, setCalloutVisible] = useState(false);
+  const [is3D, setIs3D] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
-
     async function loadLocation() {
       const { status } = await Location.requestForegroundPermissionsAsync();
-
-      if (status !== "granted") {
-        if (isMounted) {
-          setLocationLabel(
-            "Location access is off, so we're showing nearby Bacolod listings instead.",
-          );
-        }
-        return;
-      }
-
-      const currentPosition = await Location.getCurrentPositionAsync({
+      if (status !== "granted") return;
+      const pos = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
-
-      if (!isMounted) {
-        return;
-      }
-
-      setCoordinates((current) => ({
-        ...current,
-        latitude: currentPosition.coords.latitude,
-        longitude: currentPosition.coords.longitude,
-      }));
-      setLocationLabel("Centered on your current location.");
+      if (!isMounted) return;
+      const coords = {
+        ...FALLBACK_COORDINATES,
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude,
+      };
+      setCoordinates(coords);
+      setUserCoords(coords);
     }
-
-    loadLocation().catch(() => {
-      if (isMounted) {
-        setLocationLabel(
-          "We couldn't read your GPS yet, so the map is using Bacolod for now.",
-        );
-      }
-    });
-
-    return () => {
-      isMounted = false;
-    };
+    loadLocation().catch(() => {});
+    return () => { isMounted = false; };
   }, []);
 
+  const centerOnLocation = useCallback(() => {
+    const target = userCoords ?? FALLBACK_COORDINATES;
+    setCoordinates(target);
+    mapRef.current?.animateToRegion(target, 400);
+  }, [userCoords]);
+
+  const toggle3D = useCallback(() => {
+    const next = !is3D;
+    setIs3D(next);
+    mapRef.current?.animateCamera(
+      { pitch: next ? 45 : 0, zoom: next ? 17 : 14 },
+      { duration: 600 },
+    );
+  }, [is3D]);
+
+  const handleUserMarkerPress = useCallback(() => {
+    if (calloutVisible) {
+      userMarkerRef.current?.hideCallout();
+      setCalloutVisible(false);
+    } else {
+      userMarkerRef.current?.showCallout();
+      setCalloutVisible(true);
+    }
+  }, [calloutVisible]);
+
   const nearbyQuery = useQuery({
-    placeholderData: (previousData) => previousData,
+    placeholderData: (prev) => prev,
     queryFn: () =>
-      getNearbyListings({
-        filters,
-        lat: coordinates.latitude,
-        lng: coordinates.longitude,
-      }),
-    queryKey: [
-      "nearby-listings",
-      coordinates.latitude,
-      coordinates.longitude,
-      filters,
-    ],
+      getNearbyListings({ filters, lat: coordinates.latitude, lng: coordinates.longitude }),
+    queryKey: ["nearby-listings", coordinates.latitude, coordinates.longitude, filters],
   });
 
   const selectedListingQuery = useQuery({
@@ -114,9 +186,7 @@ export default function MapTabScreen() {
   if (Platform.OS === "web") {
     return (
       <View style={styles.webFallback}>
-        <Text style={styles.webTitle}>
-          Map view is optimized for the Expo native app.
-        </Text>
+        <Text style={styles.webTitle}>Map view is optimized for the Expo native app.</Text>
         <Text style={styles.webBody}>
           Open this screen on Android or iOS to see GPS centering, property
           clustering, and the bottom sheet listing preview.
@@ -127,7 +197,8 @@ export default function MapTabScreen() {
 
   return (
     <View style={styles.container}>
-      <MapView
+      <MapViewComponent
+        ref={mapRef}
         initialRegion={coordinates}
         provider={PROVIDER_GOOGLE}
         region={coordinates}
@@ -141,8 +212,64 @@ export default function MapTabScreen() {
             onPress={() => setSelectedListingId(listing.id)}
           />
         ))}
-      </MapView>
 
+        {userCoords && (
+          <Marker
+            ref={userMarkerRef}
+            coordinate={{ latitude: userCoords.latitude, longitude: userCoords.longitude }}
+            anchor={{ x: 0.5, y: 1 }}
+            onPress={handleUserMarkerPress}
+          >
+            <PinIcon width={34} height={38} />
+            <Callout tooltip>
+              <View style={styles.callout}>
+                <Text style={styles.calloutText}>You are here</Text>
+              </View>
+            </Callout>
+          </Marker>
+        )}
+      </MapViewComponent>
+
+      {/* Top overlay: search bar, then notification + 3D below */}
+      <View style={[styles.topOverlay, { top: insets.top + 10 }]}>
+        {/* Search bar */}
+        <View style={styles.searchBar}>
+          <SearchIcon width={17} height={17} color="#706A5F" />
+          <TextInput
+            placeholder="Search dorms, areas, landmarks…"
+            placeholderTextColor="#9E9890"
+            style={styles.searchInput}
+            value={searchText}
+            onChangeText={setSearchText}
+            returnKeyType="search"
+            clearButtonMode="while-editing"
+          />
+          {nearbyQuery.isFetching && (
+            <ActivityIndicator color="#706A5F" size="small" />
+          )}
+        </View>
+
+        {/* Notification + 3D row, right-aligned below search bar */}
+        <View style={styles.subRow}>
+          <Pressable
+            onPress={() => router.push("/notifications")}
+            style={styles.squareBtn}
+          >
+            <FontAwesome name="bell" size={16} color="#0B2D23" />
+          </Pressable>
+
+          <Pressable
+            onPress={toggle3D}
+            style={[styles.squareBtn, is3D && styles.squareBtnActive]}
+          >
+            <Text style={[styles.btn3DText, is3D && styles.btn3DTextActive]}>
+              3D
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+
+      {/* Filter modal */}
       <FilterBar
         filters={filters}
         isOpen={isFilterOpen}
@@ -152,22 +279,7 @@ export default function MapTabScreen() {
         resultCount={results.length}
       />
 
-      <View style={styles.statusCard}>
-        <View style={styles.statusHeader}>
-          <Text style={styles.statusTitle}>Live search area</Text>
-          {nearbyQuery.isFetching ? (
-            <ActivityIndicator color="#0B2D23" size="small" />
-          ) : null}
-        </View>
-        <Text style={styles.statusBody}>{locationLabel}</Text>
-        {nearbyQuery.error ? (
-          <Text style={styles.errorText}>
-            We couldn't load nearby listings yet. Refresh auth or try again in
-            a moment.
-          </Text>
-        ) : null}
-      </View>
-
+      {/* Listing bottom sheet */}
       <ListingSheet
         errorMessage={selectedListingQuery.error?.message ?? null}
         isLoading={selectedListingQuery.isLoading}
@@ -177,12 +289,13 @@ export default function MapTabScreen() {
         sheetRef={bottomSheetRef}
       />
 
-      <Pressable
-        onPress={() => setFilterOpen(true)}
-        style={styles.floatingAction}
-      >
-        <Text style={styles.floatingActionText}>Filters</Text>
-      </Pressable>
+      {/* Bottom-right stacked buttons */}
+      <View style={[styles.bottomRight, { bottom: insets.bottom + 16 }]}>
+        <LocationButton onPress={centerOnLocation} />
+        <Pressable onPress={() => setFilterOpen(true)} style={styles.filterFab}>
+          <SlidersIcon />
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -192,61 +305,116 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#ebe7de",
   },
-  statusCard: {
+
+  // Top overlay
+  topOverlay: {
     position: "absolute",
-    left: 14,
-    right: 14,
-    bottom: 110,
-    borderRadius: 24,
-    backgroundColor: "rgba(255, 253, 249, 0.94)",
-    borderWidth: 1,
-    borderColor: "#ece3d8",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    left: 12,
+    right: 12,
+    gap: 8,
   },
-  statusHeader: {
+  searchBar: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
+    gap: 10,
+    backgroundColor: "rgba(255, 253, 249, 0.80)",
+    borderWidth: 1,
+    borderColor: "rgba(221, 216, 207, 0.70)",
+    borderRadius: 5,
+    paddingHorizontal: 14,
+    paddingVertical: 17,
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  statusTitle: {
-    color: "#0f172a",
+  searchInput: {
+    flex: 1,
     fontSize: 14,
-    fontWeight: "800",
+    fontWeight: "600",
+    color: "#0f172a",
+    padding: 0,
+    textAlignVertical: "center",
   },
-  statusBody: {
-    marginTop: 6,
-    color: "#5F5A51",
-    fontSize: 13,
-    lineHeight: 20,
+  subRow: {
+    alignItems: "flex-end",
+    gap: 8,
   },
-  errorText: {
-    marginTop: 8,
-    color: "#c2410c",
-    fontSize: 12,
-    lineHeight: 18,
+  squareBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 4,
+    backgroundColor: "rgba(255, 253, 249, 0.92)",
+    borderWidth: 1,
+    borderColor: "rgba(221, 216, 207, 0.80)",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  floatingAction: {
-    position: "absolute",
-    right: 18,
-    bottom: 42,
-    borderRadius: 999,
+  squareBtnActive: {
     backgroundColor: "#0B2D23",
-    paddingHorizontal: 18,
-    paddingVertical: 14,
+    borderColor: "#0B2D23",
+  },
+  btn3DText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#0B2D23",
+    letterSpacing: 0.5,
+  },
+  btn3DTextActive: {
+    color: "#ffffff",
+  },
+
+  // Bottom-right stacked
+  bottomRight: {
+    position: "absolute",
+    right: 12,
+    gap: 10,
+    alignItems: "center",
+  },
+  filterFab: {
+    width: 46,
+    height: 46,
+    borderRadius: 5,
+    backgroundColor: "#0B2D23",
+    alignItems: "center",
+    justifyContent: "center",
     shadowColor: "#0B2D23",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.22,
+    shadowRadius: 8,
     elevation: 10,
   },
-  floatingActionText: {
-    color: "#ffffff",
-    fontSize: 13,
-    fontWeight: "800",
-    letterSpacing: 0.2,
+
+  // Callout
+  callout: {
+    height: 36,
+    minWidth: 120,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "rgba(221, 216, 207, 0.85)",
+    backgroundColor: "rgba(255, 253, 249, 0.97)",
+    paddingHorizontal: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
+  calloutText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#3D3830",
+  },
+
+  // Web fallback
   webFallback: {
     flex: 1,
     alignItems: "center",

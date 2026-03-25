@@ -31,10 +31,11 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-const SPLASH_MS = 6200;
+// Fallback max wait in case the video never fires playToEnd (e.g. load failure)
+const SPLASH_FALLBACK_MS = 20_000;
 const LOADING_TIMEOUT_MS = 10_000;
 
-// Once the splash plays once per app launch, skip the GIF on subsequent loads.
+// Once the splash plays once per app launch, skip the video on subsequent loads.
 let hasShownInitialSplash = false;
 
 const SETUP_SCREENS = new Set([
@@ -68,7 +69,15 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
   });
 
-  // Splash timer — skip GIF if it already played this app session
+  const handleVideoEnd = useCallback(() => {
+    if (!splashDone) {
+      hasShownInitialSplash = true;
+      setSplashDone(true);
+    }
+  }, [splashDone]);
+
+  // Skip video on re-mounts within the same app session; keep a fallback timer
+  // in case playToEnd never fires (video load failure, etc.)
   useEffect(() => {
     if (hasShownInitialSplash) {
       setSplashDone(true);
@@ -77,7 +86,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     const id = setTimeout(() => {
       hasShownInitialSplash = true;
       setSplashDone(true);
-    }, SPLASH_MS);
+    }, SPLASH_FALLBACK_MS);
     return () => clearTimeout(id);
   }, []);
 
@@ -232,7 +241,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   // --- Loading / splash screens ---
   if (!isReady || !splashDone) {
     if (!splashDone) {
-      return <AppLaunchScreen body="" title="" showGif />;
+      return <AppLaunchScreen body="" title="" showGif onVideoEnd={handleVideoEnd} />;
     }
 
     return (
