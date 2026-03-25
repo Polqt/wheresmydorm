@@ -2,16 +2,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Tabs } from "expo-router";
 import { Platform, View } from "react-native";
 
+import FeedIcon from "@/assets/icons/tabs/feed.svg";
+import HomeIcon from "@/assets/icons/tabs/home.svg";
+import MapIcon from "@/assets/icons/tabs/map.svg";
 import { ProfileAvatar } from "@/components/profile/profile-avatar";
-import { TabBarIcon } from "@/components/tabbar-icon";
 import { useAuth } from "@/providers/auth-provider";
 import type { NativeProfile } from "@/services/profile";
-
-const tabIconByRoute = {
-  discover: "search",
-  feed: "rss",
-  map: "map-marker",
-} as const;
 
 function ProfileTabIcon({ color, focused }: { color: string; focused: boolean }) {
   const { user } = useAuth();
@@ -42,7 +38,7 @@ function ProfileTabIcon({ color, focused }: { color: string; focused: boolean })
 export default function NativeTabsLayout() {
   return (
     <Tabs
-      screenOptions={({ route }) => ({
+      screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: "#0B2D23",
         tabBarInactiveTintColor: "#706A5F",
@@ -62,17 +58,29 @@ export default function NativeTabsLayout() {
           fontSize: 11,
           fontWeight: "700",
         },
-        tabBarIcon: ({ color }) => (
-          <TabBarIcon
-            name={tabIconByRoute[route.name as keyof typeof tabIconByRoute]}
-            color={color}
-          />
-        ),
-      })}
+      }}
     >
-      <Tabs.Screen name="map" options={{ title: "Map" }} />
-      <Tabs.Screen name="discover" options={{ title: "Discover" }} />
-      <Tabs.Screen name="feed" options={{ title: "Feed" }} />
+      <Tabs.Screen
+        name="map"
+        options={{
+          title: "Map",
+          tabBarIcon: ({ color }) => <MapIcon width={24} height={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="discover"
+        options={{
+          title: "Discover",
+          tabBarIcon: ({ color }) => <HomeIcon width={24} height={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="feed"
+        options={{
+          title: "Feed",
+          tabBarIcon: ({ color }) => <FeedIcon width={24} height={24} color={color} />,
+        }}
+      />
       <Tabs.Screen
         name="profile"
         options={{
