@@ -1,9 +1,10 @@
+import { useVideoPlayer, VideoView } from "expo-video";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Image,
   Pressable,
+  StyleSheet,
   Text,
   View,
 } from "react-native";
@@ -11,12 +12,32 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppLogo } from "./app-logo";
 
+const splashVideo = require("../../assets/videos/WheresMyDorm Splash Screen.mp4");
+
 type AppLaunchScreenProps = {
   body: string;
   title: string;
   actions?: React.ReactNode;
   showGif?: boolean;
 };
+
+function SplashVideo({ onError }: { onError: () => void }) {
+  const player = useVideoPlayer(splashVideo, (p) => {
+    p.loop = false;
+    p.muted = true;
+    p.play();
+  });
+
+  return (
+    <VideoView
+      player={player}
+      style={StyleSheet.absoluteFill}
+      contentFit="cover"
+      nativeControls={false}
+      onError={onError}
+    />
+  );
+}
 
 export function AppLaunchScreen({ body, title, actions, showGif = true }: AppLaunchScreenProps) {
   const insets = useSafeAreaInsets();
@@ -27,14 +48,7 @@ export function AppLaunchScreen({ body, title, actions, showGif = true }: AppLau
       <StatusBar style="light" />
 
       {showGif && !didAnimationFail ? (
-        <Image
-          accessibilityLabel="WheresMyDorm"
-          fadeDuration={0}
-          onError={() => setDidAnimationFail(true)}
-          resizeMode="contain"
-          source={require("../../assets/animations/animation.gif")}
-          style={{ height: 200, width: 200 }}
-        />
+        <SplashVideo onError={() => setDidAnimationFail(true)} />
       ) : (
         <AppLogo containerClassName="h-[200px] w-[200px]" size={112} />
       )}
