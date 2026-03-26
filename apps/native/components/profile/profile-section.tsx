@@ -11,13 +11,24 @@ export const ProfileSection = memo(function ProfileSection({
   children,
 }: ProfileSectionProps) {
   return (
-    <View className="mt-6 px-5">
+    <View className="mt-4">
       {title ? (
-        <Text className="mb-3 text-[11px] font-bold uppercase tracking-[1.6px] text-[#B0A898]">
+        <Text className="mb-2 text-[11px] font-bold uppercase tracking-[1.4px] text-[#A8A29E]">
           {title}
         </Text>
       ) : null}
-      <View className="px-1">{children}</View>
+      <View
+        className="rounded-2xl bg-white px-4"
+        style={{
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.05,
+          shadowRadius: 8,
+          elevation: 2,
+        }}
+      >
+        {children}
+      </View>
     </View>
   );
 });

@@ -1,6 +1,7 @@
 import type { User } from "@supabase/supabase-js";
 
 import { formatProfileName, getProfileNamePartsFromUser } from "@/lib/profile";
+import { uploadFileUri } from "@/services/storage";
 import type { RoleOption } from "@/types/auth";
 import { supabase } from "@/utils/supabase";
 
@@ -126,21 +127,15 @@ export async function uploadAvatar(
   const ext = uri.split(".").pop()?.toLowerCase() ?? "jpg";
   const mime = ext === "png" ? "image/png" : "image/jpeg";
   const path = `${userId}/avatar.${ext}`;
+  const publicUrl = await uploadFileUri({
+    bucket: "avatars",
+    contentType: mime,
+    filePath: path,
+    upsert: true,
+    uri,
+  });
 
-  const response = await fetch(uri);
-  const blob = await response.blob();
-
-  const { error } = await supabase.storage
-    .from("avatars")
-    .upload(path, blob, {
-      contentType: mime,
-      upsert: true,
-    });
-
-  if (error) throw error;
-
-  const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-  return `${data.publicUrl}?t=${Date.now()}`;
+  return `${publicUrl}?t=${Date.now()}`;
 }
 
 export async function updateCurrentProfile(

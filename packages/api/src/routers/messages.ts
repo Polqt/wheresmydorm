@@ -1,10 +1,9 @@
 import { TRPCError } from "@trpc/server";
-import { db, messages, userBlocks } from "@wheresmydorm/db";
-import { and, asc, desc, eq, or } from "drizzle-orm";
+import { db, listings, messages, profiles, userBlocks } from "@wheresmydorm/db";
+import { and, asc, desc, eq, or, sql } from "drizzle-orm";
 import { z } from "zod";
-
-import { formatProfileName } from "../lib/profile.js";
 import { protectedProcedure, router } from "../index.js";
+import { formatProfileName } from "../lib/profile.js";
 
 const threadIdSeparator = "__";
 
@@ -203,12 +202,45 @@ export const messagesRouter = router({
         },
       });
 
+      const fallbackListing =
+        threadMessages[0]?.listing ??
+        (await db.query.listings.findFirst({
+          where: eq(listings.id, listingId),
+          columns: {
+            id: true,
+            title: true,
+          },
+        })) ??
+        null;
+
+      const fallbackOtherUser =
+        threadMessages[0] == null
+          ? await db.query.profiles.findFirst({
+              where: eq(profiles.id, otherUserId),
+              columns: {
+                id: true,
+                avatarUrl: true,
+                firstName: true,
+                lastName: true,
+              },
+            })
+          : null;
+
       return {
         threadId: input.threadId,
-        listing: threadMessages[0]?.listing ?? null,
+        listing: fallbackListing,
         otherUser:
           threadMessages[0] == null
-            ? null
+            ? fallbackOtherUser
+              ? {
+                  avatarUrl: fallbackOtherUser.avatarUrl,
+                  displayName: formatProfileName({
+                    firstName: fallbackOtherUser.firstName,
+                    lastName: fallbackOtherUser.lastName,
+                  }),
+                  id: fallbackOtherUser.id,
+                }
+              : null
             : threadMessages[0].senderId === ctx.userId
               ? {
                   avatarUrl: threadMessages[0].receiver.avatarUrl,
@@ -265,6 +297,23 @@ export const messagesRouter = router({
         });
       }
 
+      const existingThread = await db.query.messages.findFirst({
+        where: and(
+          eq(messages.listingId, input.listingId),
+          or(
+            and(
+              eq(messages.senderId, ctx.userId),
+              eq(messages.receiverId, input.receiverId),
+            ),
+            and(
+              eq(messages.senderId, input.receiverId),
+              eq(messages.receiverId, ctx.userId),
+            ),
+          ),
+        ),
+        columns: { id: true },
+      });
+
       const [message] = await db
         .insert(messages)
         .values({
@@ -275,6 +324,13 @@ export const messagesRouter = router({
           mediaUrl: input.mediaUrl,
         })
         .returning();
+
+      if (!existingThread) {
+        await db
+          .update(listings)
+          .set({ inquiryCount: sql`${listings.inquiryCount} + 1` })
+          .where(eq(listings.id, input.listingId));
+      }
 
       return {
         ...message,

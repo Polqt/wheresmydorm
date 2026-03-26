@@ -1,4 +1,3 @@
-import { MapFilters, PropertyTypeFilter } from "@/types/map";
 import { useEffect, useState } from "react";
 import {
   Dimensions,
@@ -16,6 +15,9 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import type { MapFilters, PropertyTypeFilter } from "@/types/map";
+import { formatCurrency } from "@/utils/profile";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const SHEET_WIDTH = SCREEN_WIDTH * 0.84;
@@ -40,9 +42,8 @@ const amenities = [
 const ratingOptions = [3.5, 4, 4.5];
 const distanceOptions = [1000, 2000, 4000, 8000];
 
-function formatCurrency(value?: number) {
-  if (value === undefined) return "Any";
-  return `P${value.toLocaleString("en-PH")}`;
+function formatBudget(value?: number) {
+  return value === undefined ? "Any" : formatCurrency(value);
 }
 
 function formatDistance(distanceMeters: number) {
@@ -239,7 +240,7 @@ function Stepper({
         <Pressable onPress={onDecrease} style={styles.stepperButton}>
           <Text style={styles.stepperButtonText}>−</Text>
         </Pressable>
-        <Text style={styles.stepperValue}>{formatCurrency(value)}</Text>
+        <Text style={styles.stepperValue}>{formatBudget(value)}</Text>
         <Pressable onPress={onIncrease} style={styles.stepperButton}>
           <Text style={styles.stepperButtonText}>+</Text>
         </Pressable>

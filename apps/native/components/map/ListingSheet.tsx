@@ -7,23 +7,10 @@ import type { RefObject } from "react";
 import { useEffect } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import type { ListingDetail } from "@/stores/map";
+import type { ListingDetail } from "@/types/listings";
+import { formatCurrency } from "@/utils/profile";
 
 const SHEET_SNAP_POINTS = ["36%", "72%"];
-
-function formatCurrency(price: string) {
-  const numericPrice = Number(price);
-
-  if (Number.isNaN(numericPrice)) {
-    return price;
-  }
-
-  return new Intl.NumberFormat("en-PH", {
-    style: "currency",
-    currency: "PHP",
-    maximumFractionDigits: 0,
-  }).format(numericPrice);
-}
 
 export function ListingSheet({
   sheetRef,
@@ -32,6 +19,7 @@ export function ListingSheet({
   listing,
   errorMessage,
   onClose,
+  onViewDetails,
 }: {
   sheetRef: RefObject<BottomSheet | null>;
   isOpen: boolean;
@@ -39,6 +27,7 @@ export function ListingSheet({
   listing: ListingDetail | null;
   errorMessage: string | null;
   onClose: () => void;
+  onViewDetails: (id: string) => void;
 }) {
   useEffect(() => {
     if (!sheetRef.current) {
@@ -144,7 +133,16 @@ export function ListingSheet({
             </View>
 
             <Text style={styles.sectionTitle}>Lister</Text>
-            <Text style={styles.body}>{listing.lister.displayName}</Text>
+            <Text style={styles.body}>
+              {listing.lister?.displayName ?? "Unknown lister"}
+            </Text>
+
+            <Pressable
+              onPress={() => onViewDetails(listing.id)}
+              style={styles.primaryButton}
+            >
+              <Text style={styles.primaryButtonText}>View details</Text>
+            </Pressable>
 
             <Pressable onPress={onClose} style={styles.closeButton}>
               <Text style={styles.closeButtonText}>Back to map</Text>
@@ -271,7 +269,7 @@ const styles = StyleSheet.create({
     textTransform: "capitalize",
   },
   closeButton: {
-    marginTop: 22,
+    marginTop: 12,
     alignItems: "center",
     borderRadius: 18,
     backgroundColor: "#0B2D23",
@@ -279,6 +277,20 @@ const styles = StyleSheet.create({
   },
   closeButtonText: {
     color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  primaryButton: {
+    marginTop: 22,
+    alignItems: "center",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#0B2D23",
+    backgroundColor: "#EEF5F1",
+    paddingVertical: 14,
+  },
+  primaryButtonText: {
+    color: "#0B2D23",
     fontSize: 14,
     fontWeight: "800",
   },

@@ -19,27 +19,32 @@ export const ProfileRow = memo(function ProfileRow({
   destructive = false,
   last = false,
 }: ProfileRowProps) {
-  const labelColor = destructive ? "#EF4444" : "#1A1A1A";
-  const iconColor = destructive ? "#EF4444" : "#A09A90";
+  const labelColor = destructive ? "#DC2626" : "#1C1917";
+  const iconColor = destructive ? "#DC2626" : "#0B4A30";
+  const iconBg = destructive ? "#FEF2F2" : "#EEF5F1";
 
   return (
     <Pressable
       className={`flex-row items-center py-3.5 ${last ? "" : "border-b border-[#F5F0EA]"}`}
       onPress={onPress}
+      style={({ pressed }) => ({ opacity: pressed && onPress ? 0.6 : 1 })}
     >
-      <View className="mr-3 h-8 w-8 items-center justify-center">
-        <Ionicons color={iconColor} name={icon} size={19} />
+      <View
+        className="mr-3 h-8 w-8 items-center justify-center rounded-lg"
+        style={{ backgroundColor: iconBg }}
+      >
+        <Ionicons color={iconColor} name={icon} size={17} />
       </View>
-      <Text className="flex-1 text-[15px] font-medium" style={{ color: labelColor }}>
+      <Text className="flex-1 text-[15px] font-medium tracking-[-0.1px]" style={{ color: labelColor }}>
         {label}
       </Text>
       {value != null ? (
-        <Text className="mr-2 max-w-[44%] text-right text-[13px] text-[#A09A90]" numberOfLines={1}>
+        <Text className="mr-2 max-w-[44%] text-right text-[13px] text-[#A8A29E]" numberOfLines={1}>
           {value || "Not set"}
         </Text>
       ) : null}
       {onPress ? (
-        <Ionicons color="#D0CAC0" name="chevron-forward" size={15} />
+        <Ionicons color="#C8C0B8" name="chevron-forward" size={15} />
       ) : null}
     </Pressable>
   );

@@ -10,13 +10,14 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
-const isExpoGo =
-  Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
-
+import { SetupProgressBar } from "@/components/ui/setup-progress-bar";
+import { ONBOARDING_STEPS } from "@/lib/auth";
 import { useAuth } from "@/providers/auth-provider";
 import { setOnboardingCompletion } from "@/services/onboarding";
 
-const STEPS = 4;
+const isExpoGo =
+  Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
 const CURRENT_STEP = 4;
 
 export default function PermissionsScreen() {
@@ -76,18 +77,8 @@ export default function PermissionsScreen() {
       <StatusBar style="dark" />
 
       <View className="flex-1">
-        {/* Progress bar — all filled */}
-        <View className="flex-row gap-1.5 px-5 pt-3">
-          {Array.from({ length: STEPS }).map((_, i) => (
-            <View
-              key={i}
-              className="h-1 flex-1 rounded-full"
-              style={{ backgroundColor: i < CURRENT_STEP ? "#04170E" : "#E8E3DC" }}
-            />
-          ))}
-        </View>
+        <SetupProgressBar current={CURRENT_STEP} total={ONBOARDING_STEPS} />
 
-        {/* Nav */}
         <View className="px-4 pt-3">
           <Pressable
             className="h-10 w-10 items-center justify-center rounded-full bg-[#F4F0EA]"
@@ -106,7 +97,6 @@ export default function PermissionsScreen() {
           </Text>
 
           <View className="mt-8 gap-3">
-            {/* Location */}
             <Pressable
               className="flex-row items-center gap-4 rounded-2xl border border-[#EAE5DE] bg-[#FAF8F5] px-5 py-4"
               onPress={() => handleToggleLocation(!locationEnabled)}
@@ -128,7 +118,6 @@ export default function PermissionsScreen() {
               />
             </Pressable>
 
-            {/* Notifications */}
             <Pressable
               className="flex-row items-center gap-4 rounded-2xl border border-[#EAE5DE] bg-[#FAF8F5] px-5 py-4"
               onPress={() => handleToggleNotifications(!notificationsEnabled)}
@@ -161,7 +150,6 @@ export default function PermissionsScreen() {
           <View className="flex-1" />
         </View>
 
-        {/* Get started */}
         <View className="px-6" style={bottomAreaStyle}>
           <Pressable
             className="h-[52px] w-full items-center justify-center rounded-xl"

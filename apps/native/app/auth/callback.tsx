@@ -56,7 +56,7 @@ export default function AuthCallbackScreen() {
         }
 
         if (!isCancelled) {
-          router.replace("/");
+          router.replace("/(tabs)/map");
         }
       } catch (authError) {
         if (!isCancelled) {

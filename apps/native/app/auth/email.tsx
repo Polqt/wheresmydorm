@@ -46,19 +46,17 @@ export default function EmailSignInScreen() {
     setErrorMessage(null);
 
     try {
-      // If the user already has a valid session for this email, skip OTP entirely
       const restored = await tryRestoreSession(email);
       if (restored) {
-        router.replace("/");
+        router.replace("/(tabs)/map");
         return;
       }
 
       const normalizedEmail = await sendEmailOtp(email);
 
-      // In dev mode, password auth signs in immediately — no code needed
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        router.replace("/");
+        router.replace("/(tabs)/map");
         return;
       }
 

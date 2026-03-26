@@ -45,7 +45,6 @@ function SplashVideo({
       style={StyleSheet.absoluteFill}
       contentFit="cover"
       nativeControls={false}
-      onError={onError}
     />
   );
 }

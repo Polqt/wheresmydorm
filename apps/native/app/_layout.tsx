@@ -11,12 +11,11 @@ import { StatusBar } from "expo-status-bar";
 import React, { useRef } from "react";
 import { Platform, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { setAndroidNavigationBar } from "@/lib/navigation-bar";
 import { NAV_THEME } from "@/lib/constants";
+import { setAndroidNavigationBar } from "@/lib/navigation-bar";
 import { useColorScheme } from "@/lib/use-color-scheme";
 import { AuthProvider } from "@/providers/auth-provider";
 import { queryClient } from "@/utils/trpc";
-
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -66,22 +65,21 @@ export default function RootLayout() {
         <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
         <GestureHandlerRootView style={styles.container}>
           <AuthProvider>
-            <Stack>
-              <Stack.Screen name="index" options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="auth" options={{ headerShown: false }} />
-              <Stack.Screen
-                name="onboarding"
-                options={{ headerShown: false }}
-              />
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="index" />
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="auth" />
+              <Stack.Screen name="onboarding" />
               <Stack.Screen
                 name="modal"
                 options={{ title: "Modal", presentation: "modal" }}
               />
-              <Stack.Screen
-                name="profile"
-                options={{ headerShown: false }}
-              />
+              <Stack.Screen name="profile" />
+              <Stack.Screen name="listing" />
+              <Stack.Screen name="post" />
+              <Stack.Screen name="listings" />
+              <Stack.Screen name="messages" />
+              <Stack.Screen name="saved" />
             </Stack>
           </AuthProvider>
         </GestureHandlerRootView>

@@ -10,6 +10,24 @@ const RESTORE_KEY = "wmd:last_session";
 
 WebBrowser.maybeCompleteAuthSession();
 
+async function waitForSession(timeoutMs = 2500) {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (session) {
+      return true;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+
+  return false;
+}
+
 function parseParamValue(value: unknown) {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
@@ -48,8 +66,7 @@ export async function signInWithOAuth(provider: OAuthProvider) {
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
 
   if (result.type !== "success") {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) return true;
+    if (await waitForSession()) return true;
     throw new Error(
       "Sign-in finished in the browser but the app didn't receive the callback. " +
       `Make sure ${redirectTo} is in your Supabase Auth redirect URLs.`,
@@ -73,8 +90,7 @@ export async function signInWithOAuth(provider: OAuthProvider) {
   }
 
   if (!code) {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) return true;
+    if (await waitForSession()) return true;
     throw new Error("Missing OAuth callback data.");
   }
 

@@ -1,20 +1,6 @@
-import { MapFilters } from "@/types/map";
-import type {
-  ListingDetail,
-  NearbyListing,
-} from "@/services/listings";
-
 import { create } from "zustand";
-
-type MapStore = {
-  filters: MapFilters;
-  selectedListingId: string | null;
-  isFilterOpen: boolean;
-  setFilters: (updater: (filters: MapFilters) => MapFilters) => void;
-  setSelectedListingId: (listingId: string | null) => void;
-  setFilterOpen: (isOpen: boolean) => void;
-  resetFilters: () => void;
-};
+import type { MapFilters } from "@/types/map";
+import { MapStore } from "@/types/location";
 
 const defaultFilters: MapFilters = {
   propertyTypes: [],
@@ -34,5 +20,3 @@ export const useMapStore = create<MapStore>((set) => ({
   setFilterOpen: (isFilterOpen) => set({ isFilterOpen }),
   resetFilters: () => set({ filters: defaultFilters }),
 }));
-
-export type { ListingDetail, NearbyListing };

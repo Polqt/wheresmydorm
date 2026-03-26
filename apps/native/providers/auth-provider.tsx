@@ -1,7 +1,7 @@
 import type { Session, User } from "@supabase/supabase-js";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { router, useSegments } from "expo-router";
+import { router, useRootNavigationState, useSegments } from "expo-router";
 import {
   createContext,
   startTransition,
@@ -16,6 +16,7 @@ import {
   AppLaunchScreen,
   LaunchScreenButton,
 } from "@/components/ui/app-launch-screen";
+import { PROFILE_QUERY_KEY } from "@/lib/auth";
 import { saveSessionForRestore } from "@/services/auth";
 import { getOnboardingCompletion } from "@/services/onboarding";
 import { getOrCreateCurrentProfile } from "@/services/profile";
@@ -49,6 +50,7 @@ const SETUP_SCREENS = new Set([
 function AuthGate({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const segments = useSegments();
+  const navigationState = useRootNavigationState();
   const [firstSegment, secondSegment] = segments as string[];
 
   const [session, setSession] = useState<Session | null>(null);
@@ -64,7 +66,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const profileQuery = useQuery({
     enabled: Boolean(session),
     queryFn: () => getOrCreateCurrentProfile(session!.user),
-    queryKey: ["auth-profile", session?.user.id],
+    queryKey: [PROFILE_QUERY_KEY, session?.user.id],
     retry: 2,
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
   });
@@ -104,7 +106,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, nextSession) => {
         setSession(nextSession);
-        queryClient.invalidateQueries({ queryKey: ["auth-profile"] });
+        queryClient.invalidateQueries({ queryKey: [PROFILE_QUERY_KEY] });
       },
     );
 
@@ -115,6 +117,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   }, [queryClient]);
 
   const role = profileQuery.data?.role ?? null;
+  const canNavigate = Boolean(navigationState?.key);
   const isReady =
     isSessionReady && (!session || (!profileQuery.isLoading && !profileQuery.error));
   const isInAuth = firstSegment === "auth";
@@ -146,7 +149,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
   // Route sync
   useEffect(() => {
-    if (!isReady || !splashDone) return;
+    if (!isReady || !splashDone || !canNavigate) return;
 
     let cancelled = false;
 
@@ -209,11 +212,12 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     secondSegment,
     session,
     splashDone,
+    canNavigate,
   ]);
 
   const handleRetry = useCallback(() => {
     setLoadingTooLong(false);
-    queryClient.invalidateQueries({ queryKey: ["auth-profile"] });
+    queryClient.invalidateQueries({ queryKey: [PROFILE_QUERY_KEY] });
   }, [queryClient]);
 
   const signOut = useCallback(async () => {
@@ -223,8 +227,8 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     // can restore it on quick re-login, avoiding Supabase's email OTP rate limit.
     await saveSessionForRestore();
     await supabase.auth.signOut({ scope: "local" });
-    queryClient.removeQueries({ queryKey: ["auth-profile"] });
-    startTransition(() => router.replace("/auth/sign-in"));
+    setSession(null);
+    queryClient.removeQueries({ queryKey: [PROFILE_QUERY_KEY] });
   }, [clearAwaitingRoleSync, clearPendingEmail, queryClient]);
 
   const value = useMemo<AuthContextValue>(

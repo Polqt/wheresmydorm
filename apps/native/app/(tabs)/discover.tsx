@@ -1,155 +1,230 @@
-import { useQuery } from "@tanstack/react-query";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { FlashList } from "@shopify/flash-list";
+import { Image } from "expo-image";
+import { router } from "expo-router";
+import { memo, useCallback } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { Container } from "@/components/container";
-import { getNearbyListings } from "@/services/listings";
-import { useMapStore } from "@/stores/map";
+import { ScreenHeader } from "@/components/ui/screen-header";
+import { useDiscoveryListings } from "@/hooks/use-discovery-listings";
+import type { ListingListItem } from "@/types/listings";
+import { formatCurrency } from "@/utils/profile";
+import { listingDetailRoute } from "@/utils/routes";
 
-const FALLBACK_LAT = 10.6765;
-const FALLBACK_LNG = 122.9511;
+const COVER_FALLBACK =
+  "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=800";
 
-function formatCurrency(price: string) {
-  return new Intl.NumberFormat("en-PH", {
-    style: "currency",
-    currency: "PHP",
-    maximumFractionDigits: 0,
-  }).format(Number(price));
-}
-
-export default function DiscoverTabScreen() {
-  const filters = useMapStore((state) => state.filters);
-  const listingsQuery = useQuery({
-    queryFn: () =>
-      getNearbyListings({
-        filters,
-        lat: FALLBACK_LAT,
-        lng: FALLBACK_LNG,
-      }),
-    queryKey: ["nearby-listings", FALLBACK_LAT, FALLBACK_LNG, filters],
-  });
+const ListingRow = memo(function ListingRow({
+  item,
+  onPress,
+}: {
+  item: ListingListItem;
+  onPress: (id: string) => void;
+}) {
+  const handlePress = useCallback(() => onPress(item.id), [item.id, onPress]);
 
   return (
-    <Container>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.eyebrow}>Discover</Text>
-        <Text style={styles.title}>Shortlist places that feel promising</Text>
-        <Text style={styles.subtitle}>
-          Browse the same nearby inventory in a calmer, card-first view inspired
-          by travel and outdoor discovery apps.
-        </Text>
+    <Pressable onPress={handlePress} style={styles.row}>
+      <Image
+        contentFit="cover"
+        source={{ uri: item.coverPhoto ?? COVER_FALLBACK }}
+        style={styles.cover}
+        transition={200}
+      />
 
-        {(listingsQuery.data ?? []).slice(0, 8).map((listing) => (
-          <View key={listing.id} style={styles.card}>
-            <View style={styles.badgeRow}>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>
-                  {listing.isFeatured ? "Featured" : "Near you"}
-                </Text>
-              </View>
-              <Text style={styles.rating}>
-                {listing.ratingOverall
-                  ? `${listing.ratingOverall.toFixed(1)} stars`
-                  : "New listing"}
-              </Text>
-            </View>
-
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>{listing.title}</Text>
-              <Text style={styles.cardPrice}>
-                {formatCurrency(listing.pricePerMonth)}
-              </Text>
-            </View>
-
-            <Text style={styles.cardMeta}>
-              {listing.city}
-              {listing.barangay ? ` - ${listing.barangay}` : ""}
-            </Text>
-            <Text style={styles.cardMeta}>
-              {listing.reviewCount} reviews -{" "}
-              {listing.propertyType.replaceAll("_", " ")}
+      <View style={styles.content}>
+        <View style={styles.metaRow}>
+          <Text style={styles.metaText}>
+            {[item.city, item.barangay].filter(Boolean).join(" - ")}
+          </Text>
+          <View style={styles.ratingWrap}>
+            <Ionicons color="#F59E0B" name="star" size={12} />
+            <Text style={styles.ratingText}>
+              {item.ratingOverall ? item.ratingOverall.toFixed(1) : "New"}
             </Text>
           </View>
-        ))}
-      </ScrollView>
-    </Container>
+        </View>
+
+        <View style={styles.titleRow}>
+          <Text numberOfLines={1} style={styles.title}>
+            {item.title}
+          </Text>
+          <Text style={styles.price}>{formatCurrency(item.pricePerMonth)}</Text>
+        </View>
+
+        <Text numberOfLines={1} style={styles.subline}>
+          {item.propertyType.replaceAll("_", " ")} • {item.reviewCount} review
+          {item.reviewCount === 1 ? "" : "s"}
+        </Text>
+
+        <View style={styles.tagRow}>
+          <View style={styles.tag}>
+            <Text style={styles.tagText}>
+              {item.isFeatured ? "Featured" : "Nearby"}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </Pressable>
+  );
+});
+
+export default function DiscoverTabScreen() {
+  const { isReady, items, label, query } = useDiscoveryListings();
+
+  const handleListingPress = useCallback((id: string) => {
+    router.push(listingDetailRoute(id));
+  }, []);
+
+  const renderItem = useCallback(
+    ({ item }: { item: ListingListItem }) => (
+      <ListingRow item={item} onPress={handleListingPress} />
+    ),
+    [handleListingPress],
+  );
+
+  const keyExtractor = useCallback((item: ListingListItem) => item.id, []);
+
+  return (
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <ScreenHeader subtitle={label} title="Discover" />
+
+      {query.isLoading || !isReady ? (
+        <View style={styles.loading}>
+          <ActivityIndicator color="#0B2D23" size="large" />
+        </View>
+      ) : (
+        <FlashList
+          data={items}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Text style={styles.emptyTitle}>No listings nearby</Text>
+              <Text style={styles.emptyBody}>
+                Try adjusting filters or expanding your search distance.
+              </Text>
+            </View>
+          }
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
+  container: {
+    backgroundColor: "#F7F4EE",
+    flex: 1,
+  },
+  loading: {
+    alignItems: "center",
+    flex: 1,
+    justifyContent: "center",
+  },
+  list: {
+    paddingBottom: 120,
     paddingHorizontal: 18,
-    paddingVertical: 20,
-    gap: 14,
   },
-  eyebrow: {
-    color: "#0f766e",
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
+  row: {
+    marginBottom: 24,
   },
-  title: {
-    color: "#0f172a",
-    fontSize: 28,
-    fontWeight: "800",
+  cover: {
+    borderRadius: 26,
+    height: 232,
+    width: "100%",
   },
-  subtitle: {
-    color: "#475569",
-    fontSize: 14,
-    lineHeight: 22,
+  content: {
+    paddingHorizontal: 2,
+    paddingTop: 12,
   },
-  card: {
-    borderRadius: 28,
-    backgroundColor: "#fffdf9",
-    borderWidth: 1,
-    borderColor: "#ece3d8",
-    padding: 18,
-  },
-  badgeRow: {
+  metaRow: {
+    alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
+    marginBottom: 6,
+  },
+  metaText: {
+    color: "#736C63",
+    flex: 1,
+    fontSize: 13,
+    marginRight: 10,
+  },
+  ratingWrap: {
     alignItems: "center",
-    gap: 10,
+    flexDirection: "row",
+    gap: 4,
   },
-  badge: {
-    borderRadius: 999,
-    backgroundColor: "#EEF5F1",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  badgeText: {
-    color: "#0B2D23",
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
-  },
-  rating: {
-    color: "#6C6A64",
+  ratingText: {
+    color: "#111827",
     fontSize: 12,
     fontWeight: "700",
   },
-  cardHeader: {
-    marginTop: 12,
+  titleRow: {
+    alignItems: "flex-start",
     flexDirection: "row",
-    justifyContent: "space-between",
     gap: 12,
+    justifyContent: "space-between",
   },
-  cardTitle: {
+  title: {
+    color: "#111827",
     flex: 1,
-    color: "#0f172a",
+    fontSize: 18,
+    fontWeight: "700",
+    letterSpacing: -0.3,
+  },
+  price: {
+    color: "#0B2D23",
     fontSize: 16,
     fontWeight: "800",
   },
-  cardPrice: {
-    color: "#0B2D23",
-    fontSize: 15,
+  subline: {
+    color: "#8A8176",
+    fontSize: 13,
+    marginTop: 4,
+    textTransform: "capitalize",
+  },
+  tagRow: {
+    flexDirection: "row",
+    marginTop: 10,
+  },
+  tag: {
+    backgroundColor: "#ECE6DC",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  tagText: {
+    color: "#5C564D",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.3,
+    textTransform: "uppercase",
+  },
+  empty: {
+    alignItems: "center",
+    marginTop: 80,
+    paddingHorizontal: 32,
+  },
+  emptyTitle: {
+    color: "#1A1A1A",
+    fontSize: 18,
     fontWeight: "800",
   },
-  cardMeta: {
+  emptyBody: {
+    color: "#706A5F",
+    fontSize: 14,
+    lineHeight: 22,
     marginTop: 8,
-    color: "#475569",
-    fontSize: 13,
-    textTransform: "capitalize",
+    textAlign: "center",
   },
 });

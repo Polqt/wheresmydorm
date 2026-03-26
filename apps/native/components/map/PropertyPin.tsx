@@ -3,10 +3,11 @@ import type React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Marker } from "react-native-maps";
 
-import type { NearbyListing } from "@/stores/map";
+import type { ListingListItem } from "@/types/listings";
+import { formatCompactPrice } from "@/utils/profile";
 
 const iconByType: Record<
-  NearbyListing["propertyType"],
+  ListingListItem["propertyType"],
   React.ComponentProps<typeof FontAwesome>["name"]
 > = {
   apartment: "building",
@@ -17,24 +18,12 @@ const iconByType: Record<
   studio: "square",
 };
 
-function formatCompactPrice(price: string) {
-  const numericPrice = Number(price);
-
-  if (Number.isNaN(numericPrice)) {
-    return price;
-  }
-
-  return numericPrice >= 1000
-    ? `P${(numericPrice / 1000).toFixed(1)}k`
-    : `P${numericPrice}`;
-}
-
 export function PropertyPin({
   listing,
   isSelected,
   onPress,
 }: {
-  listing: NearbyListing;
+  listing: ListingListItem;
   isSelected: boolean;
   onPress: () => void;
 }) {
@@ -58,9 +47,7 @@ export function PropertyPin({
           <View style={styles.badge}>
             <FontAwesome name="star" color="#f59e0b" size={10} />
             <Text style={styles.badgeText}>
-              {listing.ratingOverall
-                ? listing.ratingOverall.toFixed(1)
-                : "New"}
+              {listing.ratingOverall ? listing.ratingOverall.toFixed(1) : "New"}
             </Text>
           </View>
         </View>

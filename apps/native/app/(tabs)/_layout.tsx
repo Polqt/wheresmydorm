@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Tabs } from "expo-router";
-import { useEffect, useRef, useState } from "react";
-import { Platform, View } from "react-native";
+import { memo, useEffect, useRef, useState } from "react";
+import { Platform, StyleSheet, View } from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -16,8 +16,10 @@ import HeartIcon from "@/assets/icons/tabs/heart.svg";
 import HomeIcon from "@/assets/icons/tabs/home.svg";
 import MapIcon from "@/assets/icons/tabs/map.svg";
 import { ProfileAvatar } from "@/components/profile/profile-avatar";
+import { PROFILE_QUERY_KEY } from "@/lib/auth";
 import { useAuth } from "@/providers/auth-provider";
 import type { NativeProfile } from "@/services/profile";
+import { getInitials } from "@/utils/profile";
 
 // Animates whenever `pressKey` increments (once per tab press)
 function BounceIcon({
@@ -48,7 +50,7 @@ function BounceIcon({
   return <Animated.View style={animatedStyle}>{children}</Animated.View>;
 }
 
-function ProfileTabIcon({
+const ProfileTabIcon = memo(function ProfileTabIcon({
   color,
   focused,
   pressKey,
@@ -59,10 +61,12 @@ function ProfileTabIcon({
 }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const profile = queryClient.getQueryData<NativeProfile>(["auth-profile", user?.id]);
+  const profile = queryClient.getQueryData<NativeProfile>([
+    PROFILE_QUERY_KEY,
+    user?.id,
+  ]);
 
-  const initials =
-    `${profile?.firstName?.[0] ?? "W"}${profile?.lastName?.[0] ?? "D"}`.toUpperCase();
+  const initials = getInitials(profile?.firstName, profile?.lastName);
 
   return (
     <BounceIcon pressKey={pressKey}>
@@ -82,7 +86,7 @@ function ProfileTabIcon({
       </View>
     </BounceIcon>
   );
-}
+});
 
 export default function NativeTabsLayout() {
   const [pressKeys, setPressKeys] = useState({
@@ -101,24 +105,13 @@ export default function NativeTabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        sceneStyle: styles.scene,
         tabBarActiveTintColor: "#EA580C",
         tabBarInactiveTintColor: "#706A5F",
-        tabBarStyle: {
-          backgroundColor: "#fffdf9",
-          borderTopColor: "#E7E0D5",
-          height: Platform.select({ ios: 86, default: 78 }),
-          paddingBottom: Platform.select({ ios: 14, default: 10 }),
-          paddingTop: 8,
-          shadowColor: "#1A1A1A",
-          shadowOffset: { width: 0, height: -8 },
-          shadowOpacity: 0.06,
-          shadowRadius: 14,
-          elevation: 12,
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: "700",
-        },
+        tabBarHideOnKeyboard: true,
+        tabBarStyle: styles.tabBar,
+        tabBarItemStyle: styles.tabBarItem,
+        tabBarLabelStyle: styles.tabBarLabel,
       }}
     >
       <Tabs.Screen
@@ -186,3 +179,30 @@ export default function NativeTabsLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  scene: {
+    backgroundColor: "#F7F4EE",
+  },
+  tabBar: {
+    backgroundColor: "#FFFDFC",
+    borderTopColor: "#E9E1D6",
+    borderTopWidth: 1,
+    height: Platform.select({ ios: 74, default: 64 }),
+    paddingBottom: Platform.select({ ios: 10, default: 8 }),
+    paddingTop: 8,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  tabBarItem: {
+    paddingTop: 2,
+  },
+  tabBarLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    marginTop: 2,
+  },
+});

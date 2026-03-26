@@ -1,9 +1,11 @@
-import Constants from "expo-constants";
+import * as Linking from "expo-linking";
 
-import type { RoleCard } from "@/types/auth";
+import type { OAuthProvider, RoleCard } from "@/types/auth";
 
 export const AUTH_CALLBACK_PATH = "auth/callback";
-export const AUTH_SCHEME = "mybetterapp";
+export const AUTH_SCHEME = "wheresmydorm";
+export const PROFILE_QUERY_KEY = "auth-profile";
+export const ONBOARDING_STEPS = 4;
 export const AUTH_TERMS_COPY =
   "By continuing you agree to our Terms of Service and Privacy Policy.";
 export const EMAIL_CODE_LENGTH = 8;
@@ -24,11 +26,9 @@ export const ROLE_CARDS: readonly RoleCard[] = [
 ] as const;
 
 export function getAuthRedirectUrl() {
-  const scheme = Array.isArray(Constants.expoConfig?.scheme)
-    ? Constants.expoConfig.scheme[0]
-    : (Constants.expoConfig?.scheme ?? AUTH_SCHEME);
-
-  return `${scheme}://${AUTH_CALLBACK_PATH}`;
+  return Linking.createURL(AUTH_CALLBACK_PATH, {
+    scheme: AUTH_SCHEME,
+  });
 }
 
 export function normalizeAuthEmail(email: string): string {
@@ -37,4 +37,35 @@ export function normalizeAuthEmail(email: string): string {
 
 export function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizeAuthEmail(email));
+}
+
+function getProviderLabel(provider: OAuthProvider) {
+  if (provider === "google") return "Google";
+  if (provider === "facebook") return "Facebook";
+  return "Apple";
+}
+
+export function getOAuthErrorMessage(
+  provider: OAuthProvider,
+  error: unknown,
+): string {
+  if (!(error instanceof Error)) {
+    return `${getProviderLabel(provider)} sign-in failed.`;
+  }
+
+  const msg = error.message.toLowerCase();
+
+  if (provider === "google" && msg.includes("redirect_to is not allowed")) {
+    return `Google sign-in redirect is blocked. Add ${getAuthRedirectUrl()} to Supabase Auth redirect URLs, then rebuild the app so the updated scheme is registered on the device.`;
+  }
+
+  if (provider === "google" && msg.includes("provider")) {
+    return "Google sign-in is not enabled in Supabase yet. Please enable Google provider with your web OAuth client ID/secret.";
+  }
+
+  if (provider === "google" && msg.includes("callback")) {
+    return `${error.message}\n\nExpected mobile callback: ${getAuthRedirectUrl()}`;
+  }
+
+  return error.message;
 }

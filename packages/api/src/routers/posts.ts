@@ -9,9 +9,8 @@ import {
 } from "@wheresmydorm/db";
 import { and, asc, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import { z } from "zod";
-
-import { formatProfileName } from "../lib/profile.js";
 import { protectedProcedure, router } from "../index.js";
+import { formatProfileName } from "../lib/profile.js";
 
 const reactionValues = ["like", "helpful", "funny"] as const;
 const reportReasonValues = [
@@ -377,6 +376,11 @@ export const postsRouter = router({
           parentCommentId: input.parentCommentId,
         })
         .returning();
+
+      await db
+        .update(posts)
+        .set({ commentCount: sql`${posts.commentCount} + 1` })
+        .where(eq(posts.id, input.postId));
 
       return comment;
     }),
