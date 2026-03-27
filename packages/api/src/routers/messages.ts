@@ -2,8 +2,8 @@ import { TRPCError } from "@trpc/server";
 import { db, listings, messages, profiles, userBlocks } from "@wheresmydorm/db";
 import { and, asc, desc, eq, or, sql } from "drizzle-orm";
 import { z } from "zod";
-import { protectedProcedure, router } from "../index.js";
-import { formatProfileName } from "../lib/profile.js";
+import { protectedProcedure, router } from "../index";
+import { formatProfileName } from "../lib/profile";
 
 const threadIdSeparator = "__";
 

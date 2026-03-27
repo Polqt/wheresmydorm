@@ -12,6 +12,8 @@ function requireEnv(name: string) {
 }
 
 export async function createContext(req: NextRequest) {
+  const authorization = req.headers.get("Authorization") ?? "";
+
   const supabase = createServerClient(
     requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
     requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
@@ -25,22 +27,26 @@ export async function createContext(req: NextRequest) {
         // support bearer token from the native app
 
         headers: {
-          Authorization: req.headers.get("Authorization") ?? "",
+          Authorization: authorization,
         },
       },
     },
   );
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  if (!authorization && req.cookies.getAll().length === 0) {
+    return {
+      supabase,
+      user: null,
+      userId: null,
+    };
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   return {
     supabase,
-    session,
     user,
     userId: user?.id ?? null,
   };

@@ -1,28 +1,27 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import { router } from "expo-router";
-import { useMemo, useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { refreshPostQueries } from "@/lib/post-query";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { getDiscoveryQueryInput } from "@/services/listings";
+import {
+  extractHashtags,
+  mergeHashtags,
+  parseHashtagInput,
+} from "@/services/posts";
 import { uploadPickedAsset } from "@/services/storage";
-import { trpc } from "@/utils/trpc";
-
-function extractHashtags(body: string) {
-  return [
-    ...new Set(
-      (body.match(/#([\p{L}\p{N}_]+)/gu) ?? []).map((value) =>
-        value.slice(1).toLowerCase(),
-      ),
-    ),
-  ];
-}
+import { trpc } from "@/utils/api-client";
 
 export default function CreatePostScreen() {
+  const { listingId } = useLocalSearchParams<{ listingId?: string }>();
+  const queryClient = useQueryClient();
   const [body, setBody] = useState("");
+  const [hashtagInput, setHashtagInput] = useState("");
   const [selectedListingId, setSelectedListingId] = useState<
     string | undefined
   >();
@@ -32,20 +31,29 @@ export default function CreatePostScreen() {
     trpc.listings.list.queryOptions(
       getDiscoveryQueryInput({
         amenities: [],
-        distanceMeters: 3000,
         propertyTypes: [],
       }),
     ),
   );
   const createPost = useMutation(
     trpc.posts.create.mutationOptions({
-      onSuccess: () => {
-        router.back();
+      onSuccess: async () => {
+        await refreshPostQueries(queryClient);
+        router.replace("/(tabs)/feed");
       },
     }),
   );
 
-  const hashtags = useMemo(() => extractHashtags(body), [body]);
+  const hashtags = useMemo(
+    () => mergeHashtags(extractHashtags(body), parseHashtagInput(hashtagInput)),
+    [body, hashtagInput],
+  );
+
+  useEffect(() => {
+    if (typeof listingId === "string" && listingId.length > 0) {
+      setSelectedListingId(listingId);
+    }
+  }, [listingId]);
 
   const handlePickMedia = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -71,6 +79,10 @@ export default function CreatePostScreen() {
   };
 
   const handleSubmit = async () => {
+    if (createPost.isPending) {
+      return;
+    }
+
     if (!body.trim()) {
       setErrorMessage("Write something before posting.");
       return;
@@ -82,7 +94,7 @@ export default function CreatePostScreen() {
         assets.map((asset) => uploadPickedAsset("post-media", asset)),
       );
 
-      createPost.mutate({
+      await createPost.mutateAsync({
         body: body.trim(),
         hashtags,
         listingId: selectedListingId,
@@ -108,28 +120,43 @@ export default function CreatePostScreen() {
         contentContainerStyle={{ paddingBottom: 110, paddingHorizontal: 20 }}
       >
         <Text className="text-slate-600 text-sm leading-6">
-          Add context, optional media, and an optional listing tag so your post
-          is discoverable in the feed.
+          Share a quick update, a move-in note, or a neighborhood moment. Add
+          media, a few discovery tags, then optionally link a nearby listing.
         </Text>
 
-        <TextInput
-          className="mt-5 min-h-[180px] rounded-[28px] border border-stone-200 bg-white px-5 py-5 text-base text-slate-900"
-          multiline
-          onChangeText={setBody}
-          placeholder="What should followers know about this place, your move-in, or the neighborhood?"
-          placeholderTextColor="#94a3b8"
-          textAlignVertical="top"
-          value={body}
-        />
-
-        <Pressable
-          className="mt-4 rounded-full bg-brand-teal px-4 py-4"
-          onPress={handlePickMedia}
-        >
-          <Text className="text-center font-extrabold text-white text-xs uppercase tracking-[1.2px]">
-            Attach photo or video
+        <View className="mt-5 rounded-[32px] border border-[#E8DFD2] bg-white px-5 py-5 shadow-sm">
+          <Text className="font-semibold text-[13px] text-[#8C8478]">
+            What do you want to share?
           </Text>
-        </Pressable>
+          <TextInput
+            className="mt-3 min-h-[180px] text-[18px] leading-7 text-slate-900"
+            multiline
+            onChangeText={setBody}
+            placeholder="A room opened up near campus, the street is quieter at night, or the commute is better than expected..."
+            placeholderTextColor="#A8A29A"
+            textAlignVertical="top"
+            value={body}
+          />
+        </View>
+
+        <View className="mt-4 flex-row items-center justify-between rounded-[26px] border border-[#E8DFD2] bg-[#FFFDF9] px-4 py-4">
+          <View className="flex-1 pr-4">
+            <Text className="font-bold text-[14px] text-[#111827]">
+              Add photos or video
+            </Text>
+            <Text className="mt-1 text-[13px] leading-5 text-[#706A5F]">
+              Give the feed a real sense of place with up to four attachments.
+            </Text>
+          </View>
+          <Pressable
+            className="rounded-full bg-[#111827] px-4 py-3"
+            onPress={handlePickMedia}
+          >
+            <Text className="text-center font-extrabold text-[11px] text-white uppercase tracking-[1.2px]">
+              Add media
+            </Text>
+          </Pressable>
+        </View>
 
         {assets.length ? (
           <ScrollView
@@ -159,9 +186,47 @@ export default function CreatePostScreen() {
           </ScrollView>
         ) : null}
 
+        <View className="mt-6 rounded-[28px] border border-[#E8DFD2] bg-white px-5 py-5">
+          <Text className="font-extrabold text-brand-teal text-xs uppercase tracking-[1.2px]">
+            Discovery tags
+          </Text>
+          <Text className="mt-2 text-[13px] leading-5 text-[#706A5F]">
+            Add tags like `#BacolodDorms`, `#Under5000`, or `#NearUSLS` to help
+            people find your post.
+          </Text>
+          <TextInput
+            className="mt-4 rounded-[20px] bg-[#F7F4EE] px-4 py-4 text-[15px] text-slate-900"
+            onChangeText={setHashtagInput}
+            placeholder="#BacolodDorms #NearCampus"
+            placeholderTextColor="#A8A29A"
+            value={hashtagInput}
+          />
+          <View className="mt-3 flex-row flex-wrap gap-2">
+            {hashtags.length > 0 ? (
+              hashtags.map((tag) => (
+                <View
+                  key={tag}
+                  className="rounded-full bg-[#EEF5F1] px-3 py-2"
+                >
+                  <Text className="text-[12px] font-bold text-[#0B2D23]">
+                    #{tag}
+                  </Text>
+                </View>
+              ))
+            ) : (
+              <Text className="text-[13px] text-[#8C8478]">
+                Tags from your post text and this field will be combined.
+              </Text>
+            )}
+          </View>
+        </View>
+
         <View className="mt-6 rounded-[28px] bg-white px-5 py-5">
           <Text className="font-extrabold text-brand-teal text-xs uppercase tracking-[1.2px]">
-            Suggested listing tag
+            Link a listing
+          </Text>
+          <Text className="mt-2 text-[13px] leading-5 text-[#706A5F]">
+            Optional, but helpful if your update is about a specific place.
           </Text>
           <View className="mt-4 gap-3">
             {(nearbyListings.data ?? []).slice(0, 4).map((listing) => (
@@ -186,28 +251,6 @@ export default function CreatePostScreen() {
                 </Text>
               </Pressable>
             ))}
-          </View>
-        </View>
-
-        <View className="mt-6 rounded-[28px] bg-white px-5 py-5">
-          <Text className="font-extrabold text-brand-teal text-xs uppercase tracking-[1.2px]">
-            Hashtags
-          </Text>
-          <View className="mt-3 flex-row flex-wrap gap-2">
-            {hashtags.length ? (
-              hashtags.map((hashtag) => (
-                <Text
-                  key={hashtag}
-                  className="rounded-full bg-orange-50 px-3 py-2 font-semibold text-orange-700 text-xs"
-                >
-                  #{hashtag}
-                </Text>
-              ))
-            ) : (
-              <Text className="text-slate-500 text-sm">
-                Hashtags are extracted automatically from your text.
-              </Text>
-            )}
           </View>
         </View>
 

@@ -3,8 +3,8 @@ import { db, follows, profiles } from "@wheresmydorm/db";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
-import { getProfileNamePartsFromUser } from "../lib/profile.js";
-import { protectedProcedure, router } from "../index.js";
+import { getProfileNamePartsFromUser } from "../lib/profile";
+import { protectedProcedure, router } from "../index";
 
 const roleInputSchema = z.object({
   role: z.enum(["finder", "lister"]),

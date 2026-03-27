@@ -9,11 +9,23 @@ type StorageBucket =
   | "message-media"
   | "post-media";
 
-function buildFilePath(prefix: string, asset: ImagePickerAsset) {
+async function getCurrentUserId() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("You need to be signed in before uploading files.");
+  }
+
+  return user.id;
+}
+
+function buildFilePath(userId: string, asset: ImagePickerAsset) {
   const extension =
     asset.fileName?.split(".").pop() ??
     (asset.type === "video" ? "mp4" : "jpg");
-  return `${prefix}/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
+  return `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
 }
 
 export async function uploadFileUri({
@@ -48,7 +60,8 @@ export async function uploadPickedAsset(
   bucket: "listing-photos" | "message-media" | "post-media",
   asset: ImagePickerAsset,
 ) {
-  const filePath = buildFilePath(bucket, asset);
+  const userId = await getCurrentUserId();
+  const filePath = buildFilePath(userId, asset);
   return uploadFileUri({
     bucket,
     contentType: asset.mimeType ?? undefined,

@@ -17,7 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import type { MyListing } from "@/types/listings";
 import { formatCurrency } from "@/utils/profile";
 import { createListingRoute, listingEditRoute } from "@/utils/routes";
-import { trpc } from "@/utils/trpc";
+import { trpc } from "@/utils/api-client";
 
 const STATUS_COLORS: Record<MyListing["status"], { bg: string; text: string }> =
   {

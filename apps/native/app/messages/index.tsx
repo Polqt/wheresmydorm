@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 
-import { trpc } from "@/utils/trpc";
+import { trpc } from "@/utils/api-client";
 
 export default function MessagesIndexScreen() {
   const threadsQuery = useQuery(trpc.messages.getThreads.queryOptions());
