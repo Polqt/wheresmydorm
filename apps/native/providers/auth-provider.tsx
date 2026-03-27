@@ -45,8 +45,8 @@ const SETUP_SCREENS = new Set([
   "role-preferences",
   "permissions",
 ]);
-const FINDER_TAB_SEGMENTS = new Set(["map", "discover", "saved"]);
-const LISTER_TAB_SEGMENTS = new Set(["dashboard", "listings", "inbox"]);
+const FINDER_TAB_GROUP = "(finder-tabs)";
+const LISTER_TAB_GROUP = "(lister-tabs)";
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
@@ -115,6 +115,8 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const isInAuth = firstSegment === "auth";
   const isIndexRoute = firstSegment === undefined;
   const isSetupRoute = isInAuth && SETUP_SCREENS.has(secondSegment ?? "");
+  const isInFinderTabs = firstSegment === FINDER_TAB_GROUP;
+  const isInListerTabs = firstSegment === LISTER_TAB_GROUP;
 
   // Loading timeout
   useEffect(() => {
@@ -169,12 +171,12 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       // Let users finish the setup flow without interruption
       if (isSetupRoute) return;
 
-      if (role === "finder" && LISTER_TAB_SEGMENTS.has(firstSegment ?? "")) {
+      if (role === "finder" && isInListerTabs) {
         startTransition(() => router.replace(finderHomeRoute()));
         return;
       }
 
-      if (role === "lister" && FINDER_TAB_SEGMENTS.has(firstSegment ?? "")) {
+      if (role === "lister" && isInFinderTabs) {
         startTransition(() => router.replace(listerHomeRoute()));
         return;
       }
@@ -192,6 +194,8 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     isInAuth,
     isIndexRoute,
     isReady,
+    isInFinderTabs,
+    isInListerTabs,
     isSetupRoute,
     firstSegment,
     role,
