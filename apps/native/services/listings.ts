@@ -1,10 +1,9 @@
 import type {
   ListingDetail,
   ListingFormValues,
-  ListingListItem,
   ListingPropertyType,
 } from "@/types/listings";
-import type { MapFilters } from "@/types/map";
+import type { MapSortOption } from "@/types/map";
 
 export const DISCOVERY_FALLBACK_COORDS = {
   latitude: 10.6765,
@@ -37,91 +36,28 @@ export const DEFAULT_LISTING_FORM: ListingFormValues = {
   sizeSqm: "",
   amenities: "",
 };
-
-type DiscoveryInput = {
-  filters: MapFilters;
-  lat: number;
-  lng: number;
-};
-
-function toRadians(value: number) {
-  return (value * Math.PI) / 180;
-}
-
-export function distanceBetweenMeters(
-  left: { lat: number; lng: number },
-  right: { lat: number; lng: number },
-) {
-  const earthRadiusMeters = 6_371_000;
-  const latDelta = toRadians(right.lat - left.lat);
-  const lngDelta = toRadians(right.lng - left.lng);
-  const a =
-    Math.sin(latDelta / 2) ** 2 +
-    Math.cos(toRadians(left.lat)) *
-      Math.cos(toRadians(right.lat)) *
-      Math.sin(lngDelta / 2) ** 2;
-
-  return earthRadiusMeters * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-export function applyListingFilters(
-  listings: ListingListItem[],
-  origin: { lat: number; lng: number },
-  filters: MapFilters,
-) {
-  return listings
-    .filter((listing) =>
-      filters.amenities.every((amenity) => listing.amenities.includes(amenity)),
-    )
-    .map((listing) => ({
-      distanceMeters: distanceBetweenMeters(origin, {
-        lat: listing.lat,
-        lng: listing.lng,
-      }),
-      listing,
-    }))
-    .filter(({ distanceMeters }) => distanceMeters <= filters.distanceMeters)
-    .sort((left, right) => {
-      if (left.listing.isFeatured !== right.listing.isFeatured) {
-        return left.listing.isFeatured ? -1 : 1;
-      }
-
-      if (left.distanceMeters !== right.distanceMeters) {
-        return left.distanceMeters - right.distanceMeters;
-      }
-
-      const leftRating = left.listing.ratingOverall ?? 0;
-      const rightRating = right.listing.ratingOverall ?? 0;
-
-      if (leftRating !== rightRating) {
-        return rightRating - leftRating;
-      }
-
-      return right.listing.reviewCount - left.listing.reviewCount;
-    })
-    .map(({ listing }) => listing);
-}
-
-export function getDiscoveryQueryInput(filters: MapFilters) {
+export function getDiscoveryQueryInput(filters: {
+  amenities: string[];
+  availableBy?: string;
+  maxPrice?: number;
+  minPrice?: number;
+  minRating?: number;
+  propertyTypes: ListingPropertyType[];
+  query?: string;
+  sortBy?: MapSortOption;
+  limit?: number;
+}) {
   return {
     amenities: filters.amenities,
-    limit: 150,
+    availableBy: filters.availableBy,
+    limit: filters.limit ?? 150,
     maxPrice: filters.maxPrice,
     minPrice: filters.minPrice,
     minRating: filters.minRating,
     propertyTypes: filters.propertyTypes,
+    query: filters.query,
+    sortBy: filters.sortBy ?? "best_match",
   };
-}
-
-export function getFilteredDiscoveryListings(
-  listings: ListingListItem[],
-  input: DiscoveryInput,
-) {
-  return applyListingFilters(
-    listings,
-    { lat: input.lat, lng: input.lng },
-    input.filters,
-  );
 }
 
 export function createListingFormValues(

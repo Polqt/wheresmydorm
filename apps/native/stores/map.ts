@@ -1,22 +1,38 @@
 import { create } from "zustand";
-import type { MapFilters } from "@/types/map";
-import { MapStore } from "@/types/location";
 
-const defaultFilters: MapFilters = {
-  propertyTypes: [],
-  amenities: [],
-  distanceMeters: 4000,
-};
+import type { MapStore } from "@/types/location";
+import {
+  areMapFiltersEqual,
+  cloneMapFilters,
+  DEFAULT_MAP_FILTERS,
+} from "@/utils/map-filters";
 
 export const useMapStore = create<MapStore>((set) => ({
-  filters: defaultFilters,
+  filters: cloneMapFilters(DEFAULT_MAP_FILTERS),
   selectedListingId: null,
   isFilterOpen: false,
   setFilters: (updater) =>
-    set((state) => ({
-      filters: updater(state.filters),
-    })),
+    set((state) => {
+      const nextFilters = updater(state.filters);
+
+      if (areMapFiltersEqual(state.filters, nextFilters)) {
+        return state;
+      }
+
+      return {
+        filters: cloneMapFilters(nextFilters),
+      };
+    }),
   setSelectedListingId: (selectedListingId) => set({ selectedListingId }),
   setFilterOpen: (isFilterOpen) => set({ isFilterOpen }),
-  resetFilters: () => set({ filters: defaultFilters }),
+  resetFilters: () =>
+    set((state) => {
+      if (areMapFiltersEqual(state.filters, DEFAULT_MAP_FILTERS)) {
+        return state;
+      }
+
+      return {
+        filters: cloneMapFilters(DEFAULT_MAP_FILTERS),
+      };
+    }),
 }));

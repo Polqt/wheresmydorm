@@ -1,5 +1,21 @@
 import type { Href } from "expo-router";
 
+import type { RoleOption } from "@/types/auth";
+
+type AppRole = RoleOption | "admin" | null | undefined;
+
+export function finderHomeRoute(): Href {
+  return "/(tabs)/map";
+}
+
+export function listerHomeRoute(): Href {
+  return "/(tabs)/dashboard";
+}
+
+export function roleHomeRoute(role: AppRole): Href {
+  return role === "lister" ? listerHomeRoute() : finderHomeRoute();
+}
+
 export function createListingRoute(): Href {
   return "/listings/create";
 }
@@ -8,8 +24,13 @@ export function myListingsRoute(): Href {
   return "/listings/my";
 }
 
-export function postCreateRoute(): Href {
-  return "/post/create";
+export function postCreateRoute(listingId?: string): Href {
+  return listingId
+    ? {
+        pathname: "/post/create",
+        params: { listingId },
+      }
+    : "/post/create";
 }
 
 export function profileEditRoute(): Href {
@@ -18,6 +39,14 @@ export function profileEditRoute(): Href {
 
 export function savedListingsRoute(): Href {
   return "/saved";
+}
+
+export function listerListingsTabRoute(): Href {
+  return "/(tabs)/listings";
+}
+
+export function listerInboxTabRoute(): Href {
+  return "/(tabs)/inbox";
 }
 
 export function messagesInboxRoute(): Href {

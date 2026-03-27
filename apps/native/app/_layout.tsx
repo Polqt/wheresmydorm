@@ -15,7 +15,7 @@ import { NAV_THEME } from "@/lib/constants";
 import { setAndroidNavigationBar } from "@/lib/navigation-bar";
 import { useColorScheme } from "@/lib/use-color-scheme";
 import { AuthProvider } from "@/providers/auth-provider";
-import { queryClient } from "@/utils/trpc";
+import { queryClient } from "@/utils/api-client";
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -79,7 +79,6 @@ export default function RootLayout() {
               <Stack.Screen name="post" />
               <Stack.Screen name="listings" />
               <Stack.Screen name="messages" />
-              <Stack.Screen name="saved" />
             </Stack>
           </AuthProvider>
         </GestureHandlerRootView>

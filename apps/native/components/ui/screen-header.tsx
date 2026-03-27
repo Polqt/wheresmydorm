@@ -1,7 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import type { ReactNode } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 type ScreenHeaderProps = {
   action?: ReactNode;
@@ -17,70 +17,34 @@ export function ScreenHeader({
   withBackButton = false,
 }: ScreenHeaderProps) {
   return (
-    <View style={styles.wrap}>
-      <View style={styles.row}>
+    <View className="px-[18px] pb-3.5 pt-3">
+      <View className="flex-row items-start gap-3">
         {withBackButton ? (
           <Pressable
+            className="mt-1 h-9 w-9 items-center justify-center rounded-[18px] bg-[#EEE8DE]"
             hitSlop={8}
             onPress={() => router.back()}
-            style={styles.backButton}
           >
             <Ionicons color="#1A1A1A" name="chevron-back" size={20} />
           </Pressable>
         ) : null}
 
-        <View style={styles.copy}>
-          <Text style={styles.title}>{title}</Text>
+        <View className="flex-1">
+          <Text className="text-[32px] font-extrabold tracking-[-0.8px] text-[#111827]">
+            {title}
+          </Text>
           {subtitle ? (
-            <Text numberOfLines={2} style={styles.subtitle}>
+            <Text
+              className="mt-1 text-[14px] leading-5 text-[#6F685E]"
+              numberOfLines={2}
+            >
               {subtitle}
             </Text>
           ) : null}
         </View>
 
-        {action ? <View style={styles.action}>{action}</View> : null}
+        {action ? <View className="mt-1.5 self-center">{action}</View> : null}
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    paddingHorizontal: 18,
-    paddingTop: 12,
-    paddingBottom: 14,
-  },
-  row: {
-    alignItems: "flex-start",
-    flexDirection: "row",
-    gap: 12,
-  },
-  backButton: {
-    alignItems: "center",
-    backgroundColor: "#EEE8DE",
-    borderRadius: 18,
-    height: 36,
-    justifyContent: "center",
-    marginTop: 4,
-    width: 36,
-  },
-  copy: {
-    flex: 1,
-  },
-  title: {
-    color: "#111827",
-    fontSize: 32,
-    fontWeight: "800",
-    letterSpacing: -0.8,
-  },
-  subtitle: {
-    color: "#6F685E",
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: 4,
-  },
-  action: {
-    alignSelf: "center",
-    marginTop: 6,
-  },
-});

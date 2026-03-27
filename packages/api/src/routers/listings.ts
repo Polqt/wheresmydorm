@@ -6,46 +6,91 @@ import {
   profiles,
   savedListings,
 } from "@wheresmydorm/db";
-import { and, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
-import { protectedProcedure, router } from "../index.js";
-import { formatProfileName } from "../lib/profile.js";
 
-const propertyTypeValues = [
-  "dorm",
-  "apartment",
-  "bedspace",
-  "condo",
-  "boarding_house",
-  "studio",
-] as const;
+import { protectedProcedure, router } from "../index";
+import {
+  FREE_FINDER_DAILY_FIND_LIMIT,
+  hasAdvancedFinderFilters,
+} from "../lib/finder-search";
+import {
+  fetchDiscoveryListingRows,
+  findNearbySchema,
+  getDiscoveryListingItems,
+  getNearbyDiscoveryItems,
+  listingBodySchema,
+  listingListSchema,
+  listingStatusValues,
+  type FindNearbyInput,
+} from "../lib/listings";
+import { formatProfileName } from "../lib/profile";
+type FinderQuotaRow = {
+  allowed: boolean;
+  daily_limit: number;
+  is_paid: boolean;
+  remaining_finds: number;
+  used_today: number;
+};
 
-const listingStatusValues = ["active", "paused", "archived"] as const;
+function toFinderQuotaStatus(row: FinderQuotaRow) {
+  return {
+    advancedFiltersEnabled: row.is_paid,
+    canFind: row.allowed,
+    dailyLimit: row.daily_limit,
+    hasUnlimitedFinds: row.is_paid,
+    isPaid: row.is_paid,
+    remainingFinds: row.remaining_finds,
+    usedToday: row.used_today,
+  };
+}
 
-const listingBodySchema = z.object({
-  title: z.string().trim().min(4).max(120),
-  description: z.string().trim().min(10).max(2000),
-  propertyType: z.enum(propertyTypeValues),
-  pricePerMonth: z.number().positive().max(999_999),
-  sizeSqm: z.number().positive().max(9999).optional(),
-  maxOccupants: z.number().int().positive().max(100).optional(),
-  lat: z.number().min(-90).max(90),
-  lng: z.number().min(-180).max(180),
-  address: z.string().trim().min(4).max(300),
-  city: z.string().trim().min(2).max(100),
-  barangay: z.string().trim().max(100).optional(),
-  amenities: z.array(z.string().trim().min(1).max(60)).max(30).default([]),
-  photoUrls: z.array(z.string().url()).max(10).default([]),
-});
+function normalizeFinderQuotaRow(row: Record<string, unknown>): FinderQuotaRow {
+  return {
+    allowed: Boolean(row.allowed),
+    daily_limit: Number(row.daily_limit ?? 0),
+    is_paid: Boolean(row.is_paid),
+    remaining_finds: Number(row.remaining_finds ?? 0),
+    used_today: Number(row.used_today ?? 0),
+  };
+}
 
-const listingListSchema = z.object({
-  amenities: z.array(z.string().trim().min(1).max(60)).max(30).default([]),
-  limit: z.number().int().min(1).max(150).default(100),
-  maxPrice: z.number().nonnegative().max(999_999).optional(),
-  minPrice: z.number().nonnegative().max(999_999).optional(),
-  minRating: z.number().min(0).max(5).optional(),
-  propertyTypes: z.array(z.enum(propertyTypeValues)).max(6).default([]),
-});
+async function getFinderQuotaRow(userId: string): Promise<FinderQuotaRow> {
+  const result = await db.execute(sql<FinderQuotaRow>`
+    select *
+    from public.get_finder_find_quota(${userId})
+  `);
+  const row = result.rows[0];
+
+  if (!row) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Finder quota is unavailable right now.",
+    });
+  }
+
+  return normalizeFinderQuotaRow(row);
+}
+
+async function consumeFinderFindRow(
+  userId: string,
+  input: Pick<FindNearbyInput, "lat" | "lng" | "radiusMeters">,
+): Promise<FinderQuotaRow> {
+  const result = await db.execute(sql<FinderQuotaRow>`
+    select *
+    from public.consume_finder_find(${userId}, ${input.lat}, ${input.lng}, ${input.radiusMeters})
+  `);
+  const row = result.rows[0];
+
+  if (!row) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Finder quota could not be updated.",
+    });
+  }
+
+  return normalizeFinderQuotaRow(row);
+}
 
 export const listingsRouter = router({
   create: protectedProcedure
@@ -98,59 +143,88 @@ export const listingsRouter = router({
     }),
 
   list: protectedProcedure.input(listingListSchema).query(async ({ input }) => {
-    const rows = await db.query.listings.findMany({
-      where: and(
-        eq(listings.status, "active"),
-        eq(listings.isAvailable, true),
-        input.propertyTypes.length > 0
-          ? inArray(listings.propertyType, input.propertyTypes)
-          : undefined,
-        input.minPrice !== undefined
-          ? gte(listings.pricePerMonth, String(input.minPrice))
-          : undefined,
-        input.maxPrice !== undefined
-          ? lte(listings.pricePerMonth, String(input.maxPrice))
-          : undefined,
-        input.minRating !== undefined
-          ? gte(listings.ratingOverall, input.minRating)
-          : undefined,
-      ),
-      orderBy: [desc(listings.isFeatured), desc(listings.createdAt)],
-      limit: input.limit,
-      with: {
-        photos: {
-          columns: { url: true, orderIndex: true },
-          limit: 1,
-          orderBy: (p, { asc }) => [asc(p.orderIndex)],
-        },
-      },
+    const rows = await fetchDiscoveryListingRows(input);
+    return getDiscoveryListingItems(rows, input);
+  }),
+
+  findQuotaStatus: protectedProcedure.query(async ({ ctx }) => {
+    const profile = await db.query.profiles.findFirst({
+      where: eq(profiles.id, ctx.userId),
+      columns: { role: true },
     });
 
-    return rows
-      .filter((row) =>
-        input.amenities.every((amenity) => row.amenities.includes(amenity)),
-      )
-      .map((row) => ({
-        amenities: row.amenities,
-        barangay: row.barangay,
-        bookmarkCount: row.bookmarkCount,
-        city: row.city,
-        coverPhoto: row.photos[0]?.url ?? null,
-        id: row.id,
-        inquiryCount: row.inquiryCount,
-        isAvailable: row.isAvailable,
-        isFeatured: row.isFeatured,
-        lat: row.lat,
-        lng: row.lng,
-        pricePerMonth: row.pricePerMonth,
-        propertyType: row.propertyType,
-        ratingOverall: row.ratingOverall,
-        reviewCount: row.reviewCount,
-        status: row.status,
-        title: row.title,
-        viewCount: row.viewCount,
-      }));
+    if (!profile) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Profile not found for the current user.",
+      });
+    }
+
+    if (profile.role !== "finder" && profile.role !== "admin") {
+      return {
+        advancedFiltersEnabled: false,
+        canFind: false,
+        dailyLimit: FREE_FINDER_DAILY_FIND_LIMIT,
+        hasUnlimitedFinds: false,
+        isPaid: false,
+        remainingFinds: 0,
+        usedToday: 0,
+      };
+    }
+
+    const quota = await getFinderQuotaRow(ctx.userId);
+    return toFinderQuotaStatus(quota);
   }),
+
+  findNearby: protectedProcedure
+    .input(findNearbySchema)
+    .mutation(async ({ ctx, input }) => {
+      const profile = await db.query.profiles.findFirst({
+        where: eq(profiles.id, ctx.userId),
+        columns: { role: true },
+      });
+
+      if (!profile) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Profile not found for the current user.",
+        });
+      }
+
+      if (profile.role !== "finder" && profile.role !== "admin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only finders can run nearby searches.",
+        });
+      }
+
+      const quotaBeforeFind = await getFinderQuotaRow(ctx.userId);
+
+      if (!quotaBeforeFind.is_paid && hasAdvancedFinderFilters(input)) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "Advanced filters are available for paid finders only.",
+        });
+      }
+
+      const quota = await consumeFinderFindRow(ctx.userId, input);
+
+      if (!quota.allowed) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "Free finders get 5 nearby finds per day. Upgrade your finder plan for unlimited searches.",
+        });
+      }
+
+      const rows = await fetchDiscoveryListingRows(input);
+
+      return {
+        items: getNearbyDiscoveryItems(rows, input),
+        quota: toFinderQuotaStatus(quota),
+      };
+    }),
 
   myListings: protectedProcedure.query(async ({ ctx }) => {
     const rows = await db.query.listings.findMany({
@@ -291,12 +365,23 @@ export const listingsRouter = router({
 
       const updatePayload: Record<string, unknown> = {};
       const passThrough = [
-        "title", "description", "propertyType", "sizeSqm",
-        "maxOccupants", "lat", "lng", "address", "city", "barangay", "amenities",
+        "title",
+        "description",
+        "propertyType",
+        "sizeSqm",
+        "maxOccupants",
+        "lat",
+        "lng",
+        "address",
+        "city",
+        "barangay",
+        "amenities",
       ] as const;
+
       for (const key of passThrough) {
         if (fields[key] !== undefined) updatePayload[key] = fields[key];
       }
+
       if (fields.pricePerMonth !== undefined) {
         updatePayload.pricePerMonth = String(fields.pricePerMonth);
       }
@@ -309,11 +394,13 @@ export const listingsRouter = router({
 
       if (photoUrls && photoUrls.length > 0) {
         await db.delete(listingPhotos).where(eq(listingPhotos.listingId, id));
-        await db
-          .insert(listingPhotos)
-          .values(
-            photoUrls.map((url, i) => ({ listingId: id, url, orderIndex: i })),
-          );
+        await db.insert(listingPhotos).values(
+          photoUrls.map((url, i) => ({
+            listingId: id,
+            url,
+            orderIndex: i,
+          })),
+        );
       }
 
       return updated;
@@ -362,12 +449,6 @@ export const listingsRouter = router({
               eq(savedListings.listingId, input.listingId),
             ),
           );
-        await db
-          .update(listings)
-          .set({
-            bookmarkCount: sql`greatest(${listings.bookmarkCount} - 1, 0)`,
-          })
-          .where(eq(listings.id, input.listingId));
         return { saved: false };
       }
 
@@ -375,10 +456,6 @@ export const listingsRouter = router({
         finderId: ctx.userId,
         listingId: input.listingId,
       });
-      await db
-        .update(listings)
-        .set({ bookmarkCount: sql`${listings.bookmarkCount} + 1` })
-        .where(eq(listings.id, input.listingId));
 
       return { saved: true };
     }),
