@@ -5,11 +5,11 @@ import type { RoleOption } from "@/types/auth";
 type AppRole = RoleOption | "admin" | null | undefined;
 
 export function finderHomeRoute(): Href {
-  return "/(tabs)/map";
+  return "/(finder-tabs)/map";
 }
 
 export function listerHomeRoute(): Href {
-  return "/(tabs)/dashboard";
+  return "/(lister-tabs)/dashboard";
 }
 
 export function roleHomeRoute(role: AppRole): Href {
@@ -38,15 +38,19 @@ export function profileEditRoute(): Href {
 }
 
 export function savedListingsRoute(): Href {
-  return "/saved";
+  return "/(finder-tabs)/saved";
 }
 
 export function listerListingsTabRoute(): Href {
-  return "/(tabs)/listings";
+  return "/(lister-tabs)/listings";
 }
 
 export function listerInboxTabRoute(): Href {
-  return "/(tabs)/inbox";
+  return "/(lister-tabs)/inbox";
+}
+
+export function roleFeedRoute(role: AppRole): Href {
+  return role === "lister" ? "/(lister-tabs)/feed" : "/(finder-tabs)/feed";
 }
 
 export function messagesInboxRoute(): Href {

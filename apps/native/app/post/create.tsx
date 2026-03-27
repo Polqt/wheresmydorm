@@ -8,6 +8,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { refreshPostQueries } from "@/lib/post-query";
 import { ScreenHeader } from "@/components/ui/screen-header";
+import { useAuth } from "@/providers/auth-provider";
 import { getDiscoveryQueryInput } from "@/services/listings";
 import {
   extractHashtags,
@@ -15,9 +16,11 @@ import {
   parseHashtagInput,
 } from "@/services/posts";
 import { uploadPickedAsset } from "@/services/storage";
+import { roleFeedRoute } from "@/utils/routes";
 import { trpc } from "@/utils/api-client";
 
 export default function CreatePostScreen() {
+  const { role } = useAuth();
   const { listingId } = useLocalSearchParams<{ listingId?: string }>();
   const queryClient = useQueryClient();
   const [body, setBody] = useState("");
@@ -39,7 +42,7 @@ export default function CreatePostScreen() {
     trpc.posts.create.mutationOptions({
       onSuccess: async () => {
         await refreshPostQueries(queryClient);
-        router.replace("/(tabs)/feed");
+        router.replace(roleFeedRoute(role));
       },
     }),
   );

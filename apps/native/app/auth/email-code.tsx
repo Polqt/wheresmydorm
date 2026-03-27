@@ -72,7 +72,7 @@ export default function EmailCodeScreen() {
       await verifyEmailOtp(pendingEmail, code);
       clearPendingEmail();
       // AuthProvider detects the new session via onAuthStateChange
-      // and routes to role-select or (tabs)/map automatically.
+      // and routes to role-select or the correct role home automatically.
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "Unable to verify your code.",
