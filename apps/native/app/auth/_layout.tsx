@@ -11,6 +11,7 @@ export default function AuthLayout() {
       <Stack.Screen name="profile-setup" />
       <Stack.Screen name="avatar-setup" />
       <Stack.Screen name="contact-info" />
+      <Stack.Screen name="role-preferences" />
       <Stack.Screen name="permissions" />
     </Stack>
   );

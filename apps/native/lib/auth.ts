@@ -5,7 +5,7 @@ import type { OAuthProvider, RoleCard } from "@/types/auth";
 export const AUTH_CALLBACK_PATH = "auth/callback";
 export const AUTH_SCHEME = "wheresmydorm";
 export const PROFILE_QUERY_KEY = "auth-profile";
-export const ONBOARDING_STEPS = 4;
+export const ONBOARDING_STEPS = 5;
 export const AUTH_TERMS_COPY =
   "By continuing you agree to our Terms of Service and Privacy Policy.";
 export const EMAIL_CODE_LENGTH = 8;
@@ -14,13 +14,13 @@ export const ROLE_CARDS: readonly RoleCard[] = [
   {
     emoji: "\u{1F50D}",
     role: "finder",
-    subtitle: "Search listings, AI chat, reviews.",
+    subtitle: "Search on the map, save places, use AI chat, and review rentals.",
     title: "I'm looking for a place",
   },
   {
     emoji: "\u{1F3E0}",
     role: "lister",
-    subtitle: "Post listings, manage inquiries, respond to reviews.",
+    subtitle: "Publish listings, manage inquiries, and post vacancy updates.",
     title: "I have a place to rent",
   },
 ] as const;

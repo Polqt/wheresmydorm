@@ -15,12 +15,12 @@ import {
 import {
   AppLaunchScreen,
   LaunchScreenButton,
-} from "@/components/ui/app-launch-screen";
+} from "@/components/ui/launch-screen";
 import { PROFILE_QUERY_KEY } from "@/lib/auth";
 import { saveSessionForRestore } from "@/services/auth";
-import { getOnboardingCompletion } from "@/services/onboarding";
 import { getOrCreateCurrentProfile } from "@/services/profile";
 import { useAuthFlowStore } from "@/stores/auth";
+import { finderHomeRoute, listerHomeRoute, roleHomeRoute } from "@/utils/routes";
 import { supabase } from "@/utils/supabase";
 
 type AuthContextValue = {
@@ -32,11 +32,9 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-// Fallback max wait in case the video never fires playToEnd (e.g. load failure)
 const SPLASH_FALLBACK_MS = 20_000;
 const LOADING_TIMEOUT_MS = 10_000;
 
-// Once the splash plays once per app launch, skip the video on subsequent loads.
 let hasShownInitialSplash = false;
 
 const SETUP_SCREENS = new Set([
@@ -44,8 +42,11 @@ const SETUP_SCREENS = new Set([
   "profile-setup",
   "avatar-setup",
   "contact-info",
+  "role-preferences",
   "permissions",
 ]);
+const FINDER_TAB_SEGMENTS = new Set(["map", "discover", "saved"]);
+const LISTER_TAB_SEGMENTS = new Set(["dashboard", "listings", "inbox"]);
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
@@ -71,15 +72,6 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
   });
 
-  const handleVideoEnd = useCallback(() => {
-    if (!splashDone) {
-      hasShownInitialSplash = true;
-      setSplashDone(true);
-    }
-  }, [splashDone]);
-
-  // Skip video on re-mounts within the same app session; keep a fallback timer
-  // in case playToEnd never fires (video load failure, etc.)
   useEffect(() => {
     if (hasShownInitialSplash) {
       setSplashDone(true);
@@ -122,7 +114,6 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     isSessionReady && (!session || (!profileQuery.isLoading && !profileQuery.error));
   const isInAuth = firstSegment === "auth";
   const isIndexRoute = firstSegment === undefined;
-  const isOnboardingRoute = firstSegment === "onboarding";
   const isSetupRoute = isInAuth && SETUP_SCREENS.has(secondSegment ?? "");
 
   // Loading timeout
@@ -154,24 +145,15 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     let cancelled = false;
 
     const sync = async () => {
-      let onboardingDone = false;
-      try {
-        onboardingDone = await getOnboardingCompletion(session?.user.id);
-      } catch {
-        // treat as not done
-      }
-
-      if (cancelled) return;
-
       // --- Not signed in ---
       if (!session) {
-        if (!onboardingDone && !isOnboardingRoute) {
-          startTransition(() => router.replace("/onboarding"));
-        } else if (onboardingDone && !isInAuth) {
+        if (!isInAuth) {
           startTransition(() => router.replace("/auth/sign-in"));
         }
         return;
       }
+
+      if (cancelled) return;
 
       // --- Signed in, no role yet ---
       if (!role) {
@@ -187,14 +169,18 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       // Let users finish the setup flow without interruption
       if (isSetupRoute) return;
 
-      // --- Signed in, has role, check onboarding ---
-      if (!onboardingDone && !isOnboardingRoute) {
-        startTransition(() => router.replace("/onboarding"));
+      if (role === "finder" && LISTER_TAB_SEGMENTS.has(firstSegment ?? "")) {
+        startTransition(() => router.replace(finderHomeRoute()));
         return;
       }
 
-      if ((isInAuth || isIndexRoute || isOnboardingRoute) && onboardingDone) {
-        startTransition(() => router.replace("/(tabs)/map"));
+      if (role === "lister" && FINDER_TAB_SEGMENTS.has(firstSegment ?? "")) {
+        startTransition(() => router.replace(listerHomeRoute()));
+        return;
+      }
+
+      if (isInAuth || isIndexRoute || firstSegment === "onboarding") {
+        startTransition(() => router.replace(roleHomeRoute(role)));
       }
     };
 
@@ -205,9 +191,9 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     isAwaitingRoleSync,
     isInAuth,
     isIndexRoute,
-    isOnboardingRoute,
     isReady,
     isSetupRoute,
+    firstSegment,
     role,
     secondSegment,
     session,
@@ -245,12 +231,11 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   // --- Loading / splash screens ---
   if (!isReady || !splashDone) {
     if (!splashDone) {
-      return <AppLaunchScreen body="" title="" showGif onVideoEnd={handleVideoEnd} />;
+      return <AppLaunchScreen body="" title="" />;
     }
 
     return (
       <AppLaunchScreen
-        showGif={false}
         body={
           loadingTooLong
             ? "Having trouble loading your profile. You can retry or sign out."

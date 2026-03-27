@@ -15,11 +15,7 @@ export default function NativeSignInScreen() {
     setErrorMessage(null);
 
     try {
-      const didComplete = await signInWithOAuth(provider);
-
-      if (didComplete) {
-        router.replace("/(tabs)/map");
-      }
+      await signInWithOAuth(provider);
     } catch (error) {
       setErrorMessage(getOAuthErrorMessage(provider, error));
     } finally {
