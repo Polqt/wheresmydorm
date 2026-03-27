@@ -136,7 +136,7 @@ export default function RoleSelectScreen() {
             How will you use{"\n"}WheresMyDorm?
           </Text>
           <Text className="mt-2 text-center text-[14px] leading-6 text-[#8A8480]">
-            Pick the path that fits you best. You can switch roles later in settings.
+            Pick the path that fits you best. Your role shapes the whole app experience.
           </Text>
 
           <View className="mt-8 gap-3">

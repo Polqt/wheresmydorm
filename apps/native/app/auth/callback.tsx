@@ -5,7 +5,7 @@ import { Text, View } from "react-native";
 import { AppLaunchScreen } from "@/components/ui/launch-screen";
 import { supabase } from "@/utils/supabase";
 
-export default function AuthCallbackScreen() {
+export default function AutahCallbackScreen() {
   const {
     access_token: accessToken,
     code,

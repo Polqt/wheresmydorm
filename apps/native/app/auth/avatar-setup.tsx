@@ -19,7 +19,7 @@ import {
 import { SetupProgressBar } from "@/components/ui/setup-progress-bar";
 import { ONBOARDING_STEPS, PROFILE_QUERY_KEY } from "@/lib/auth";
 import { useAuth } from "@/providers/auth-provider";
-import { updateCurrentProfile } from "@/services/profile";
+import { updateCurrentProfile, uploadAvatar } from "@/services/profile";
 
 const CURRENT_STEP = 2;
 
@@ -56,7 +56,12 @@ export default function AvatarSetupScreen() {
     setError(null);
 
     try {
-      const profile = await updateCurrentProfile(user.id, { avatarUrl: avatarUri });
+      const uploadedAvatarUrl = avatarUri
+        ? await uploadAvatar(user.id, avatarUri)
+        : null;
+      const profile = await updateCurrentProfile(user.id, {
+        avatarUrl: uploadedAvatarUrl,
+      });
       queryClient.setQueryData([PROFILE_QUERY_KEY, user.id], profile);
       router.replace("/auth/contact-info");
     } catch (err) {

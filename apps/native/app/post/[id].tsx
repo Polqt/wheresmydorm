@@ -1,12 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { useMemo, useState } from "react";
+import { Pressable, ScrollView, Share, Text, TextInput, View } from "react-native";
 
+import { usePostRealtime } from "@/hooks/use-post-realtime";
+import { refreshPostQueries } from "@/lib/post-query";
+import { buildPostShareMessage } from "@/services/posts";
 import type { PostComment } from "@/types/posts";
-import { supabase } from "@/utils/supabase";
-import { trpc } from "@/utils/trpc";
+import { trpc } from "@/utils/api-client";
 
 function CommentCard({
   comment,
@@ -74,49 +76,18 @@ export default function PostDetailScreen() {
       postId: id,
     }),
   );
+
+  usePostRealtime({ enabled: Boolean(id), postId: id });
+
   const commentMutation = useMutation(
     trpc.posts.comment.mutationOptions({
       onSuccess: async () => {
         setCommentBody("");
         setReplyTarget(null);
-        await Promise.all([
-          queryClient.invalidateQueries({
-            queryKey: ["trpc", "posts", "getComments"],
-          }),
-          queryClient.invalidateQueries({
-            queryKey: ["trpc", "posts", "getById"],
-          }),
-          queryClient.invalidateQueries({
-            queryKey: ["trpc", "posts", "list"],
-          }),
-        ]);
+        await refreshPostQueries(queryClient);
       },
     }),
   );
-
-  useEffect(() => {
-    const channel = supabase
-      .channel(`post-comments:${id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          filter: `post_id=eq.${id}`,
-          schema: "public",
-          table: "post_comments",
-        },
-        () => {
-          void queryClient.invalidateQueries({
-            queryKey: ["trpc", "posts", "getComments"],
-          });
-        },
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [id, queryClient]);
 
   const orderedComments = useMemo(() => {
     const comments = commentsQuery.data ?? [];
@@ -145,9 +116,27 @@ export default function PostDetailScreen() {
         <Text className="font-extrabold text-brand-teal text-xs uppercase tracking-[1.2px]">
           Post thread
         </Text>
-        <Pressable onPress={() => router.back()}>
-          <Text className="font-bold text-slate-600 text-sm">Back</Text>
-        </Pressable>
+        <View className="flex-row items-center gap-4">
+          {postQuery.data ? (
+            <Pressable
+              onPress={() =>
+                Share.share({
+                  message: buildPostShareMessage({
+                    authorName: postQuery.data.author.displayName,
+                    body: postQuery.data.body,
+                    listingTitle: postQuery.data.listing?.title,
+                  }),
+                  title: "Share post",
+                })
+              }
+            >
+              <Text className="font-bold text-brand-orange text-sm">Share</Text>
+            </Pressable>
+          ) : null}
+          <Pressable onPress={() => router.back()}>
+            <Text className="font-bold text-slate-600 text-sm">Back</Text>
+          </Pressable>
+        </View>
       </View>
 
       {postQuery.data ? (

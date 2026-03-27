@@ -18,7 +18,7 @@ import { useAuth } from "@/providers/auth-provider";
 import { encodeMessageThreadId } from "@/services/messages";
 import { formatCurrency } from "@/utils/profile";
 import { listingEditRoute, messageThreadRoute } from "@/utils/routes";
-import { trpc } from "@/utils/trpc";
+import { trpc } from "@/utils/api-client";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const COVER_FALLBACK =

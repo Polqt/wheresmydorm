@@ -9,33 +9,22 @@ import { ProfileAvatar } from "@/components/profile/profile-avatar";
 import { ProfileRow } from "@/components/profile/profile-row";
 import { ProfileSection } from "@/components/profile/profile-section";
 import { ProfileStatsRow } from "@/components/profile/profile-stat";
-import { PROFILE_QUERY_KEY } from "@/lib/auth";
+import { useCurrentProfile } from "@/hooks/use-current-profile";
 import { useAuth } from "@/providers/auth-provider";
-import { getOrCreateCurrentProfile } from "@/services/profile";
 import { formatMemberSince, getInitials } from "@/utils/profile";
 import {
   createListingRoute,
+  listerListingsTabRoute,
   messagesInboxRoute,
-  myListingsRoute,
   profileEditRoute,
   savedListingsRoute,
 } from "@/utils/routes";
-import { trpc } from "@/utils/trpc";
+import { trpc } from "@/utils/api-client";
 
 export default function ProfileTabScreen() {
   const { signOut, user, role } = useAuth();
 
-  const { data: profile } = useQuery({
-    enabled: Boolean(user),
-    queryFn: async () => {
-      if (!user) {
-        throw new Error("Missing authenticated user.");
-      }
-
-      return getOrCreateCurrentProfile(user);
-    },
-    queryKey: [PROFILE_QUERY_KEY, user?.id],
-  });
+  const { data: profile } = useCurrentProfile(user);
   const myListingsQuery = useQuery({
     ...trpc.listings.myListings.queryOptions(),
     enabled: role === "lister",
@@ -183,7 +172,7 @@ export default function ProfileTabScreen() {
               <ProfileRow
                 icon="home-outline"
                 label="My listings"
-                onPress={() => router.push(myListingsRoute())}
+                onPress={() => router.push(listerListingsTabRoute())}
               />
               <ProfileRow
                 icon="add-circle-outline"

@@ -10,7 +10,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -47,15 +46,18 @@ function FormField({
   required?: boolean;
 }) {
   return (
-    <View style={styles.fieldGroup}>
-      <Text style={styles.fieldLabel}>
+    <View className="mb-4">
+      <Text className="mb-1.5 text-[13px] font-bold text-[#1A1A1A]">
         {label}
-        {required ? <Text style={styles.required}> *</Text> : null}
+        {required ? <Text className="text-red-500"> *</Text> : null}
       </Text>
       {children}
     </View>
   );
 }
+
+const INPUT_CLASS_NAME =
+  "rounded-[14px] border border-[#EAE5DE] bg-white px-[14px] py-3 text-[14px] text-[#0F172A]";
 
 export function ListingForm({
   errorMessage,
@@ -168,27 +170,33 @@ export function ListingForm({
   }, [assets, form, onSubmit]);
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-[#FAF8F5]" edges={["top"]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.flex}
+        className="flex-1"
       >
-        <View style={styles.header}>
-          <Pressable hitSlop={8} onPress={onCancel} style={styles.backBtn}>
+        <View className="flex-row items-center gap-3 px-4 pb-3 pt-2">
+          <Pressable
+            hitSlop={8}
+            onPress={onCancel}
+            className="h-[38px] w-[38px] items-center justify-center rounded-full bg-[#F5F0EA]"
+          >
             <Ionicons color="#1A1A1A" name="chevron-back" size={22} />
           </Pressable>
-          <Text style={styles.headerTitle}>
+          <Text className="flex-1 text-[20px] font-extrabold text-[#0F172A]">
             {mode === "create" ? "New Listing" : "Edit Listing"}
           </Text>
           <Pressable
             disabled={isSubmitting}
             onPress={() => void handleSubmit()}
-            style={[styles.saveBtn, isSubmitting && styles.disabled]}
+            className={`rounded-[14px] bg-[#0B2D23] px-[18px] py-2 ${
+              isSubmitting ? "opacity-50" : ""
+            }`}
           >
             {isSubmitting ? (
               <ActivityIndicator color="#ffffff" size="small" />
             ) : (
-              <Text style={styles.saveBtnText}>
+              <Text className="text-[13px] font-extrabold text-white">
                 {mode === "create" ? "Publish" : "Save"}
               </Text>
             )}
@@ -196,14 +204,17 @@ export function ListingForm({
         </View>
 
         <ScrollView
-          contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          <View className="gap-1 px-4 pb-10">
           <FormField label="Photos">
-            <Pressable onPress={handlePickPhotos} style={styles.photoUpload}>
+            <Pressable
+              onPress={handlePickPhotos}
+              className="flex-row items-center gap-[10px] rounded-[14px] border border-dashed border-[#EAE5DE] bg-white px-[14px] py-[14px]"
+            >
               <Ionicons color="#706A5F" name="camera-outline" size={22} />
-              <Text style={styles.photoUploadText}>
+              <Text className="text-[14px] text-[#706A5F]">
                 {assets.length > 0
                   ? `${assets.length} photo${assets.length > 1 ? "s" : ""} selected`
                   : photoPreviewUrls.length > 0
@@ -216,13 +227,13 @@ export function ListingForm({
 
             {photoPreviewUrls.length > 0 ? (
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View style={styles.photoRow}>
+                <View className="mt-[10px] flex-row gap-2">
                   {photoPreviewUrls.map((uri) => (
                     <Image
                       key={uri}
+                      className="h-20 w-20 rounded-[12px]"
                       contentFit="cover"
                       source={{ uri }}
-                      style={styles.photoThumb}
                     />
                   ))}
                 </View>
@@ -232,45 +243,45 @@ export function ListingForm({
 
           <FormField label="Title" required>
             <TextInput
+              className={INPUT_CLASS_NAME}
               onChangeText={(value) => update("title", value)}
               placeholder="e.g. Cozy 2-bed dorm near USLS"
               placeholderTextColor="#A09A90"
-              style={styles.input}
               value={form.title}
             />
           </FormField>
 
           <FormField label="Description" required>
             <TextInput
+              className={`${INPUT_CLASS_NAME} min-h-[100px] pt-3`}
               multiline
               numberOfLines={4}
               onChangeText={(value) => update("description", value)}
               placeholder="Describe the place, rules, and what is included."
               placeholderTextColor="#A09A90"
-              style={[styles.input, styles.textarea]}
               textAlignVertical="top"
               value={form.description}
             />
           </FormField>
 
           <FormField label="Property type" required>
-            <View style={styles.chipRow}>
+            <View className="flex-row flex-wrap gap-2">
               {LISTING_PROPERTY_TYPES.map((propertyType) => (
                 <Pressable
                   key={propertyType.value}
                   onPress={() => update("propertyType", propertyType.value)}
-                  style={[
-                    styles.chip,
-                    form.propertyType === propertyType.value &&
-                      styles.chipActive,
-                  ]}
+                  className={`rounded-full border px-[14px] py-2 ${
+                    form.propertyType === propertyType.value
+                      ? "border-[#0B2D23] bg-[#0B2D23]"
+                      : "border-[#EAE5DE] bg-white"
+                  }`}
                 >
                   <Text
-                    style={[
-                      styles.chipText,
-                      form.propertyType === propertyType.value &&
-                        styles.chipTextActive,
-                    ]}
+                    className={`text-[13px] font-semibold ${
+                      form.propertyType === propertyType.value
+                        ? "text-white"
+                        : "text-[#706A5F]"
+                    }`}
                   >
                     {propertyType.label}
                   </Text>
@@ -281,11 +292,11 @@ export function ListingForm({
 
           <FormField label="Monthly rent (PHP)" required>
             <TextInput
+              className={INPUT_CLASS_NAME}
               keyboardType="numeric"
               onChangeText={(value) => update("pricePerMonth", value)}
               placeholder="e.g. 3500"
               placeholderTextColor="#A09A90"
-              style={styles.input}
               value={form.pricePerMonth}
             />
           </FormField>
@@ -293,56 +304,60 @@ export function ListingForm({
           <FormField label="Map pin" required>
             <Pressable
               onPress={() => void handleUseCurrentLocation()}
-              style={styles.locationBtn}
+              className="mb-[10px] self-start rounded-full bg-[#EEF5F1] px-3 py-2"
             >
-              <Ionicons color="#0B2D23" name="locate-outline" size={18} />
-              <Text style={styles.locationBtnText}>Use current location</Text>
+              <View className="flex-row items-center gap-2">
+                <Ionicons color="#0B2D23" name="locate-outline" size={18} />
+                <Text className="text-[12px] font-bold text-[#0B2D23]">
+                  Use current location
+                </Text>
+              </View>
             </Pressable>
-            <View style={styles.row}>
-              <View style={styles.flex}>
+            <View className="flex-row gap-3">
+              <View className="flex-1">
                 <TextInput
+                  className={INPUT_CLASS_NAME}
                   keyboardType="numeric"
                   onChangeText={(value) => update("lat", value)}
                   placeholder="Latitude"
                   placeholderTextColor="#A09A90"
-                  style={styles.input}
                   value={form.lat}
                 />
               </View>
-              <View style={styles.flex}>
+              <View className="flex-1">
                 <TextInput
+                  className={INPUT_CLASS_NAME}
                   keyboardType="numeric"
                   onChangeText={(value) => update("lng", value)}
                   placeholder="Longitude"
                   placeholderTextColor="#A09A90"
-                  style={styles.input}
                   value={form.lng}
                 />
               </View>
             </View>
           </FormField>
 
-          <View style={styles.row}>
-            <View style={styles.flex}>
+          <View className="flex-row gap-3">
+            <View className="flex-1">
               <FormField label="Max occupants">
                 <TextInput
+                  className={INPUT_CLASS_NAME}
                   keyboardType="numeric"
                   onChangeText={(value) => update("maxOccupants", value)}
                   placeholder="e.g. 2"
                   placeholderTextColor="#A09A90"
-                  style={styles.input}
                   value={form.maxOccupants}
                 />
               </FormField>
             </View>
-            <View style={styles.flex}>
+            <View className="flex-1">
               <FormField label="Size (sqm)">
                 <TextInput
+                  className={INPUT_CLASS_NAME}
                   keyboardType="numeric"
                   onChangeText={(value) => update("sizeSqm", value)}
                   placeholder="e.g. 18"
                   placeholderTextColor="#A09A90"
-                  style={styles.input}
                   value={form.sizeSqm}
                 />
               </FormField>
@@ -351,162 +366,68 @@ export function ListingForm({
 
           <FormField label="City" required>
             <TextInput
+              className={INPUT_CLASS_NAME}
               onChangeText={(value) => update("city", value)}
               placeholder="e.g. Bacolod"
               placeholderTextColor="#A09A90"
-              style={styles.input}
               value={form.city}
             />
           </FormField>
 
           <FormField label="Barangay">
             <TextInput
+              className={INPUT_CLASS_NAME}
               onChangeText={(value) => update("barangay", value)}
               placeholder="e.g. Mandalagan"
               placeholderTextColor="#A09A90"
-              style={styles.input}
               value={form.barangay}
             />
           </FormField>
 
           <FormField label="Address">
             <TextInput
+              className={INPUT_CLASS_NAME}
               onChangeText={(value) => update("address", value)}
               placeholder="Street or landmark"
               placeholderTextColor="#A09A90"
-              style={styles.input}
               value={form.address}
             />
           </FormField>
 
           <FormField label="Amenities">
             <TextInput
+              className={INPUT_CLASS_NAME}
               onChangeText={(value) => update("amenities", value)}
               placeholder="wifi, ac, parking, laundry"
               placeholderTextColor="#A09A90"
-              style={styles.input}
               value={form.amenities}
             />
           </FormField>
 
           {localError || errorMessage ? (
-            <Text style={styles.error}>{localError ?? errorMessage}</Text>
+            <Text className="mb-1 text-[13px] font-semibold text-red-500">
+              {localError ?? errorMessage}
+            </Text>
           ) : null}
 
           <Pressable
             disabled={isSubmitting}
             onPress={() => void handleSubmit()}
-            style={[styles.submitBtn, isSubmitting && styles.disabled]}
+            className={`mt-2 items-center rounded-[16px] bg-[#0B2D23] py-4 ${
+              isSubmitting ? "opacity-50" : ""
+            }`}
           >
             {isSubmitting ? (
               <ActivityIndicator color="#ffffff" size="small" />
             ) : (
-              <Text style={styles.submitBtnText}>
+              <Text className="text-[15px] font-extrabold text-white">
                 {mode === "create" ? "Publish listing" : "Save changes"}
               </Text>
             )}
           </Pressable>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FAF8F5" },
-  flex: { flex: 1 },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 12,
-    gap: 12,
-  },
-  backBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "#F5F0EA",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerTitle: { flex: 1, color: "#0f172a", fontSize: 20, fontWeight: "800" },
-  saveBtn: {
-    backgroundColor: "#0B2D23",
-    borderRadius: 14,
-    paddingHorizontal: 18,
-    paddingVertical: 8,
-  },
-  saveBtnText: { color: "#ffffff", fontSize: 13, fontWeight: "800" },
-  content: { paddingHorizontal: 16, paddingBottom: 40, gap: 4 },
-  fieldGroup: { marginBottom: 16 },
-  fieldLabel: {
-    color: "#1A1A1A",
-    fontSize: 13,
-    fontWeight: "700",
-    marginBottom: 6,
-  },
-  required: { color: "#EF4444" },
-  input: {
-    backgroundColor: "#ffffff",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#EAE5DE",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: "#0f172a",
-    fontSize: 14,
-  },
-  textarea: { minHeight: 100, paddingTop: 12 },
-  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  chip: {
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "#EAE5DE",
-    backgroundColor: "#ffffff",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  chipActive: { backgroundColor: "#0B2D23", borderColor: "#0B2D23" },
-  chipText: { color: "#706A5F", fontSize: 13, fontWeight: "600" },
-  chipTextActive: { color: "#ffffff" },
-  photoUpload: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    backgroundColor: "#ffffff",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#EAE5DE",
-    borderStyle: "dashed",
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-  },
-  photoUploadText: { color: "#706A5F", fontSize: 14 },
-  photoRow: { flexDirection: "row", gap: 8, marginTop: 10 },
-  photoThumb: { width: 80, height: 80, borderRadius: 12 },
-  locationBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    alignSelf: "flex-start",
-    marginBottom: 10,
-    borderRadius: 999,
-    backgroundColor: "#EEF5F1",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  locationBtnText: { color: "#0B2D23", fontSize: 12, fontWeight: "700" },
-  row: { flexDirection: "row", gap: 12 },
-  error: { color: "#EF4444", fontSize: 13, fontWeight: "600", marginBottom: 4 },
-  submitBtn: {
-    backgroundColor: "#0B2D23",
-    borderRadius: 16,
-    paddingVertical: 16,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  submitBtnText: { color: "#ffffff", fontSize: 15, fontWeight: "800" },
-  disabled: { opacity: 0.5 },
-});

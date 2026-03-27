@@ -17,9 +17,9 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { ProfileAvatar } from "@/components/profile/profile-avatar";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { PROFILE_QUERY_KEY } from "@/lib/auth";
+import { useCurrentProfile } from "@/hooks/use-current-profile";
 import { useAuth } from "@/providers/auth-provider";
 import {
-  getOrCreateCurrentProfile,
   updateCurrentProfile,
   uploadAvatar,
 } from "@/services/profile";
@@ -80,11 +80,7 @@ export default function EditProfileScreen() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const { data: profile } = useQuery({
-    enabled: Boolean(user),
-    queryFn: () => getOrCreateCurrentProfile(user!),
-    queryKey: [PROFILE_QUERY_KEY, user?.id],
-  });
+  const { data: profile } = useCurrentProfile(user);
 
   const [form, setFormState] = useState<Record<FieldKey, string>>(emptyForm);
   const [localAvatarUri, setLocalAvatarUri] = useState<string | null>(null);

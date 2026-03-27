@@ -6,7 +6,7 @@ import { ListingForm } from "@/components/listings/listing-form";
 import { parseAmenities } from "@/services/listings";
 import { uploadPickedAsset } from "@/services/storage";
 import { myListingsRoute } from "@/utils/routes";
-import { trpc } from "@/utils/trpc";
+import { trpc } from "@/utils/api-client";
 
 export default function CreateListingScreen() {
   const queryClient = useQueryClient();

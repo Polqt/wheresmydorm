@@ -27,7 +27,7 @@ const CURRENT_STEP = 1;
 export default function ProfileSetupScreen() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { role, user } = useAuth();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -86,7 +86,9 @@ export default function ProfileSetupScreen() {
               What's your name?
             </Text>
             <Text className="mt-2 text-[14px] leading-5 text-[#8A8480]">
-              We'll only show this to people you connect with on WheresMyDorm.
+              {role === "lister"
+                ? "This is how Finders will recognize you in your listings, inbox, and public posts."
+                : "This is how Listers and other Finders will recognize you across messages and the community feed."}
             </Text>
 
             <View className="mt-8 gap-4">

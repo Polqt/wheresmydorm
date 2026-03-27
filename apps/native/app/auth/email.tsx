@@ -48,7 +48,7 @@ export default function EmailSignInScreen() {
     try {
       const restored = await tryRestoreSession(email);
       if (restored) {
-        router.replace("/(tabs)/map");
+        router.replace("/");
         return;
       }
 
@@ -56,7 +56,7 @@ export default function EmailSignInScreen() {
 
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        router.replace("/(tabs)/map");
+        router.replace("/");
         return;
       }
 

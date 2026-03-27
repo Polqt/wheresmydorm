@@ -27,7 +27,7 @@ const CURRENT_STEP = 3;
 export default function ContactInfoScreen() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { role, user } = useAuth();
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,7 +50,7 @@ export default function ContactInfoScreen() {
         contactPhone: contactPhone.trim() || null,
       });
       queryClient.setQueryData([PROFILE_QUERY_KEY, user.id], profile);
-      router.replace("/auth/permissions");
+      router.replace("/auth/role-preferences");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save. Try again.");
     } finally {
@@ -59,7 +59,7 @@ export default function ContactInfoScreen() {
   }, [contactEmail, contactPhone, queryClient, user]);
 
   const handleSkip = useCallback(() => {
-    router.replace("/auth/permissions");
+    router.replace("/auth/role-preferences");
   }, []);
 
   return (
@@ -90,7 +90,9 @@ export default function ContactInfoScreen() {
               How can people{"\n"}reach you?
             </Text>
             <Text className="mt-2 text-[14px] leading-5 text-[#8A8480]">
-              Optional — we'll only share this with people you connect with.
+              {role === "lister"
+                ? "Optional. This helps serious Finders reach you faster once they inquire about a property."
+                : "Optional. We only surface this when you choose to connect with a Lister."}
             </Text>
 
             <View className="mt-8 gap-5">

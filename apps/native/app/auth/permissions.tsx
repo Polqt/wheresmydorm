@@ -22,7 +22,7 @@ const CURRENT_STEP = 4;
 
 export default function PermissionsScreen() {
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
+  const { role, user } = useAuth();
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,7 +66,7 @@ export default function PermissionsScreen() {
     setIsSubmitting(true);
     try {
       await setOnboardingCompletion(user?.id);
-      router.replace("/(tabs)/map");
+      router.replace("/");
     } finally {
       setIsSubmitting(false);
     }
@@ -80,10 +80,10 @@ export default function PermissionsScreen() {
         <SetupProgressBar current={CURRENT_STEP} total={ONBOARDING_STEPS} />
 
         <View className="px-4 pt-3">
-          <Pressable
-            className="h-10 w-10 items-center justify-center rounded-full bg-[#F4F0EA]"
-            onPress={() => router.replace("/auth/contact-info")}
-          >
+            <Pressable
+              className="h-10 w-10 items-center justify-center rounded-full bg-[#F4F0EA]"
+              onPress={() => router.replace("/auth/role-preferences")}
+            >
             <Ionicons color="#1A1A1A" name="chevron-back" size={20} />
           </Pressable>
         </View>
@@ -93,7 +93,9 @@ export default function PermissionsScreen() {
             One last step
           </Text>
           <Text className="mt-2 text-[14px] leading-6 text-[#8A8480]">
-            WheresMyDorm needs these to help you find housing near you. You can change them anytime in Settings.
+            {role === "lister"
+              ? "Turn these on so you can respond faster to inquiries and manage your listings with less friction."
+              : "Turn these on so Finder search, nearby results, and replies work the way you expect."}
           </Text>
 
           <View className="mt-8 gap-3">
@@ -107,7 +109,9 @@ export default function PermissionsScreen() {
               <View className="flex-1">
                 <Text className="text-[15px] font-bold text-[#1A1A1A]">Location</Text>
                 <Text className="mt-0.5 text-[12px] leading-[18px] text-[#8A8480]">
-                  Find listings near you. Only used while the app is open.
+                  {role === "lister"
+                    ? "Place listing pins faster and preview nearby supply when needed."
+                    : "Find listings near you. Only used while the app is open."}
                 </Text>
               </View>
               <Switch
@@ -128,7 +132,9 @@ export default function PermissionsScreen() {
               <View className="flex-1">
                 <Text className="text-[15px] font-bold text-[#1A1A1A]">Notifications</Text>
                 <Text className="mt-0.5 text-[12px] leading-[18px] text-[#8A8480]">
-                  Get alerted when a lister replies or new listings appear.
+                  {role === "lister"
+                    ? "Get alerted when a Finder sends a new inquiry or engages with your listings."
+                    : "Get alerted when a Lister replies or new listings appear."}
                 </Text>
               </View>
               <Switch
