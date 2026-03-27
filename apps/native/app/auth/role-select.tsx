@@ -15,7 +15,7 @@ import {
 } from "react-native-safe-area-context";
 
 import { AppLogo } from "@/components/ui/app-logo";
-import { ROLE_CARDS } from "@/lib/auth";
+import { PROFILE_QUERY_KEY, ROLE_CARDS } from "@/lib/auth";
 import { useAuth } from "@/providers/auth-provider";
 import { setCurrentProfileRole } from "@/services/profile";
 import { useAuthFlowStore } from "@/stores/auth";
@@ -105,7 +105,7 @@ export default function RoleSelectScreen() {
       { role: selectedRole },
       {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ["auth-profile"] });
+          queryClient.invalidateQueries({ queryKey: [PROFILE_QUERY_KEY] });
           setAwaitingRoleSync();
           router.replace("/auth/profile-setup");
         },
@@ -118,7 +118,6 @@ export default function RoleSelectScreen() {
       <StatusBar style="dark" />
 
       <View className="flex-1">
-        {/* Nav */}
         <View className="flex-row items-center px-4 pt-2">
           <Pressable
             className="h-10 w-10 items-center justify-center rounded-full bg-white border border-[#EAE5DE]"
@@ -129,7 +128,6 @@ export default function RoleSelectScreen() {
         </View>
 
         <View className="flex-1 px-5 pt-6">
-          {/* Logo + header */}
           <View className="items-center">
             <AppLogo containerClassName="h-[60px] w-[60px] rounded-[18px]" size={32} />
           </View>
@@ -138,10 +136,9 @@ export default function RoleSelectScreen() {
             How will you use{"\n"}WheresMyDorm?
           </Text>
           <Text className="mt-2 text-center text-[14px] leading-6 text-[#8A8480]">
-            Pick the path that fits you best. You can switch roles later in settings.
+            Pick the path that fits you best. Your role shapes the whole app experience.
           </Text>
 
-          {/* Role cards */}
           <View className="mt-8 gap-3">
             {ROLE_CARDS.map((card) => (
               <RoleCard
@@ -161,7 +158,6 @@ export default function RoleSelectScreen() {
           ) : null}
         </View>
 
-        {/* Continue button */}
         <View className="px-5" style={bottomAreaStyle}>
           <Pressable
             className={`h-[52px] w-full items-center justify-center rounded-xl ${

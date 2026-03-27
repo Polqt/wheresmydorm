@@ -9,17 +9,29 @@ import { ProfileAvatar } from "@/components/profile/profile-avatar";
 import { ProfileRow } from "@/components/profile/profile-row";
 import { ProfileSection } from "@/components/profile/profile-section";
 import { ProfileStatsRow } from "@/components/profile/profile-stat";
+import { useCurrentProfile } from "@/hooks/use-current-profile";
 import { useAuth } from "@/providers/auth-provider";
-import { getOrCreateCurrentProfile } from "@/services/profile";
 import { formatMemberSince, getInitials } from "@/utils/profile";
+import {
+  createListingRoute,
+  listerListingsTabRoute,
+  messagesInboxRoute,
+  profileEditRoute,
+  savedListingsRoute,
+} from "@/utils/routes";
+import { trpc } from "@/utils/api-client";
 
 export default function ProfileTabScreen() {
   const { signOut, user, role } = useAuth();
 
-  const { data: profile } = useQuery({
-    enabled: Boolean(user),
-    queryFn: () => getOrCreateCurrentProfile(user!),
-    queryKey: ["auth-profile", user?.id],
+  const { data: profile } = useCurrentProfile(user);
+  const myListingsQuery = useQuery({
+    ...trpc.listings.myListings.queryOptions(),
+    enabled: role === "lister",
+  });
+  const savedListingsQuery = useQuery({
+    ...trpc.listings.savedListings.queryOptions(),
+    enabled: role === "finder",
   });
 
   const initials = useMemo(
@@ -27,137 +39,207 @@ export default function ProfileTabScreen() {
     [profile?.firstName, profile?.lastName],
   );
 
-  const displayName = profile?.fullName ?? user?.email?.split("@")[0] ?? "Member";
+  const displayName =
+    profile?.fullName ?? user?.email?.split("@")[0] ?? "Member";
 
-  const stats = useMemo(() => {
-    const base = [
-      { label: role === "lister" ? "Listings" : "Saved", value: "0" },
+  const stats = useMemo(
+    () => [
+      {
+        label: role === "lister" ? "Listings" : "Saved",
+        value:
+          role === "lister"
+            ? String(myListingsQuery.data?.length ?? 0)
+            : String(savedListingsQuery.data?.length ?? 0),
+      },
       { label: "Reviews", value: "0" },
       { label: "Member since", value: formatMemberSince(profile?.createdAt) },
-    ];
-    return base;
-  }, [role, profile?.createdAt]);
+    ],
+    [
+      myListingsQuery.data?.length,
+      profile?.createdAt,
+      role,
+      savedListingsQuery.data?.length,
+    ],
+  );
 
-  const goEdit = () => router.push("/profile/edit");
+  const goEdit = () => router.push(profileEditRoute());
 
   return (
-    <SafeAreaView className="flex-1 bg-[#FAF8F5]" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-[#F5F0E8]" edges={["top"]}>
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 56 }}
+        contentContainerStyle={{ paddingBottom: 64 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Edit button top-right */}
-        <View className="flex-row justify-end px-5 pt-5">
+        <View className="flex-row items-center justify-between px-5 pt-4 pb-2">
+          <Text className="text-[22px] font-bold tracking-[-0.4px] text-[#1C1917]">
+            Profile
+          </Text>
           <Pressable
-            className="h-9 w-9 items-center justify-center rounded-full bg-[#EFECE7]"
+            className="h-9 w-9 items-center justify-center rounded-full bg-white"
             hitSlop={8}
             onPress={goEdit}
+            style={{
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.08,
+              shadowRadius: 4,
+              elevation: 2,
+            }}
           >
-            <Ionicons color="#1A1A1A" name="pencil" size={15} />
+            <Ionicons color="#1C1917" name="pencil" size={15} />
           </Pressable>
         </View>
 
-        {/* Avatar + name */}
-        <View className="mt-2 items-center px-5">
-          <ProfileAvatar
-            avatarUrl={profile?.avatarUrl ?? null}
-            initials={initials}
-            size={96}
-          />
-
-          <View className="mt-4 items-center gap-1">
-            <View className="flex-row items-center gap-1.5">
-              <Text className="text-[22px] font-bold tracking-tight text-[#1A1A1A]">
-                {displayName}
+        <View
+          className="mx-5 mb-5 rounded-3xl bg-white p-5"
+          style={{
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.06,
+            shadowRadius: 12,
+            elevation: 3,
+          }}
+        >
+          <View className="flex-row items-center gap-4">
+            <ProfileAvatar
+              avatarUrl={profile?.avatarUrl ?? null}
+              initials={initials}
+              size={72}
+            />
+            <View className="flex-1">
+              <View className="flex-row items-center gap-1.5">
+                <Text
+                  className="text-[18px] font-bold tracking-[-0.3px] text-[#1C1917]"
+                  numberOfLines={1}
+                >
+                  {displayName}
+                </Text>
+                {profile?.isVerifiedMember ? (
+                  <Ionicons color="#0B4A30" name="checkmark-circle" size={17} />
+                ) : null}
+              </View>
+              <Text className="mt-0.5 text-[13px] text-[#78716C]" numberOfLines={1}>
+                {user?.email ?? ""}
               </Text>
-              {profile?.isVerifiedMember ? (
-                <Ionicons color="#0B4A30" name="checkmark-circle" size={18} />
+              {role ? (
+                <View className="mt-2 self-start rounded-full bg-[#EEF5F1] px-3 py-1">
+                  <Text className="text-[12px] font-semibold capitalize text-[#0B4A30]">
+                    {role}
+                  </Text>
+                </View>
               ) : null}
             </View>
-            <Text className="text-[14px] text-[#A09A90]">
-              {user?.email ?? ""}
-            </Text>
+          </View>
+
+          <View className="mt-4 h-px bg-[#F0EBE3]" />
+
+          <View className="mt-4">
+            <ProfileStatsRow stats={stats} />
           </View>
         </View>
 
-        {/* Stats */}
-        <View className="mx-5 mt-7 h-px bg-[#EAE5DE]" />
-        <View className="mx-5 mt-5">
-          <ProfileStatsRow stats={stats} />
-        </View>
-        <View className="mx-5 mt-5 h-px bg-[#EAE5DE]" />
+        <View className="px-5">
+          <ProfileSection title="Account">
+            <ProfileRow
+              icon="person-outline"
+              label="Name"
+              onPress={goEdit}
+              value={profile?.fullName ?? null}
+            />
+            <ProfileRow
+              icon="mail-outline"
+              label="Email"
+              value={user?.email ?? null}
+            />
+            <ProfileRow
+              icon="call-outline"
+              label="Phone"
+              onPress={goEdit}
+              value={profile?.contactPhone ?? null}
+            />
+            <ProfileRow
+              icon="at-outline"
+              label="Contact"
+              last
+              onPress={goEdit}
+              value={profile?.contactEmail ?? null}
+            />
+          </ProfileSection>
 
-        {/* Account */}
-        <ProfileSection title="Account">
-          <ProfileRow
-            icon="person-outline"
-            label="Name"
-            onPress={goEdit}
-            value={profile?.fullName ?? null}
-          />
-          <ProfileRow
-            icon="mail-outline"
-            label="Email"
-            value={user?.email ?? null}
-          />
-          <ProfileRow
-            icon="call-outline"
-            label="Phone"
-            onPress={goEdit}
-            value={profile?.contactPhone ?? null}
-          />
-          <ProfileRow
-            icon="at-outline"
-            label="Contact"
-            last
-            onPress={goEdit}
-            value={profile?.contactEmail ?? null}
-          />
-        </ProfileSection>
-
-        <View className="mx-5 mt-5 h-px bg-[#EAE5DE]" />
-
-        {/* Role-specific */}
-        {role === "lister" ? (
-          <>
+          {role === "lister" ? (
             <ProfileSection title="Listings">
-              <ProfileRow icon="home-outline" label="My listings" onPress={() => {}} />
-              <ProfileRow icon="star-outline" label="Reviews received" last onPress={() => {}} />
+              <ProfileRow
+                icon="home-outline"
+                label="My listings"
+                onPress={() => router.push(listerListingsTabRoute())}
+              />
+              <ProfileRow
+                icon="add-circle-outline"
+                label="Create listing"
+                last
+                onPress={() => router.push(createListingRoute())}
+              />
             </ProfileSection>
-            <View className="mx-5 mt-5 h-px bg-[#EAE5DE]" />
-          </>
-        ) : role === "finder" ? (
-          <>
+          ) : role === "finder" ? (
             <ProfileSection title="Activity">
-              <ProfileRow icon="bookmark-outline" label="Saved listings" onPress={() => {}} />
-              <ProfileRow icon="chatbubble-outline" label="My reviews" last onPress={() => {}} />
+              <ProfileRow
+                icon="bookmark-outline"
+                label="Saved listings"
+                onPress={() => router.push(savedListingsRoute())}
+              />
+              <ProfileRow
+                icon="chatbubble-outline"
+                label="Messages"
+                last
+                onPress={() => router.push(messagesInboxRoute())}
+              />
             </ProfileSection>
-            <View className="mx-5 mt-5 h-px bg-[#EAE5DE]" />
-          </>
-        ) : null}
+          ) : null}
 
-        {/* Preferences */}
-        <ProfileSection title="Preferences">
-          <ProfileRow icon="notifications-outline" label="Notifications" onPress={() => {}} />
-          <ProfileRow icon="moon-outline" label="Appearance" last onPress={() => {}} />
-        </ProfileSection>
+          <ProfileSection title="Preferences">
+            <ProfileRow
+              icon="notifications-outline"
+              label="Notifications"
+              onPress={() => {}}
+            />
+            <ProfileRow
+              icon="moon-outline"
+              label="Appearance"
+              last
+              onPress={() => {}}
+            />
+          </ProfileSection>
 
-        <View className="mx-5 mt-5 h-px bg-[#EAE5DE]" />
+          <ProfileSection title="Support">
+            <ProfileRow
+              icon="help-circle-outline"
+              label="Help center"
+              onPress={() => {}}
+            />
+            <ProfileRow
+              icon="document-text-outline"
+              label="Terms of service"
+              onPress={() => {}}
+            />
+            <ProfileRow
+              icon="shield-checkmark-outline"
+              label="Privacy policy"
+              last
+              onPress={() => {}}
+            />
+          </ProfileSection>
 
-        {/* Support */}
-        <ProfileSection title="Support">
-          <ProfileRow icon="help-circle-outline" label="Help center" onPress={() => {}} />
-          <ProfileRow icon="document-text-outline" label="Terms of service" onPress={() => {}} />
-          <ProfileRow icon="shield-checkmark-outline" label="Privacy policy" last onPress={() => {}} />
-        </ProfileSection>
-
-        <View className="mx-5 mt-5 h-px bg-[#EAE5DE]" />
-
-        {/* Sign out */}
-        <ProfileSection>
-          <ProfileRow destructive icon="log-out-outline" label="Sign out" last onPress={signOut} />
-        </ProfileSection>
+          <ProfileSection>
+            <ProfileRow
+              destructive
+              icon="log-out-outline"
+              label="Sign out"
+              last
+              onPress={() => void signOut()}
+            />
+          </ProfileSection>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

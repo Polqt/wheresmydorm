@@ -8,7 +8,7 @@ import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useAuth } from "@/providers/auth-provider";
 import { uploadPickedAsset } from "@/services/storage";
 import { supabase } from "@/utils/supabase";
-import { trpc } from "@/utils/trpc";
+import { trpc } from "@/utils/api-client";
 
 export default function ThreadScreen() {
   const { threadId } = useLocalSearchParams<{ threadId: string }>();

@@ -1,5 +1,5 @@
-import { useQueryClient } from "@tanstack/react-query";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useMemo, useState } from "react";
@@ -17,16 +17,17 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
+import { SetupProgressBar } from "@/components/ui/setup-progress-bar";
+import { ONBOARDING_STEPS, PROFILE_QUERY_KEY } from "@/lib/auth";
 import { useAuth } from "@/providers/auth-provider";
 import { updateCurrentProfile } from "@/services/profile";
 
-const STEPS = 4;
 const CURRENT_STEP = 3;
 
 export default function ContactInfoScreen() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { role, user } = useAuth();
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,8 +49,8 @@ export default function ContactInfoScreen() {
         contactEmail: contactEmail.trim() || null,
         contactPhone: contactPhone.trim() || null,
       });
-      queryClient.setQueryData(["auth-profile", user.id], profile);
-      router.replace("/auth/permissions");
+      queryClient.setQueryData([PROFILE_QUERY_KEY, user.id], profile);
+      router.replace("/auth/role-preferences");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save. Try again.");
     } finally {
@@ -58,7 +59,7 @@ export default function ContactInfoScreen() {
   }, [contactEmail, contactPhone, queryClient, user]);
 
   const handleSkip = useCallback(() => {
-    router.replace("/auth/permissions");
+    router.replace("/auth/role-preferences");
   }, []);
 
   return (
@@ -70,18 +71,8 @@ export default function ContactInfoScreen() {
         className="flex-1"
       >
         <View className="flex-1">
-          {/* Progress bar */}
-          <View className="flex-row gap-1.5 px-5 pt-3">
-            {Array.from({ length: STEPS }).map((_, i) => (
-              <View
-                key={i}
-                className="h-1 flex-1 rounded-full"
-                style={{ backgroundColor: i < CURRENT_STEP ? "#04170E" : "#E8E3DC" }}
-              />
-            ))}
-          </View>
+          <SetupProgressBar current={CURRENT_STEP} total={ONBOARDING_STEPS} />
 
-          {/* Nav */}
           <View className="flex-row items-center justify-between px-4 pt-3">
             <Pressable
               className="h-10 w-10 items-center justify-center rounded-full bg-[#F4F0EA]"
@@ -99,11 +90,12 @@ export default function ContactInfoScreen() {
               How can people{"\n"}reach you?
             </Text>
             <Text className="mt-2 text-[14px] leading-5 text-[#8A8480]">
-              Optional — we'll only share this with people you connect with.
+              {role === "lister"
+                ? "Optional. This helps serious Finders reach you faster once they inquire about a property."
+                : "Optional. We only surface this when you choose to connect with a Lister."}
             </Text>
 
             <View className="mt-8 gap-5">
-              {/* Email */}
               <View>
                 <Text className="mb-2 text-[13px] font-semibold text-[#4A4540]">
                   Contact email
@@ -124,7 +116,6 @@ export default function ContactInfoScreen() {
                 </View>
               </View>
 
-              {/* Phone */}
               <View>
                 <Text className="mb-2 text-[13px] font-semibold text-[#4A4540]">
                   Phone number
@@ -159,7 +150,6 @@ export default function ContactInfoScreen() {
             <View className="flex-1" />
           </View>
 
-          {/* Continue */}
           <View className="px-6" style={bottomAreaStyle}>
             <Pressable
               className="h-[52px] w-full items-center justify-center rounded-xl"

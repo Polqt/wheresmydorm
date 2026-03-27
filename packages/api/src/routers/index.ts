@@ -1,13 +1,15 @@
-import { publicProcedure, router } from "../index.js";
-import { messagesRouter } from "./messages.js";
-import { postsRouter } from "./posts.js";
-import { profilesRouter } from "./profiles.js";
+import { publicProcedure, router } from "../index";
+import { listingsRouter } from "./listings";
+import { messagesRouter } from "./messages";
+import { postsRouter } from "./posts";
+import { profilesRouter } from "./profiles";
 
 export const appRouter = router({
   healthCheck: publicProcedure.query(() => {
     return "OK";
   }),
   profiles: profilesRouter,
+  listings: listingsRouter,
   messages: messagesRouter,
   posts: postsRouter,
 });

@@ -9,9 +9,8 @@ import {
 } from "@wheresmydorm/db";
 import { and, asc, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import { z } from "zod";
-
-import { formatProfileName } from "../lib/profile.js";
-import { protectedProcedure, router } from "../index.js";
+import { protectedProcedure, router } from "../index";
+import { formatProfileName } from "../lib/profile";
 
 const reactionValues = ["like", "helpful", "funny"] as const;
 const reportReasonValues = [
@@ -188,11 +187,12 @@ export const postsRouter = router({
         ]),
       ];
       const cursorDate = input.cursor ? new Date(input.cursor) : null;
+      const feedAuthorIds = followingRows.length > 0 ? authorIds : null;
 
       const postList = await db.query.posts.findMany({
         where: and(
           eq(posts.isRemoved, false),
-          inArray(posts.authorId, authorIds),
+          feedAuthorIds ? inArray(posts.authorId, feedAuthorIds) : undefined,
           cursorDate ? lt(posts.createdAt, cursorDate) : undefined,
         ),
         orderBy: [desc(posts.createdAt)],

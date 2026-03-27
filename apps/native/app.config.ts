@@ -7,7 +7,7 @@ const config: ExpoConfig = {
   slug: "wheresmydorm",
   version: "1.0.0",
   orientation: "portrait",
-  scheme: "mybetterapp",
+  scheme: ["wheresmydorm", "mybetterapp"],
   userInterfaceStyle: "light",
   newArchEnabled: true,
   ios: {

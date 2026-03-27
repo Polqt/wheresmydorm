@@ -2,10 +2,10 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 
-import { AppLaunchScreen } from "@/components/ui/app-launch-screen";
+import { AppLaunchScreen } from "@/components/ui/launch-screen";
 import { supabase } from "@/utils/supabase";
 
-export default function AuthCallbackScreen() {
+export default function AutahCallbackScreen() {
   const {
     access_token: accessToken,
     code,
@@ -55,9 +55,6 @@ export default function AuthCallbackScreen() {
           throw new Error("Missing OAuth callback data.");
         }
 
-        if (!isCancelled) {
-          router.replace("/");
-        }
       } catch (authError) {
         if (!isCancelled) {
           setErrorMessage(

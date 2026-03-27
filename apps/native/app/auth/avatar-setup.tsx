@@ -1,5 +1,5 @@
-import { useQueryClient } from "@tanstack/react-query";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
@@ -16,10 +16,11 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
+import { SetupProgressBar } from "@/components/ui/setup-progress-bar";
+import { ONBOARDING_STEPS, PROFILE_QUERY_KEY } from "@/lib/auth";
 import { useAuth } from "@/providers/auth-provider";
-import { updateCurrentProfile } from "@/services/profile";
+import { updateCurrentProfile, uploadAvatar } from "@/services/profile";
 
-const STEPS = 4;
 const CURRENT_STEP = 2;
 
 export default function AvatarSetupScreen() {
@@ -55,8 +56,13 @@ export default function AvatarSetupScreen() {
     setError(null);
 
     try {
-      const profile = await updateCurrentProfile(user.id, { avatarUrl: avatarUri });
-      queryClient.setQueryData(["auth-profile", user.id], profile);
+      const uploadedAvatarUrl = avatarUri
+        ? await uploadAvatar(user.id, avatarUri)
+        : null;
+      const profile = await updateCurrentProfile(user.id, {
+        avatarUrl: uploadedAvatarUrl,
+      });
+      queryClient.setQueryData([PROFILE_QUERY_KEY, user.id], profile);
       router.replace("/auth/contact-info");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save. Try again.");
@@ -74,18 +80,8 @@ export default function AvatarSetupScreen() {
       <StatusBar style="dark" />
 
       <View className="flex-1">
-        {/* Progress bar */}
-        <View className="flex-row gap-1.5 px-5 pt-3">
-          {Array.from({ length: STEPS }).map((_, i) => (
-            <View
-              key={i}
-              className="h-1 flex-1 rounded-full"
-              style={{ backgroundColor: i < CURRENT_STEP ? "#04170E" : "#E8E3DC" }}
-            />
-          ))}
-        </View>
+        <SetupProgressBar current={CURRENT_STEP} total={ONBOARDING_STEPS} />
 
-        {/* Nav */}
         <View className="flex-row items-center justify-between px-4 pt-3">
           <Pressable
             className="h-10 w-10 items-center justify-center rounded-full bg-[#F4F0EA]"
@@ -106,7 +102,6 @@ export default function AvatarSetupScreen() {
             Help listers and finders recognize you. You can always change this later.
           </Text>
 
-          {/* Avatar picker */}
           <View className="mt-10 items-center">
             <Pressable
               className="relative items-center justify-center"
@@ -127,7 +122,6 @@ export default function AvatarSetupScreen() {
                 </View>
               )}
 
-              {/* Camera badge */}
               <View
                 className="absolute bottom-1 right-1 h-10 w-10 items-center justify-center rounded-full border-2 border-white"
                 style={{ backgroundColor: "#04170E" }}
@@ -141,7 +135,6 @@ export default function AvatarSetupScreen() {
             </Text>
           </View>
 
-          {/* Photo library shortcut */}
           <Pressable
             className="mt-6 flex-row items-center gap-3 rounded-2xl border border-[#EAE5DE] bg-[#FAF8F5] px-4 py-3.5"
             onPress={handlePickImage}
@@ -162,7 +155,6 @@ export default function AvatarSetupScreen() {
           <View className="flex-1" />
         </View>
 
-        {/* Continue */}
         <View className="px-6" style={bottomAreaStyle}>
           <Pressable
             className="h-[52px] w-full items-center justify-center rounded-xl"

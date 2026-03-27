@@ -1,14 +1,32 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 
 import { getAuthRedirectUrl, normalizeAuthEmail } from "@/lib/auth";
+import { asyncStorageAdapter } from "@/lib/mmkv";
 import type { OAuthProvider } from "@/types/auth";
 import { supabase } from "@/utils/supabase";
 
 const RESTORE_KEY = "wmd:last_session";
 
 WebBrowser.maybeCompleteAuthSession();
+
+async function waitForSession(timeoutMs = 2500) {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (session) {
+      return true;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+
+  return false;
+}
 
 function parseParamValue(value: unknown) {
   return typeof value === "string" && value.length > 0 ? value : null;
@@ -48,8 +66,7 @@ export async function signInWithOAuth(provider: OAuthProvider) {
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
 
   if (result.type !== "success") {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) return true;
+    if (await waitForSession()) return true;
     throw new Error(
       "Sign-in finished in the browser but the app didn't receive the callback. " +
       `Make sure ${redirectTo} is in your Supabase Auth redirect URLs.`,
@@ -73,8 +90,7 @@ export async function signInWithOAuth(provider: OAuthProvider) {
   }
 
   if (!code) {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) return true;
+    if (await waitForSession()) return true;
     throw new Error("Missing OAuth callback data.");
   }
 
@@ -93,7 +109,7 @@ export async function saveSessionForRestore(): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.refresh_token || !session.user.email) return;
 
-  await AsyncStorage.setItem(
+  await asyncStorageAdapter.setItem(
     RESTORE_KEY,
     JSON.stringify({
       email: session.user.email.toLowerCase(),
@@ -109,7 +125,7 @@ export async function saveSessionForRestore(): Promise<void> {
  */
 export async function tryRestoreSession(email: string): Promise<boolean> {
   try {
-    const raw = await AsyncStorage.getItem(RESTORE_KEY);
+    const raw = await asyncStorageAdapter.getItem(RESTORE_KEY);
     if (!raw) return false;
 
     const { email: savedEmail, refreshToken } = JSON.parse(raw) as {
@@ -124,12 +140,12 @@ export async function tryRestoreSession(email: string): Promise<boolean> {
     });
 
     if (error || !data.session) {
-      await AsyncStorage.removeItem(RESTORE_KEY);
+      await asyncStorageAdapter.removeItem(RESTORE_KEY);
       return false;
     }
 
     // Session restored — clean up the stored token
-    await AsyncStorage.removeItem(RESTORE_KEY);
+    await asyncStorageAdapter.removeItem(RESTORE_KEY);
     return true;
   } catch {
     return false;

@@ -1,6 +1,7 @@
-import { Image } from "expo-image";
 import React from "react";
 import { View } from "react-native";
+
+import LogoWhiteFill from "@/assets/icons/logo_white_fill.svg";
 
 type AppLogoProps = {
   className?: string;
@@ -16,12 +17,7 @@ export const AppLogo = React.memo(function AppLogo({
     <View
       className={`items-center justify-center ${containerClassName ?? ""}`}
     >
-      <Image
-        accessibilityLabel="WheresMyDorm logo"
-        contentFit="contain"
-        source={require("../../assets/icons/logo_white_fill.svg")}
-        style={{ height: size, width: size }}
-      />
+      <LogoWhiteFill height={size} width={size} />
     </View>
   );
 });

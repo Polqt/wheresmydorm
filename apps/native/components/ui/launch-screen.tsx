@@ -1,77 +1,27 @@
-import { useVideoPlayer, VideoView } from "expo-video";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppLogo } from "./app-logo";
-
-const splashVideo = require("../../assets/videos/WheresMyDorm Splash Screen.mp4");
 
 type AppLaunchScreenProps = {
   body: string;
   title: string;
   actions?: React.ReactNode;
-  showGif?: boolean;
-  onVideoEnd?: () => void;
 };
-
-function SplashVideo({
-  onError,
-  onEnd,
-}: {
-  onError: () => void;
-  onEnd?: () => void;
-}) {
-  const player = useVideoPlayer(splashVideo);
-
-  useEffect(() => {
-    player.play();
-    const subscription = player.addListener("playToEnd", () => {
-      onEnd?.();
-    });
-    return () => subscription.remove();
-  }, [player, onEnd]);
-
-  return (
-    <VideoView
-      player={player}
-      style={StyleSheet.absoluteFill}
-      contentFit="cover"
-      nativeControls={false}
-      onError={onError}
-    />
-  );
-}
 
 export function AppLaunchScreen({
   body,
   title,
   actions,
-  showGif = true,
-  onVideoEnd,
 }: AppLaunchScreenProps) {
   const insets = useSafeAreaInsets();
-  const [didAnimationFail, setDidAnimationFail] = useState(false);
 
   return (
     <View className="flex-1 items-center justify-center bg-[#04170E]">
       <StatusBar style="light" />
 
-      {showGif && !didAnimationFail ? (
-        <SplashVideo
-          onError={() => setDidAnimationFail(true)}
-          onEnd={onVideoEnd}
-        />
-      ) : (
-        <AppLogo containerClassName="h-[200px] w-[200px]" size={112} />
-      )}
+      <AppLogo containerClassName="h-[200px] w-[200px]" size={112} />
 
       {title ? (
         <>

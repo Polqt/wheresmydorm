@@ -1,5 +1,13 @@
 import {
-  boolean, decimal, index, pgTable, text, timestamp, uuid,
+  boolean,
+  decimal,
+  doublePrecision,
+  index,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
 } from "drizzle-orm/pg-core";
 import {
   notificationTypeEnum, paymentStatusEnum,
@@ -9,15 +17,25 @@ import { profiles } from "./profiles";
 import { listings } from "./listings";
 
 export const searchEvents = pgTable("search_events", {
-  id:        uuid("id").primaryKey().defaultRandom(),
-  userId:    uuid("user_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
-  listingId: uuid("listing_id").references(() => listings.id, { onDelete: "set null" }),
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => profiles.id, { onDelete: "cascade" }),
+  listingId: uuid("listing_id").references(() => listings.id, {
+    onDelete: "set null",
+  }),
   eventType: searchEventTypeEnum("event_type").notNull(),
-  searchesRemainingAfter: text("searches_remaining_after"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  centerLat: doublePrecision("center_lat"),
+  centerLng: doublePrecision("center_lng"),
+  radiusMeters: integer("radius_meters"),
+  searchesRemainingAfter: integer("searches_remaining_after"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 }, (t) => [
   index("search_events_user_idx").on(t.userId),
   index("search_events_gate_idx").on(t.userId, t.listingId, t.eventType),
+  index("search_events_quota_idx").on(t.userId, t.eventType, t.createdAt),
 ]);
 
 export const payments = pgTable("payments", {
