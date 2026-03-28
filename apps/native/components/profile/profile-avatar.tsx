@@ -31,13 +31,13 @@ export const ProfileAvatar = memo(function ProfileAvatar({
         <Image
           contentFit="cover"
           source={{ uri: avatarUrl }}
-          style={{ width: size, height: size, borderRadius: radius }}
+          style={{ width: size, height: size, borderRadius: radius, borderCurve: "continuous" }}
           transition={200}
         />
       ) : (
         <View
           className="items-center justify-center bg-[#0B2D23]"
-          style={{ width: size, height: size, borderRadius: radius }}
+          style={{ width: size, height: size, borderRadius: radius, borderCurve: "continuous" }}
         >
           <Text className="font-bold text-white" style={{ fontSize: size * 0.3 }}>
             {initials}
@@ -52,6 +52,7 @@ export const ProfileAvatar = memo(function ProfileAvatar({
             width: badgeSize,
             height: badgeSize,
             borderRadius: badgeSize / 2,
+            borderCurve: "continuous",
             bottom: badgeOffset,
             right: badgeOffset,
           }}
