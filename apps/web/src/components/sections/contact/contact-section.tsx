@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 const TOPICS = [
   "General enquiry",
@@ -10,6 +11,9 @@ const TOPICS = [
   "Press & media",
   "Other",
 ] as const;
+
+const fieldClass =
+  "h-11 w-full rounded-xl border border-marketing-border bg-white px-4 text-sm text-marketing-ink placeholder:text-marketing-subhead/70 transition-colors duration-150 focus:outline-none focus:border-marketing-brand focus:ring-2 focus:ring-marketing-brand/25";
 
 export function Contact() {
   const [submitted, setSubmitted] = useState(false);
@@ -23,31 +27,38 @@ export function Contact() {
     <section
       id="contact"
       aria-labelledby="contact-heading"
-      className="scroll-mt-24 bg-white border-b border-[#E2E8F0]"
+      className="scroll-mt-24 border-b border-marketing-border bg-marketing-card"
     >
-      <div className="mx-auto max-w-[1200px] px-5 lg:px-10 py-20 lg:py-24">
-        <div className="grid lg:grid-cols-2 gap-12 items-start">
-          {/* Left copy */}
-          <div className="lg:sticky lg:top-32">
-            <span className="inline-flex items-center rounded-full border border-[#B5CAFF] bg-[#F5F7FF] px-3.5 py-1 text-xs font-semibold text-[#5B6FD1] mb-4">
-              Contact
-            </span>
-            <h2
-              id="contact-heading"
-              className="text-[clamp(1.75rem,4vw,2.75rem)] font-bold text-[#0F172A] tracking-tight leading-tight mb-5"
-            >
-              Get in touch
-            </h2>
-            <p className="text-[#475569] text-lg leading-relaxed mb-8 max-w-[44ch]">
-              Have a question, a listing issue, or a partnership idea? We&rsquo;d love
-              to hear from you. Our team typically replies within one business day.
-            </p>
+      <div className="mx-auto max-w-[1100px] px-5 lg:px-10 py-20 lg:py-24">
+        <div
+          className="overflow-hidden rounded-3xl border border-marketing-border bg-marketing-card shadow-[0_24px_64px_rgba(15,23,42,0.08)] grid lg:grid-cols-12"
+        >
+          <div className="lg:col-span-5 relative p-10 lg:p-12 flex flex-col justify-between gap-10 bg-gradient-to-br from-marketing-ink via-[#1e293b] to-marketing-brand/30 text-white">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.2),transparent_50%)]"
+            />
+            <div className="relative">
+              <span className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-3.5 py-1 text-xs font-semibold text-white/90 backdrop-blur-sm mb-6">
+                Contact
+              </span>
+              <h2
+                id="contact-heading"
+                className="font-display text-[clamp(1.75rem,3vw,2.5rem)] leading-tight tracking-tight text-white mb-4"
+              >
+                Let&rsquo;s start a conversation
+              </h2>
+              <p className="text-white/75 text-base leading-relaxed max-w-[36ch] font-medium">
+                Have a question, a listing issue, or a partnership idea? We typically
+                reply within one business day.
+              </p>
+            </div>
 
-            <ul className="flex flex-col gap-5" aria-label="Contact details">
+            <ul className="relative flex flex-col gap-6" aria-label="Contact details">
               {[
                 {
                   icon: (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                       <polyline points="22,6 12,13 2,6" />
                     </svg>
@@ -57,7 +68,7 @@ export function Contact() {
                 },
                 {
                   icon: (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
                     </svg>
                   ),
@@ -65,155 +76,141 @@ export function Contact() {
                   value: "Within 1 business day",
                 },
               ].map((item) => (
-                <li key={item.label} className="flex items-center gap-3 text-sm text-[#475569]">
-                  <span className="w-9 h-9 rounded-[10px] bg-[#F5F7FF] border border-[#E2E8F0] flex items-center justify-center text-[#5B6FD1] shrink-0">
+                <li key={item.label} className="flex items-center gap-4">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white backdrop-blur-sm">
                     {item.icon}
                   </span>
                   <div>
-                    <p className="text-xs text-[#64748B] font-medium">{item.label}</p>
-                    <p className="text-[#0F172A] font-medium">{item.value}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-white/55">
+                      {item.label}
+                    </p>
+                    <p className="text-sm font-medium text-white">{item.value}</p>
                   </div>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Form card */}
-          <div className="rounded-[20px] bg-white border border-[#E2E8F0] shadow-[0_8px_24px_rgba(15,23,42,0.10)] p-8">
-            {submitted ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center gap-4">
-                <div className="w-14 h-14 rounded-full bg-[#F0FDF4] border border-[#86EFAC] flex items-center justify-center">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F766E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-[#0F172A]">Message sent!</h3>
-                <p className="text-[#475569] text-sm max-w-[32ch]">
-                  Thanks for reaching out. We&rsquo;ll get back to you within one business day.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setSubmitted(false)}
-                  className="mt-2 text-sm font-medium text-[#5B6FD1] hover:text-[#3746A3] transition-colors duration-[120ms] focus-visible:outline-2 focus-visible:outline-[#5B6FD1] focus-visible:outline-offset-2 rounded"
-                >
-                  Send another message
-                </button>
-              </div>
-            ) : (
-              <form
-                onSubmit={handleSubmit}
-                noValidate
-                aria-label="Contact form"
-                className="flex flex-col gap-5"
-              >
-                <div className="grid sm:grid-cols-2 gap-5">
-                  {/* Name */}
-                  <div className="flex flex-col gap-1.5">
-                    <label
-                      htmlFor="contact-name"
-                      className="text-sm font-medium text-[#0F172A]"
-                    >
-                      Name <span className="text-[#EF4444]" aria-label="required">*</span>
-                    </label>
-                    <input
-                      id="contact-name"
-                      type="text"
-                      name="name"
-                      required
-                      autoComplete="name"
-                      placeholder="Your full name"
-                      className="h-11 rounded-[12px] border border-[#E2E8F0] bg-white px-4 text-sm text-[#0F172A] placeholder-[#94A3B8] transition-colors duration-[120ms] focus:outline-none focus:border-[#5B6FD1] focus:ring-2 focus:ring-[#5B6FD1]/30"
-                    />
-                  </div>
-
-                  {/* Email */}
-                  <div className="flex flex-col gap-1.5">
-                    <label
-                      htmlFor="contact-email"
-                      className="text-sm font-medium text-[#0F172A]"
-                    >
-                      Email <span className="text-[#EF4444]" aria-label="required">*</span>
-                    </label>
-                    <input
-                      id="contact-email"
-                      type="email"
-                      name="email"
-                      required
-                      autoComplete="email"
-                      placeholder="you@university.edu"
-                      className="h-11 rounded-[12px] border border-[#E2E8F0] bg-white px-4 text-sm text-[#0F172A] placeholder-[#94A3B8] transition-colors duration-[120ms] focus:outline-none focus:border-[#5B6FD1] focus:ring-2 focus:ring-[#5B6FD1]/30"
-                    />
-                  </div>
-                </div>
-
-                {/* Topic */}
-                <div className="flex flex-col gap-1.5">
-                  <label
-                    htmlFor="contact-topic"
-                    className="text-sm font-medium text-[#0F172A]"
-                  >
-                    Topic <span className="text-[#EF4444]" aria-label="required">*</span>
-                  </label>
-                  <div className="relative">
-                    <select
-                      id="contact-topic"
-                      name="topic"
-                      required
-                      defaultValue=""
-                      className="h-11 w-full appearance-none rounded-[12px] border border-[#E2E8F0] bg-white pl-4 pr-10 text-sm text-[#0F172A] transition-colors duration-[120ms] focus:outline-none focus:border-[#5B6FD1] focus:ring-2 focus:ring-[#5B6FD1]/30"
-                    >
-                      <option value="" disabled>
-                        Select a topic
-                      </option>
-                      {TOPICS.map((t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
-                      ))}
-                    </select>
-                    <svg
-                      className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8]"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                    >
-                      <polyline points="6 9 12 15 18 9" />
+          <div className="lg:col-span-7 p-8 sm:p-10 lg:p-12 bg-marketing-canvas/50">
+            <div className="rounded-2xl border border-marketing-border bg-marketing-card p-6 sm:p-8 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
+              {submitted ? (
+                <div className="flex flex-col items-center justify-center py-14 text-center gap-4">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0f766e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <polyline points="20 6 9 17 4 12" />
                     </svg>
                   </div>
-                </div>
-
-                {/* Message */}
-                <div className="flex flex-col gap-1.5">
-                  <label
-                    htmlFor="contact-message"
-                    className="text-sm font-medium text-[#0F172A]"
+                  <h3 className="font-display text-xl text-marketing-ink">Message sent!</h3>
+                  <p className="text-marketing-subhead text-sm max-w-[32ch] font-medium">
+                    Thanks for reaching out. We&rsquo;ll get back to you within one business day.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setSubmitted(false)}
+                    className="mt-2 text-sm font-semibold text-marketing-brand hover:text-marketing-brand-hover transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-[#5b6fd1] focus-visible:outline-offset-2 rounded-lg"
                   >
-                    Message <span className="text-[#EF4444]" aria-label="required">*</span>
-                  </label>
-                  <textarea
-                    id="contact-message"
-                    name="message"
-                    required
-                    rows={5}
-                    placeholder="How can we help you?"
-                    className="resize-none rounded-[12px] border border-[#E2E8F0] bg-white px-4 py-3 text-sm text-[#0F172A] placeholder-[#94A3B8] transition-colors duration-[120ms] focus:outline-none focus:border-[#5B6FD1] focus:ring-2 focus:ring-[#5B6FD1]/30"
-                  />
+                    Send another message
+                  </button>
                 </div>
-
-                <button
-                  type="submit"
-                  className="mt-1 inline-flex items-center justify-center h-11 rounded-full bg-[#0F172A] text-white text-sm font-medium hover:bg-[#1E293B] transition-colors duration-[180ms] focus-visible:outline-2 focus-visible:outline-[#5B6FD1] focus-visible:outline-offset-2 active:scale-[0.98]"
+              ) : (
+                <form
+                  onSubmit={handleSubmit}
+                  noValidate
+                  aria-label="Contact form"
+                  className="flex flex-col gap-5"
                 >
-                  Send message
-                </button>
-              </form>
-            )}
+                  <div className="grid sm:grid-cols-2 gap-5">
+                    <div className="flex flex-col gap-1.5">
+                      <label htmlFor="contact-name" className="text-sm font-semibold text-marketing-ink">
+                        Name <span className="text-red-500" aria-label="required">*</span>
+                      </label>
+                      <input
+                        id="contact-name"
+                        type="text"
+                        name="name"
+                        required
+                        autoComplete="name"
+                        placeholder="Your full name"
+                        className={fieldClass}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label htmlFor="contact-email" className="text-sm font-semibold text-marketing-ink">
+                        Email <span className="text-red-500" aria-label="required">*</span>
+                      </label>
+                      <input
+                        id="contact-email"
+                        type="email"
+                        name="email"
+                        required
+                        autoComplete="email"
+                        placeholder="you@university.edu"
+                        className={fieldClass}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="contact-topic" className="text-sm font-semibold text-marketing-ink">
+                      Topic <span className="text-red-500" aria-label="required">*</span>
+                    </label>
+                    <div className="relative">
+                      <select
+                        id="contact-topic"
+                        name="topic"
+                        required
+                        defaultValue=""
+                        className={cn(fieldClass, "appearance-none pr-10")}
+                      >
+                        <option value="" disabled>
+                          Select a topic
+                        </option>
+                        {TOPICS.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
+                      </select>
+                      <svg
+                        className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-marketing-subhead"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="contact-message" className="text-sm font-semibold text-marketing-ink">
+                      Message <span className="text-red-500" aria-label="required">*</span>
+                    </label>
+                    <textarea
+                      id="contact-message"
+                      name="message"
+                      required
+                      rows={5}
+                      placeholder="How can we help you?"
+                      className="resize-none rounded-xl border border-marketing-border bg-white px-4 py-3 text-sm text-marketing-ink placeholder:text-marketing-subhead/70 transition-colors duration-150 focus:outline-none focus:border-marketing-brand focus:ring-2 focus:ring-marketing-brand/25"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="mt-1 inline-flex items-center justify-center h-12 rounded-full bg-marketing-ink text-white text-sm font-semibold hover:bg-marketing-ink/90 transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-[#5b6fd1] focus-visible:outline-offset-2 active:scale-[0.98]"
+                  >
+                    Send message
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
         </div>
       </div>

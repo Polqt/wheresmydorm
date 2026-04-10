@@ -2,37 +2,42 @@
   "meta": {
     "name": "WheresMyDorm Website Design System Contract",
     "version": "1.0.0",
-    "last_updated": "2026-03-22",
+    "last_updated": "2026-04-10",
     "purpose": "Authoritative UI implementation guide for AI when creating new website features in this repository.",
     "scope": [
-      "showcase/src/app/globals.css",
-      "showcase/src/app/layout.tsx",
-      "showcase/src/app/page.tsx",
-      "design.json"
+      "apps/web/src/index.css",
+      "apps/web/src/app/layout.tsx",
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/layout/",
+      "apps/web/src/components/sections/",
+      "apps/web/src/components/ui/liquid-glass-pill.tsx",
+      "apps/web/design/design-system.json"
     ],
     "stack": {
       "framework": "Next.js App Router",
       "language": "TypeScript + React",
       "styling": "Tailwind CSS v4 with inline @theme CSS variables",
       "icons": "lucide-react",
-      "fonts": "Geist + Geist Mono (display=swap)"
+      "fonts": "Canela Bold Trial (local OTF, display headlines) + Geist + Geist Mono (display=swap)",
+      "motion": "framer-motion (marketing scroll/entrance), embla-carousel-react (testimonials)"
     }
   },
   "design_dna": {
     "brand_style": [
-      "minimal",
-      "modern SaaS",
-      "friendly professional",
-      "card-first composition",
-      "soft rounded geometry",
-      "high legibility"
+      "warm light marketing canvas",
+      "editorial display headlines",
+      "glassmorphism pills for primary navigation and CTAs",
+      "card-first and bento-style feature blocks",
+      "soft rounded geometry (rounded-2xl/3xl)",
+      "high legibility on #F1EDEA"
     ],
     "visual_principles": [
-      "Prefer clarity over decorative effects.",
-      "Use blue ramp as the only dominant brand family.",
-      "Keep large white or near-white breathing space in light layouts.",
-      "Use rounded shapes consistently across controls and containers.",
-      "Use subtle depth (sm/md/lg shadows) instead of heavy blur or glow."
+      "Default marketing page background is warm neutral #F1EDEA (--marketing-canvas).",
+      "Headlines: Canela for hero/section titles; body/subhead Geist medium tone.",
+      "Hero headline split: sand #FFF7ED for lead clause, ink #0F172A for emphasis clause.",
+      "Brand blue (#5B6FD1) is accent, not the page wash — use for links, badges, focus.",
+      "Use backdrop-blur glass pills for nav links and secondary CTAs; solid ink for emphasis CTA when needed.",
+      "Respect prefers-reduced-motion for scroll-linked hero motion."
     ],
     "content_tone": {
       "voice": "direct, helpful, trustworthy",
@@ -42,7 +47,8 @@
   },
   "tokens": {
     "font": {
-      "sans": "var(--font-geist-sans), Inter, system-ui, sans-serif",
+      "sans": "var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif",
+      "display": "var(--font-canela), ui-serif, Georgia, serif",
       "mono": "var(--font-geist-mono), ui-monospace, monospace"
     },
     "color": {
@@ -59,14 +65,15 @@
         "accent_teal": "#0F766E"
       },
       "semantic_light": {
-        "bg_page": "#FFFFFF",
-        "bg_subtle": "#F5F7FF",
+        "bg_page": "#F1EDEA",
+        "bg_subtle": "#EBE6E1",
         "bg_card": "#FFFFFF",
         "text_primary": "#0F172A",
         "text_secondary": "#475569",
         "text_muted": "#64748B",
-        "border_soft": "#E2E8F0",
-        "border_strong": "#CBD5E1",
+        "headline_sand": "#FFF7ED",
+        "border_soft": "#E7E2DC",
+        "border_strong": "#D4CEC7",
         "brand": "#5B6FD1",
         "brand_hover": "#3746A3",
         "brand_soft": "#B5CAFF",

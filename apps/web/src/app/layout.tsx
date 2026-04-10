@@ -1,12 +1,18 @@
 import type { Metadata } from "next";
-
+import localFont from "next/font/local";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import "../index.css";
-import Header from "@/components/header";
+import { ConditionalNavbar } from "@/components/layout/conditional-navbar";
+
+const canela = localFont({
+  src: "../../public/fonts/Canela-Bold-Trial.otf",
+  variable: "--font-canela",
+  display: "swap",
+});
 
 const geistSans = Geist({
-  variable: "--font-geist-sans", 
+  variable: "--font-geist-sans",
   subsets: ["latin"],
 });
 
@@ -28,10 +34,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-          <div className="grid grid-rows-[auto_1fr] h-svh">
-            {children}
-          </div>
+      <body
+        className={`${canela.variable} ${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <ConditionalNavbar />
+        {children}
       </body>
     </html>
   );
