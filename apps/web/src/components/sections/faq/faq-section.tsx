@@ -50,7 +50,7 @@ function FaqItem({
   const panelId = `faq-panel-${index}`;
 
   return (
-    <div className="rounded-[16px] bg-white border border-[#E2E8F0] overflow-hidden">
+    <div className="rounded-2xl border border-marketing-border bg-marketing-card shadow-[0_4px_20px_rgba(15,23,42,0.04)] overflow-hidden transition-shadow duration-200 hover:shadow-[0_12px_36px_rgba(15,23,42,0.08)]">
       <h3>
         <button
           id={id}
@@ -58,13 +58,13 @@ function FaqItem({
           aria-expanded={open}
           aria-controls={panelId}
           onClick={() => setOpen((prev) => !prev)}
-          className="flex w-full items-center justify-between gap-4 px-6 text-left text-[#0F172A] font-semibold text-base transition-colors duration-[120ms] hover:text-[#5B6FD1] focus-visible:outline-2 focus-visible:outline-[#5B6FD1] focus-visible:outline-offset-[-2px] min-h-[52px] py-4"
+          className="flex w-full items-center justify-between gap-4 px-6 text-left text-marketing-ink font-semibold text-base transition-colors duration-150 hover:text-marketing-brand focus-visible:outline-2 focus-visible:outline-[#5b6fd1] focus-visible:outline-offset-[-2px] min-h-[56px] py-4"
         >
-          <span>{question}</span>
+          <span className="pr-2">{question}</span>
           <span
             className={cn(
-              "shrink-0 w-7 h-7 rounded-full border border-[#E2E8F0] bg-[#F5F7FF] flex items-center justify-center text-[#5B6FD1] transition-transform duration-[180ms]",
-              open && "rotate-45",
+              "shrink-0 w-9 h-9 rounded-full border border-marketing-border bg-marketing-canvas flex items-center justify-center text-marketing-brand transition-transform duration-200",
+              open && "rotate-45 bg-marketing-brand-soft/40",
             )}
             aria-hidden="true"
           >
@@ -90,11 +90,16 @@ function FaqItem({
         aria-labelledby={id}
         hidden={!open}
         className={cn(
-          "overflow-hidden transition-all duration-[180ms]",
-          open ? "max-h-[480px] opacity-100" : "max-h-0 opacity-0",
+          "overflow-hidden transition-all duration-200 ease-out",
+          open ? "max-h-[560px] opacity-100" : "max-h-0 opacity-0",
         )}
       >
-        <p className="px-6 pb-5 text-sm text-[#475569] leading-relaxed">
+        <p
+          className={cn(
+            "px-6 pb-5 text-sm text-marketing-subhead leading-relaxed",
+            open && "pt-4 border-t border-marketing-border/60",
+          )}
+        >
           {answer}
         </p>
       </div>
@@ -107,20 +112,20 @@ export function Faq() {
     <section
       id="faq"
       aria-labelledby="faq-heading"
-      className="scroll-mt-24 bg-[#F5F7FF] border-b border-[#E2E8F0]"
+      className="scroll-mt-24 border-b border-marketing-border bg-marketing-canvas"
     >
       <div className="mx-auto max-w-[800px] px-5 lg:px-10 py-20 lg:py-24">
         <div className="mb-12 text-center">
-          <span className="inline-flex items-center rounded-full border border-[#B5CAFF] bg-white px-3.5 py-1 text-xs font-semibold text-[#5B6FD1] mb-4">
+          <span className="inline-flex items-center rounded-full border border-marketing-border bg-white/70 px-3.5 py-1 text-xs font-semibold text-marketing-brand mb-4">
             FAQs
           </span>
           <h2
             id="faq-heading"
-            className="text-[clamp(1.75rem,4vw,2.75rem)] font-bold text-[#0F172A] tracking-tight leading-tight"
+            className="font-display text-[clamp(1.75rem,4vw,2.75rem)] text-marketing-ink tracking-tight leading-tight"
           >
             Frequently asked questions
           </h2>
-          <p className="mt-4 text-[#475569] text-lg leading-relaxed">
+          <p className="mt-4 text-marketing-subhead text-lg leading-relaxed font-medium">
             Can&rsquo;t find what you&rsquo;re looking for?{" "}
             <a
               href="#contact"
@@ -128,7 +133,7 @@ export function Faq() {
                 e.preventDefault();
                 document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" });
               }}
-              className="text-[#5B6FD1] font-medium underline underline-offset-2 hover:text-[#3746A3] transition-colors duration-[120ms] focus-visible:outline-2 focus-visible:outline-[#5B6FD1] focus-visible:outline-offset-2 rounded"
+              className="text-marketing-brand font-semibold underline underline-offset-2 hover:text-marketing-brand-hover transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-[#5b6fd1] focus-visible:outline-offset-2 rounded"
             >
               Contact us
             </a>
