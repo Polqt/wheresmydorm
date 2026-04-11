@@ -57,8 +57,8 @@ const PLANS = [
 function CheckIcon() {
   return (
     <svg
-      width="16"
-      height="16"
+      width="15"
+      height="15"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -78,27 +78,33 @@ export function Pricing() {
     <section
       id="pricing"
       aria-labelledby="pricing-heading"
-      className="scroll-mt-24 bg-white border-b border-[#E2E8F0]"
+      className="scroll-mt-24 bg-[#FDFBF7] border-t border-[#E8E0D5]"
     >
-      <div className="mx-auto max-w-[1200px] px-5 lg:px-10 py-20 lg:py-24">
-        <div className="mb-12 text-center">
-          <span className="inline-flex items-center rounded-full border border-[#B5CAFF] bg-[#F5F7FF] px-3.5 py-1 text-xs font-semibold text-[#5B6FD1] mb-4">
+      <div className="mx-auto max-w-[1200px] px-5 lg:px-10 py-20 lg:py-28">
+        <div className="mb-14">
+          <span className="inline-flex items-center rounded-full border border-[#C4622D]/30 bg-[#C4622D]/08 px-3.5 py-1 text-xs font-semibold text-[#C4622D] mb-4 tracking-wide uppercase">
             Pricing
           </span>
-          <h2
-            id="pricing-heading"
-            className="text-[clamp(1.75rem,4vw,2.75rem)] font-bold text-[#0F172A] tracking-tight leading-tight"
-          >
-            Simple, student-friendly pricing
-          </h2>
-          <p className="mt-4 text-[#475569] text-lg max-w-[50ch] mx-auto leading-relaxed">
-            Start for free and upgrade only when you&rsquo;re ready. No hidden
-            fees, no long-term contracts.
-          </p>
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+            <h2
+              id="pricing-heading"
+              className="text-[#1C1917] tracking-[-0.02em] leading-tight"
+              style={{
+                fontFamily: "var(--font-dm-serif)",
+                fontSize: "clamp(1.9rem, 4vw, 3rem)",
+              }}
+            >
+              Simple, student-friendly pricing
+            </h2>
+            <p className="text-[#78716C] text-base leading-relaxed max-w-[40ch] lg:text-right">
+              Start for free and upgrade only when you&rsquo;re ready. No hidden
+              fees, no long-term contracts.
+            </p>
+          </div>
         </div>
 
         <div
-          className="grid gap-6 md:grid-cols-3 items-stretch"
+          className="grid gap-5 md:grid-cols-3 items-stretch"
           role="list"
           aria-label="Pricing plans"
         >
@@ -110,12 +116,17 @@ export function Pricing() {
               className={cn(
                 "relative flex flex-col rounded-[20px] border p-8",
                 plan.featured
-                  ? "bg-[#0F172A] text-white border-[#5B6FD1] border-2 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
-                  : "bg-white border-[#E2E8F0] shadow-[0_8px_24px_rgba(15,23,42,0.10)]",
+                  ? "text-white border-[#2D5A42]"
+                  : "bg-white border-[#E8E0D5] shadow-[0_4px_16px_rgba(28,25,23,0.06)]",
               )}
+              style={
+                plan.featured
+                  ? { backgroundColor: "#1A3A2A" }
+                  : undefined
+              }
             >
               {plan.featured && plan.badge && (
-                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 inline-flex items-center rounded-full bg-[#5B6FD1] px-4 py-1 text-xs font-semibold text-white shadow-[0_6px_20px_rgba(91,111,209,0.35)]">
+                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 inline-flex items-center rounded-full bg-[#C4622D] px-4 py-1 text-xs font-semibold text-white shadow-[0_4px_14px_rgba(196,98,45,0.4)]">
                   {plan.badge}
                 </span>
               )}
@@ -123,8 +134,8 @@ export function Pricing() {
               <div className="mb-6">
                 <h3
                   className={cn(
-                    "text-lg font-semibold mb-1",
-                    plan.featured ? "text-white" : "text-[#0F172A]",
+                    "text-sm font-semibold mb-1 uppercase tracking-widest",
+                    plan.featured ? "text-[#86C4A0]" : "text-[#78716C]",
                   )}
                 >
                   {plan.name}
@@ -132,16 +143,17 @@ export function Pricing() {
                 <div className="flex items-end gap-1.5 mb-3">
                   <span
                     className={cn(
-                      "text-4xl font-bold tracking-tight tabular-nums",
-                      plan.featured ? "text-white" : "text-[#0F172A]",
+                      "text-5xl font-bold tracking-tight tabular-nums",
+                      plan.featured ? "text-[#FDFBF7]" : "text-[#1C1917]",
                     )}
+                    style={{ fontFamily: "var(--font-dm-serif)" }}
                   >
                     {plan.price}
                   </span>
                   <span
                     className={cn(
-                      "text-sm pb-1",
-                      plan.featured ? "text-[#94A3B8]" : "text-[#64748B]",
+                      "text-sm pb-1.5",
+                      plan.featured ? "text-[#86C4A0]" : "text-[#78716C]",
                     )}
                   >
                     /{plan.period}
@@ -150,7 +162,7 @@ export function Pricing() {
                 <p
                   className={cn(
                     "text-sm leading-relaxed",
-                    plan.featured ? "text-[#94A3B8]" : "text-[#475569]",
+                    plan.featured ? "text-[#86C4A0]" : "text-[#78716C]",
                   )}
                 >
                   {plan.description}
@@ -166,12 +178,12 @@ export function Pricing() {
                     key={feat}
                     className={cn(
                       "flex items-start gap-2.5 text-sm",
-                      plan.featured ? "text-[#CBD5E1]" : "text-[#475569]",
+                      plan.featured ? "text-[#C5DDD0]" : "text-[#44403C]",
                     )}
                   >
                     <span
                       className={
-                        plan.featured ? "text-[#829AFF]" : "text-[#5B6FD1]"
+                        plan.featured ? "text-[#6DB88E]" : "text-[#C4622D]"
                       }
                     >
                       <CheckIcon />
@@ -184,10 +196,10 @@ export function Pricing() {
               <a
                 href="#"
                 className={cn(
-                  "inline-flex items-center justify-center h-11 rounded-full font-medium text-sm transition-colors duration-[180ms] focus-visible:outline-2 focus-visible:outline-[#5B6FD1] focus-visible:outline-offset-2 active:scale-[0.98]",
+                  "inline-flex items-center justify-center h-11 rounded-full font-medium text-sm transition-colors duration-[180ms] focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]",
                   plan.featured
-                    ? "bg-[#5B6FD1] text-white hover:bg-[#3746A3] shadow-[0_6px_20px_rgba(91,111,209,0.35)]"
-                    : "border border-[#CBD5E1] bg-white text-[#0F172A] hover:bg-[#F8FAFC] hover:border-[#94A3B8]",
+                    ? "bg-[#C4622D] text-white hover:bg-[#A84E23] shadow-[0_4px_14px_rgba(196,98,45,0.4)] focus-visible:outline-[#F4A67A]"
+                    : "border border-[#D6C5B0] bg-transparent text-[#1C1917] hover:bg-[#F5EFE6] hover:border-[#C4622D]/40 focus-visible:outline-[#C4622D]",
                 )}
                 aria-label={`${plan.cta} — ${plan.name} plan`}
               >
@@ -197,7 +209,7 @@ export function Pricing() {
           ))}
         </div>
 
-        <p className="mt-8 text-center text-sm text-[#64748B]">
+        <p className="mt-8 text-center text-sm text-[#78716C]">
           All plans include a 14-day free trial. No credit card required.
         </p>
       </div>
