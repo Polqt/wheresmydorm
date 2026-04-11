@@ -5,6 +5,7 @@ import {
   listings,
   profiles,
   savedListings,
+  searchEvents,
 } from "@wheresmydorm/db";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -302,6 +303,19 @@ export const listingsRouter = router({
           .returning({ viewCount: listings.viewCount });
 
         viewCount = updated?.viewCount ?? row.viewCount + 1;
+
+        const viewerProfile = await db.query.profiles.findFirst({
+          where: eq(profiles.id, ctx.userId),
+          columns: { role: true },
+        });
+
+        if (viewerProfile?.role === "finder" || viewerProfile?.role === "admin") {
+          await db.insert(searchEvents).values({
+            userId: ctx.userId,
+            listingId: input.id,
+            eventType: "listing_view",
+          });
+        }
       }
 
       return {

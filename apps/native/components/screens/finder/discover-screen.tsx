@@ -1,4 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { memo, useCallback } from "react";
@@ -10,7 +11,11 @@ import { useFinderDiscovery } from "@/hooks/use-finder-discovery";
 import type { DiscoverySearchPreset } from "@/types/discovery";
 import type { ListingListItem } from "@/types/listings";
 import { formatCurrency } from "@/utils/profile";
-import { finderHomeRoute, listingDetailRoute } from "@/utils/routes";
+import {
+  finderHomeRoute,
+  listingDetailRoute,
+  savedListingsRoute,
+} from "@/utils/routes";
 
 const COVER_FALLBACK =
   "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=800";
@@ -87,6 +92,47 @@ function PresetChip({
   );
 }
 
+function FinderMetric({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <View className="flex-1 rounded-[22px] bg-[#F5F0E8] px-4 py-3">
+      <Text className="text-[20px] font-extrabold text-[#111827]">{value}</Text>
+      <Text className="mt-1 text-[12px] text-[#706A5F]">{label}</Text>
+    </View>
+  );
+}
+
+function QuickActionCard({
+  description,
+  icon,
+  onPress,
+  title,
+}: {
+  description: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  onPress: () => void;
+  title: string;
+}) {
+  return (
+    <Pressable className="flex-1 rounded-[24px] bg-[#FFFDFC] p-4" onPress={onPress}>
+      <View className="h-10 w-10 items-center justify-center rounded-full bg-[#F5F0E8]">
+        <Ionicons color="#111827" name={icon} size={18} />
+      </View>
+      <Text className="mt-3 text-[16px] font-extrabold text-[#111827]">
+        {title}
+      </Text>
+      <Text className="mt-1.5 text-[13px] leading-5 text-[#706A5F]">
+        {description}
+      </Text>
+    </Pressable>
+  );
+}
+
 function DiscoverySection({
   actionLabel,
   onActionPress,
@@ -128,15 +174,15 @@ function DiscoverySection({
         ) : null}
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {items.map((item) => (
-          <DiscoveryListingCard
-            key={item.id}
-            item={item}
-            onPress={onPressItem}
-          />
-        ))}
-      </ScrollView>
+      <FlashList
+        data={items}
+        horizontal
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <DiscoveryListingCard item={item} onPress={onPressItem} />
+        )}
+        showsHorizontalScrollIndicator={false}
+      />
     </View>
   );
 }
@@ -169,6 +215,8 @@ export function FinderDiscoverScreen() {
     },
     [applyPreset],
   );
+
+  const activeSearchCount = searchText.trim().length > 0 ? searchResults.length : 0;
 
   return (
     <SafeAreaView className="flex-1 bg-[#F7F4EE]" edges={["top"]}>
@@ -227,6 +275,36 @@ export function FinderDiscoverScreen() {
               />
             ) : null}
           </View>
+
+          <View className="mt-5 flex-row gap-2.5">
+            <FinderMetric
+              label="Saved searches"
+              value={String(savedSearches.length)}
+            />
+            <FinderMetric
+              label="Nearby picks"
+              value={String(lastNearbyItems.length)}
+            />
+            <FinderMetric
+              label="Live results"
+              value={String(activeSearchCount)}
+            />
+          </View>
+        </View>
+
+        <View className="mt-5 flex-row gap-3">
+          <QuickActionCard
+            description="Jump back into the full map with your nearby inventory."
+            icon="map-outline"
+            onPress={() => router.push(finderHomeRoute())}
+            title="Map search"
+          />
+          <QuickActionCard
+            description="Review the shortlist you bookmarked while comparing options."
+            icon="bookmark-outline"
+            onPress={() => router.push(savedListingsRoute())}
+            title="Saved list"
+          />
         </View>
 
         {savedSearches.length > 0 ? (
@@ -267,7 +345,7 @@ export function FinderDiscoverScreen() {
           <DiscoverySection
             items={searchResults}
             onPressItem={handleListingPress}
-            subtitle="Text search across listing titles, descriptions, and location fields."
+            subtitle={`${searchResults.length} matches across titles, descriptions, and location fields.`}
             title="Search results"
           />
         ) : null}

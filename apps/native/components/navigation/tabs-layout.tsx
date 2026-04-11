@@ -42,14 +42,16 @@ function BounceIcon({
       return;
     }
 
-    scale.value = withSequence(
+    scale.set(
+      withSequence(
       withTiming(1.2, { duration: 120, easing: Easing.out(Easing.quad) }),
       withSpring(1.0, { damping: 6, stiffness: 80 }),
+      ),
     );
   }, [pressKey, scale]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [{ scale: scale.get() }],
   }));
 
   return <Animated.View style={animatedStyle}>{children}</Animated.View>;
@@ -287,11 +289,7 @@ const TAB_SCREEN_OPTIONS = {
     height: Platform.select({ ios: 74, default: 64 }),
     paddingBottom: Platform.select({ ios: 10, default: 8 }),
     paddingTop: 8,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.03,
-    shadowRadius: 12,
-    elevation: 8,
+    boxShadow: "0 -4px 12px rgba(15, 23, 42, 0.03)",
   },
   tabBarItemStyle: {
     paddingTop: 2,

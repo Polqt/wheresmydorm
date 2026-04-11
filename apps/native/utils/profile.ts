@@ -1,9 +1,11 @@
+const PHP_CURRENCY_FORMATTER = new Intl.NumberFormat("en-PH", {
+  style: "currency",
+  currency: "PHP",
+  maximumFractionDigits: 0,
+});
+
 export function formatCurrency(price: string | number): string {
-  return new Intl.NumberFormat("en-PH", {
-    style: "currency",
-    currency: "PHP",
-    maximumFractionDigits: 0,
-  }).format(Number(price));
+  return PHP_CURRENCY_FORMATTER.format(Number(price));
 }
 
 export function formatCompactPrice(price: string | number): string {

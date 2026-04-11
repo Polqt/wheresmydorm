@@ -6,13 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import * as Location from "expo-location";
 import { router } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Platform,
-  Pressable,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -70,9 +64,11 @@ function LocationButton({ onPress }: { onPress: () => void }) {
   const [active, setActive] = useState(false);
 
   const handlePress = useCallback(() => {
-    scale.value = withSequence(
+    scale.set(
+      withSequence(
       withTiming(1.2, { duration: 120, easing: Easing.out(Easing.quad) }),
       withSpring(1.0, { damping: 6, stiffness: 80 }),
+      ),
     );
     setActive(true);
     setTimeout(() => setActive(false), 1000);
@@ -80,7 +76,7 @@ function LocationButton({ onPress }: { onPress: () => void }) {
   }, [onPress, scale]);
 
   const animStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [{ scale: scale.get() }],
   }));
 
   return (
@@ -203,7 +199,7 @@ export default function MapTabScreen() {
     longitudeDelta: 0.05,
   };
 
-  if (Platform.OS === "web") {
+  if (process.env.EXPO_OS === "web") {
     return (
       <View className="flex-1 items-center justify-center bg-[#F7F4EE] px-7">
         <Text className="text-center text-[22px] font-extrabold text-[#0F172A]">
@@ -222,7 +218,7 @@ export default function MapTabScreen() {
       <MapViewComponent
         ref={mapRef}
         initialRegion={initialRegion}
-        mapType={Platform.OS === "ios" ? "mutedStandard" : "standard"}
+        mapType={process.env.EXPO_OS === "ios" ? "mutedStandard" : "standard"}
         onMapReady={handleMapReady}
         pitchEnabled
         rotateEnabled
