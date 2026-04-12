@@ -80,11 +80,7 @@ export default function ProfileTabScreen() {
             hitSlop={8}
             onPress={goEdit}
             style={{
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.08,
-              shadowRadius: 4,
-              elevation: 2,
+              boxShadow: "0 1px 4px rgba(0, 0, 0, 0.08)",
             }}
           >
             <Ionicons color="#1C1917" name="pencil" size={15} />
@@ -94,11 +90,7 @@ export default function ProfileTabScreen() {
         <View
           className="mx-5 mb-5 rounded-3xl bg-white p-5"
           style={{
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.06,
-            shadowRadius: 12,
-            elevation: 3,
+            boxShadow: "0 2px 12px rgba(0, 0, 0, 0.06)",
           }}
         >
           <View className="flex-row items-center gap-4">

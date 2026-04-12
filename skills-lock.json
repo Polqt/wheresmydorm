@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "skills": {
+    "app-icon": {
+      "source": "code-with-beto/skills",
+      "sourceType": "github",
+      "computedHash": "8b91c8b648c737789f68fa97e37f05ad0885fdbad55d921dcdd276de23802e69"
+    },
+    "building-native-ui": {
+      "source": "expo/skills",
+      "sourceType": "github",
+      "computedHash": "a0316d2ce842d2dd8067a144e339cf502329dc7701f9f5122268fdb3d4c980f7"
+    },
+    "devops-flow": {
+      "source": "vladm3105/aidoc-flow-framework",
+      "sourceType": "github",
+      "computedHash": "d3e5b08c3bcc9ca7d60bb349014847b0c69365ff32f5f6e7eefcdd8d722374db"
+    },
+    "skill-creator": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "57f470f512f45bdac598e302bc72fd62bf2b649fc7fad032efe97720149cde4d"
+    },
+    "supabase": {
+      "source": "alinaqi/claude-bootstrap",
+      "sourceType": "github",
+      "computedHash": "251cb2c3363e56f852317cbced07a1159b07c55e0d0dba2d1dffd298e8cc6547"
+    },
+    "trpc": {
+      "source": "mindrally/skills",
+      "sourceType": "github",
+      "computedHash": "36e188d67fabea61e4b891bc3a5d9f18f377632564a3ed0e780204de1a5e58e6"
+    },
+    "trpc-type-safety": {
+      "source": "bobmatnyc/claude-mpm-skills",
+      "sourceType": "github",
+      "computedHash": "751764662fc7462c7d3d04ee4e795b679a14bb4c8e4fcc7df0465f59af24a840"
+    },
+    "vercel-react-native-skills": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "computedHash": "41d24eafa7c3d82e270439808f7cfbc4d51aeb2d14f2809a2267c16275784d06"
+    }
+  }
+}

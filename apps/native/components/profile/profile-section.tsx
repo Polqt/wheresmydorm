@@ -20,11 +20,7 @@ export const ProfileSection = memo(function ProfileSection({
       <View
         className="rounded-2xl bg-white px-4"
         style={{
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.05,
-          shadowRadius: 8,
-          elevation: 2,
+          boxShadow: "0 1px 8px rgba(0, 0, 0, 0.05)",
         }}
       >
         {children}

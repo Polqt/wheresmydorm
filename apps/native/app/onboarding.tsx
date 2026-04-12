@@ -1,8 +1,9 @@
+import { FlashList } from "@shopify/flash-list";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { NativeScrollEvent, NativeSyntheticEvent } from "react-native";
-import { Dimensions, FlatList, Pressable, Text, View } from "react-native";
+import { Pressable, Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AnimatedDot } from "@/components/onboarding/animated-dot";
@@ -13,11 +14,10 @@ import { setOnboardingCompletion } from "@/services/onboarding";
 import { useOnboardingStore } from "@/stores/onboarding";
 import type { OnboardingSlide as OnboardingSlideItem } from "@/types/onboarding";
 
-const { width: screenWidth } = Dimensions.get("window");
-
 export default function OnboardingScreen() {
-  const flatListRef = useRef<FlatList<OnboardingSlideItem>>(null);
+  const flatListRef = useRef<any>(null);
   const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
   const { user } = useAuth();
   const currentIndex = useOnboardingStore((state) => state.currentIndex);
   const resetCurrentIndex = useOnboardingStore(
@@ -95,7 +95,7 @@ export default function OnboardingScreen() {
         </Pressable>
       </View>
 
-      <FlatList
+      <FlashList
         ref={flatListRef}
         contentContainerStyle={contentContainerStyle}
         data={ONBOARDING_SLIDES}

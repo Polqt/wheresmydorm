@@ -1,3 +1,4 @@
+import { FlashList } from "@shopify/flash-list";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
@@ -226,18 +227,21 @@ export function ListingForm({
             </Pressable>
 
             {photoPreviewUrls.length > 0 ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View className="mt-[10px] flex-row gap-2">
-                  {photoPreviewUrls.map((uri) => (
+              <View className="mt-[10px]">
+                <FlashList
+                  data={photoPreviewUrls}
+                  horizontal
+                  keyExtractor={(uri) => uri}
+                  renderItem={({ item: uri }) => (
                     <Image
-                      key={uri}
-                      className="h-20 w-20 rounded-[12px]"
+                      className="mr-2 h-20 w-20 rounded-[12px]"
                       contentFit="cover"
                       source={{ uri }}
                     />
-                  ))}
-                </View>
-              </ScrollView>
+                  )}
+                  showsHorizontalScrollIndicator={false}
+                />
+              </View>
             ) : null}
           </FormField>
 

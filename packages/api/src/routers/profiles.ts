@@ -12,6 +12,20 @@ const roleInputSchema = z.object({
 const followInputSchema = z.object({
   userId: z.string().uuid(),
 });
+const updateProfileInputSchema = z.object({
+  avatarUrl: z.string().url().nullable().optional(),
+  bio: z.string().trim().max(500).nullable().optional(),
+  contactEmail: z.string().email().nullable().optional(),
+  contactPhone: z.string().trim().max(40).nullable().optional(),
+  finderBudgetMax: z.string().trim().max(40).nullable().optional(),
+  finderBudgetMin: z.string().trim().max(40).nullable().optional(),
+  finderPropertyTypes: z.array(z.string().trim().min(1)).max(12).optional(),
+  firstName: z.string().trim().min(1).max(100).optional(),
+  lastName: z.string().trim().max(100).nullable().optional(),
+  listerPropertyCount: z.number().int().min(0).nullable().optional(),
+  preferredArea: z.string().trim().max(120).nullable().optional(),
+  propertyTypes: z.array(z.string().trim().min(1)).max(12).optional(),
+});
 
 export const profilesRouter = router({
   sync: protectedProcedure.mutation(async ({ ctx }) => {
@@ -61,6 +75,38 @@ export const profilesRouter = router({
       const [profile] = await db
         .update(profiles)
         .set({ role: input.role })
+        .where(eq(profiles.id, ctx.userId))
+        .returning();
+
+      if (!profile) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Profile not found for the current user.",
+        });
+      }
+
+      return profile;
+    }),
+
+  update: protectedProcedure
+    .input(updateProfileInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const [profile] = await db
+        .update(profiles)
+        .set({
+          avatarUrl: input.avatarUrl,
+          bio: input.bio,
+          contactEmail: input.contactEmail,
+          contactPhone: input.contactPhone,
+          finderBudgetMax: input.finderBudgetMax,
+          finderBudgetMin: input.finderBudgetMin,
+          finderPropertyTypes: input.finderPropertyTypes,
+          firstName: input.firstName,
+          lastName: input.lastName,
+          listerPropertyCount: input.listerPropertyCount,
+          preferredArea: input.preferredArea,
+          propertyTypes: input.propertyTypes,
+        })
         .where(eq(profiles.id, ctx.userId))
         .returning();
 

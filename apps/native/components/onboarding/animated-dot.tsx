@@ -21,8 +21,8 @@ export const AnimatedDot = React.memo(function AnimatedDot({
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      opacity: opacity.value,
-      transform: [{ scaleX: scaleX.value }],
+      opacity: opacity.get(),
+      transform: [{ scaleX: scaleX.get() }],
     };
   });
 

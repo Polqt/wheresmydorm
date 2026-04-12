@@ -25,13 +25,13 @@ export function Navbar() {
     <header className="sticky top-0 z-40 flex justify-center px-5 pt-4 pb-2 pointer-events-none">
       <nav
         aria-label="Main navigation"
-        className="pointer-events-auto flex items-center justify-between gap-6 rounded-full border border-[#E2E8F0] bg-white/90 backdrop-blur-md px-4 py-2.5 shadow-[0_8px_24px_rgba(15,23,42,0.10)] w-full max-w-3xl"
+        className="pointer-events-auto flex items-center justify-between gap-6 rounded-full border border-[#1C1917]/12 bg-[#FDFBF7]/90 backdrop-blur-md px-4 py-2.5 shadow-[0_8px_24px_rgba(28,25,23,0.10)] w-full max-w-3xl"
       >
         {/* Logo */}
         <a
           href="/"
           aria-label="Where's My Dorm — home"
-          className="shrink-0 focus-visible:outline-2 focus-visible:outline-[#5B6FD1] focus-visible:outline-offset-2 rounded-full"
+          className="shrink-0 focus-visible:outline-2 focus-visible:outline-[#C4622D] focus-visible:outline-offset-2 rounded-full"
         >
           <Image
             src={logoSrc}
@@ -49,7 +49,7 @@ export function Navbar() {
               <a
                 href={href}
                 onClick={(e) => handleScroll(e, href)}
-                className="inline-flex items-center h-9 px-4 rounded-full text-sm font-medium text-[#475569] hover:text-[#0F172A] hover:bg-[#F5F7FF] transition-colors duration-[180ms] focus-visible:outline-2 focus-visible:outline-[#5B6FD1] focus-visible:outline-offset-2"
+                className="inline-flex items-center h-9 px-4 rounded-full text-sm font-medium text-[#44403C] hover:text-[#1C1917] hover:bg-[#1C1917]/06 transition-colors duration-[180ms] focus-visible:outline-2 focus-visible:outline-[#C4622D] focus-visible:outline-offset-2"
               >
                 {label}
               </a>
@@ -60,7 +60,7 @@ export function Navbar() {
         {/* CTA */}
         <a
           href="#"
-          className="shrink-0 inline-flex items-center h-10 px-5 rounded-full bg-[#0F172A] text-white text-sm font-medium hover:bg-[#1E293B] transition-colors duration-[180ms] focus-visible:outline-2 focus-visible:outline-[#5B6FD1] focus-visible:outline-offset-2 active:scale-[0.98]"
+          className="shrink-0 inline-flex items-center h-10 px-5 rounded-full bg-[#C4622D] text-white text-sm font-medium hover:bg-[#A84E23] transition-colors duration-[180ms] shadow-[0_3px_10px_rgba(196,98,45,0.3)] focus-visible:outline-2 focus-visible:outline-[#C4622D] focus-visible:outline-offset-2 active:scale-[0.98]"
           aria-label="Get the app"
         >
           Get the app

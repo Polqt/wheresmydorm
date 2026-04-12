@@ -61,6 +61,7 @@ const SavedRow = memo(function SavedRow({
 
 export default function SavedTabScreen() {
   const savedQuery = useQuery(trpc.listings.savedListings.queryOptions());
+  const savedItems = savedQuery.data ?? [];
 
   const handlePress = useCallback((id: string) => {
     router.push(listingDetailRoute(id));
@@ -74,6 +75,24 @@ export default function SavedTabScreen() {
   );
 
   const keyExtractor = useCallback((item: SavedListing) => item.id, []);
+
+  const avgPrice =
+    savedItems.length > 0
+      ? Math.round(
+          savedItems.reduce((sum, item) => sum + Number(item.pricePerMonth), 0) /
+            savedItems.length,
+        )
+      : null;
+  const topCity =
+    savedItems.length > 0
+      ? Object.entries(
+          savedItems.reduce<Record<string, number>>((acc, item) => {
+            const key = item.city.trim();
+            acc[key] = (acc[key] ?? 0) + 1;
+            return acc;
+          }, {}),
+        ).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+      : null;
 
   return (
     <SafeAreaView className="flex-1 bg-[#F7F4EE]" edges={["top"]}>
@@ -89,9 +108,55 @@ export default function SavedTabScreen() {
       ) : (
         <FlashList
           contentContainerStyle={{ paddingBottom: 40, paddingHorizontal: 18 }}
-          data={savedQuery.data ?? []}
+          data={savedItems}
           keyExtractor={keyExtractor}
           ItemSeparatorComponent={() => <View className="h-px bg-[#E9E2D8]" />}
+          ListHeaderComponent={
+            savedItems.length > 0 ? (
+              <View className="mb-4 rounded-[28px] bg-[#FFFDFC] p-5">
+                <Text className="text-[24px] font-extrabold tracking-[-0.6px] text-[#111827]">
+                  Your shortlist is ready
+                </Text>
+                <Text className="mt-1.5 text-[14px] leading-6 text-[#706A5F]">
+                  Compare saved places before you message a lister or revisit the
+                  map.
+                </Text>
+
+                <View className="mt-4 flex-row gap-2.5">
+                  <View className="flex-1 rounded-[22px] bg-[#F5F0E8] px-4 py-3">
+                    <Text className="text-[20px] font-extrabold text-[#111827]">
+                      {savedItems.length}
+                    </Text>
+                    <Text className="mt-1 text-[12px] text-[#706A5F]">
+                      Saved places
+                    </Text>
+                  </View>
+                  <View className="flex-1 rounded-[22px] bg-[#F5F0E8] px-4 py-3">
+                    <Text className="text-[20px] font-extrabold text-[#111827]">
+                      {avgPrice ? formatCurrency(avgPrice) : "-"}
+                    </Text>
+                    <Text className="mt-1 text-[12px] text-[#706A5F]">
+                      Avg monthly
+                    </Text>
+                  </View>
+                </View>
+
+                {topCity ? (
+                  <View className="mt-4 rounded-[22px] bg-[#0B2D23] px-4 py-4">
+                    <Text className="text-[12px] font-bold uppercase tracking-[0.8px] text-[#D9E7E1]">
+                      Strongest cluster
+                    </Text>
+                    <Text className="mt-1 text-[18px] font-extrabold text-white">
+                      {topCity}
+                    </Text>
+                    <Text className="mt-1 text-[13px] leading-5 text-[#D9E7E1]">
+                      Most of your saved inventory is currently centered here.
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            ) : null
+          }
           ListEmptyComponent={
             <View className="mt-20 items-center px-8">
               <Text className="text-[18px] font-extrabold text-[#1A1A1A]">

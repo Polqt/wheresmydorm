@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm check-types:*)",
+      "Bash(find C:Userspoyhiwheresmydormappsweb.agents -type f -name *.md)",
+      "Bash(find C:Userspoyhiwheresmydorm -name SKILL.md -o -name threejs*)",
+      "Bash(find /c/Users/poyhi/wheresmydorm -name SKILL.md -o -name threejs*)",
+      "Bash(pnpm --filter web add three)",
+      "Bash(pnpm --filter web add -D @types/three)"
+    ]
+  }
+}

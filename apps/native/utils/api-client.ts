@@ -1,5 +1,4 @@
 import Constants from "expo-constants";
-import { Platform } from "react-native";
 
 import { QueryClient } from "@tanstack/react-query";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
@@ -33,7 +32,7 @@ function getNativeServerUrl() {
     return url.toString().replace(/\/$/, "");
   }
 
-  if (Platform.OS === "android") {
+  if (process.env.EXPO_OS === "android") {
     url.hostname = "10.0.2.2";
   }
 

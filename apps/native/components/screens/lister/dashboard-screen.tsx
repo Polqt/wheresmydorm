@@ -68,14 +68,20 @@ const DashboardListingRow = memo(function DashboardListingRow({
 });
 
 function StatBlock({
+  accent,
   label,
   value,
 }: {
+  accent: string;
   label: string;
   value: string;
 }) {
   return (
     <View className="flex-1 rounded-[22px] bg-[#FFFDFC] px-3.5 py-4">
+      <View
+        className="mb-3 h-2.5 w-2.5 rounded-full"
+        style={{ backgroundColor: accent }}
+      />
       <Text className="text-[22px] font-extrabold text-[#111827]">{value}</Text>
       <Text className="mt-1 text-[12px] text-[#7B7468]">{label}</Text>
     </View>
@@ -155,24 +161,75 @@ export default function ListerDashboardTabScreen() {
         ItemSeparatorComponent={() => <View className="h-px bg-[#ECE4DA]" />}
         ListHeaderComponent={
           <>
-            <View className="mb-4 rounded-[28px] bg-[#FFFDFC] p-[18px]">
-              <Text className="text-[24px] font-extrabold tracking-[-0.6px] text-[#111827]">
-                Unlimited free listings
+            <View className="mb-4 overflow-hidden rounded-[30px] bg-[#0F172A] p-[20px]">
+              <View className="rounded-full bg-[rgba(255,255,255,0.12)] px-3 py-1.5 self-start">
+                <Text className="text-[11px] font-bold uppercase tracking-[0.9px] text-[#D9E7E1]">
+                  Lister workspace
+                </Text>
+              </View>
+              <Text className="mt-4 text-[28px] font-extrabold tracking-[-0.7px] text-white">
+                {profileQuery.data?.firstName
+                  ? `${profileQuery.data.firstName}, here is today's pipeline`
+                  : "Here is today's pipeline"}
               </Text>
-              <Text className="mt-1.5 text-[14px] leading-5 text-[#6F685E]">
+              <Text className="mt-2 text-[14px] leading-6 text-[#D2D7E0]">
                 {profileQuery.data?.propertyTypes?.length
-                  ? `Managing ${profileQuery.data.propertyTypes.join(", ")} with optional boosts when you want more reach.`
-                  : "Set your property types in profile to tailor the lister experience."}
+                  ? `Managing ${profileQuery.data.propertyTypes.join(", ")} across pricing, visibility, and inquiry flow.`
+                  : "Set your property types in profile to tailor your listing workflow and prompts."}
               </Text>
+
+              <View className="mt-5 flex-row gap-2.5">
+                <View className="flex-1 rounded-[24px] bg-[rgba(255,255,255,0.08)] px-4 py-4">
+                  <Text className="text-[11px] font-bold uppercase tracking-[0.8px] text-[#B7C0CF]">
+                    Portfolio
+                  </Text>
+                  <Text className="mt-1 text-[22px] font-extrabold text-white">
+                    {listingsQuery.data?.length ?? 0} listings
+                  </Text>
+                </View>
+                <View className="flex-1 rounded-[24px] bg-[rgba(255,255,255,0.08)] px-4 py-4">
+                  <Text className="text-[11px] font-bold uppercase tracking-[0.8px] text-[#B7C0CF]">
+                    Inbox load
+                  </Text>
+                  <Text className="mt-1 text-[22px] font-extrabold text-white">
+                    {unreadThreads} unread
+                  </Text>
+                </View>
+              </View>
             </View>
 
             <View className="mb-4 flex-row gap-2.5">
-              <StatBlock label="Active" value={String(activeListings)} />
-              <StatBlock label="Inquiries" value={String(totalInquiries)} />
-              <StatBlock label="Unread" value={String(unreadThreads)} />
+              <StatBlock
+                accent="#0B4A30"
+                label="Active"
+                value={String(activeListings)}
+              />
+              <StatBlock
+                accent="#EA580C"
+                label="Inquiries"
+                value={String(totalInquiries)}
+              />
+              <StatBlock
+                accent="#2563EB"
+                label="Unread"
+                value={String(unreadThreads)}
+              />
             </View>
 
             <View className="mb-5 flex-row gap-3">
+              <Pressable
+                className="flex-1 rounded-[24px] bg-[#FFFDFC] p-4"
+                onPress={() => router.push(createListingRoute())}
+              >
+                <Ionicons color="#111827" name="add-circle-outline" size={18} />
+                <Text className="mt-2.5 text-[16px] font-bold text-[#111827]">
+                  New listing
+                </Text>
+                <Text className="mt-1.5 text-[13px] leading-[19px] text-[#7B7468]">
+                  Start a fresh property card with photos and pricing.
+                </Text>
+              </Pressable>
+
               <Pressable
                 className="flex-1 rounded-[24px] bg-[#FFFDFC] p-4"
                 onPress={() => router.push(listerListingsTabRoute())}
@@ -185,7 +242,9 @@ export default function ListerDashboardTabScreen() {
                   Edit pricing, status, and photos.
                 </Text>
               </Pressable>
+            </View>
 
+            <View className="mb-5 flex-row gap-3">
               <Pressable
                 className="flex-1 rounded-[24px] bg-[#FFFDFC] p-4"
                 onPress={() => router.push(listerInboxTabRoute())}
@@ -202,6 +261,19 @@ export default function ListerDashboardTabScreen() {
                   Reply to finder inquiries quickly.
                 </Text>
               </Pressable>
+
+              <View className="flex-1 rounded-[24px] bg-[#EAF2EE] p-4">
+                <Text className="text-[12px] font-bold uppercase tracking-[0.8px] text-[#0B4A30]">
+                  Focus now
+                </Text>
+                <Text className="mt-2 text-[16px] font-bold text-[#111827]">
+                  Keep active listings fresh
+                </Text>
+                <Text className="mt-1.5 text-[13px] leading-[19px] text-[#4B5563]">
+                  Updated pricing and recent photos keep you visible in finder
+                  search results.
+                </Text>
+              </View>
             </View>
 
             <View className="mb-2.5 flex-row items-center justify-between">

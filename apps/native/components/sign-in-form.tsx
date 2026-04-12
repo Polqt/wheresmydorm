@@ -91,11 +91,7 @@ export function SignInForm({
             className="mb-8 h-[120px] w-[120px] items-center justify-center rounded-[36px]"
             style={{
               backgroundColor: "#0B2D23",
-              shadowColor: "#0B2D23",
-              shadowOffset: { width: 0, height: 12 },
-              shadowOpacity: 0.3,
-              shadowRadius: 24,
-              elevation: 16,
+              boxShadow: "0 12px 24px rgba(11, 45, 35, 0.3)",
             }}
           >
             <AppLogo size={60} />
@@ -141,11 +137,7 @@ export function SignInForm({
             style={({ pressed }) => ({
               backgroundColor: "#0B2D23",
               opacity: pressed ? 0.85 : 1,
-              shadowColor: "#0B2D23",
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.25,
-              shadowRadius: 12,
-              elevation: 6,
+              boxShadow: "0 4px 12px rgba(11, 45, 35, 0.25)",
             })}
           >
             <Text className="text-[15px] font-semibold tracking-[-0.2px] text-white">
