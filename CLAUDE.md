@@ -54,17 +54,19 @@ tRPC with a Supabase-backed context. Authentication is handled by extracting ses
 - **Web**: Supabase SSR cookies
 - **Native**: Bearer token in Authorization header
 
-The `protectedProcedure` middleware throws `UNAUTHORIZED` if no session is present.
+The `protectedProcedure` middleware throws `UNAUTHORIZED` if no session is present. `adminProcedure` extends it and throws `FORBIDDEN` if `ctx.role !== "admin"`. Always use `adminProcedure` for admin-only routes — never call `ensureAdmin()` inside a handler body.
 
-Routers: `profiles`, `listings`, `messages`, `posts`
+`createContext` fetches the user's `role` once from the `profiles` table after auth and exposes it as `ctx.role`. Use `ctx.role` for role checks inside procedures instead of issuing extra DB queries.
+
+Routers: `profiles`, `listings`, `messages`, `posts`, `reviews`, `notifications`, `payments`, `admin`
 
 Key non-obvious router behaviors:
-- `listings.getById` increments `viewCount` only if the caller is not the owner
+- `listings.getById` increments `viewCount` only if the caller is not the owner; uses `ctx.role` to gate the `listing_view` search event
 - `messages.send` checks for user blocks and increments `inquiryCount` on the listing for the first message in a thread
 - `posts.list` is follow-gated (see Key Domain Concepts below)
 - `profiles.sync` must be called after OAuth login to pull `firstName`/`lastName`/`avatarUrl` from Supabase auth into the profile row
 
-**Important**: The native app's `services/profile.ts` calls Supabase directly (bypassing tRPC) for all profile CRUD — reading/writing the `profiles` table with camelCase ↔ snake_case mapping done in the service itself. tRPC's `profiles` router is only used for social actions (sync, setRole, follow/unfollow). Don't add profile reads/writes to the tRPC router for native.
+**Important**: The native app's `services/profile.ts` calls Supabase directly (bypassing tRPC) for all profile CRUD — reading/writing the `profiles` table with camelCase ↔ snake_case mapping done in the service itself. tRPC's `profiles` router is only used for social actions (sync, setRole, follow/unfollow, update, setNotificationToken, deleteAccount, me). The `update`, `me`, `setNotificationToken`, and `deleteAccount` procedures exist in the tRPC router for web consumption but must not be added to native service calls — use the direct Supabase service layer there.
 
 The tRPC handler is hosted at `apps/web/src/app/api/trpc/[trpc]/route.ts` — the web app serves the API for both itself and the native app.
 
