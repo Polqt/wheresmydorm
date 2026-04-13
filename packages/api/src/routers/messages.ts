@@ -1,8 +1,18 @@
 import { TRPCError } from "@trpc/server";
-import { db, listings, messages, profiles, userBlocks } from "@wheresmydorm/db";
-import { and, asc, desc, eq, or, sql } from "drizzle-orm";
+import {
+  conversationReports,
+  db,
+  inquiryStatuses,
+  listings,
+  messages,
+  profiles,
+  userBlocks,
+} from "@wheresmydorm/db";
+import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { protectedProcedure, router } from "../index";
+import { reportReasonValues } from "../lib/moderation";
+import { createNotification } from "../lib/notifications";
 import { formatProfileName } from "../lib/profile";
 
 const threadIdSeparator = "__";
@@ -27,6 +37,17 @@ const blockUserSchema = z.object({
   reason: z.string().trim().max(300).optional(),
 });
 
+const reportConversationSchema = z.object({
+  notes: z.string().trim().max(500).optional(),
+  reason: z.enum(reportReasonValues),
+  threadId: z.string().min(1),
+});
+
+const setInquiryStatusSchema = z.object({
+  status: z.enum(["pending", "responded", "closed"]),
+  threadId: z.string().min(1),
+});
+
 function encodeThreadId(listingId: string, otherUserId: string) {
   return `${listingId}${threadIdSeparator}${otherUserId}`;
 }
@@ -46,113 +67,112 @@ function decodeThreadId(threadId: string) {
 
 export const messagesRouter = router({
   getThreads: protectedProcedure.query(async ({ ctx }) => {
-    const messageList = await db.query.messages.findMany({
-      where: and(
-        eq(messages.isDeleted, false),
-        or(
-          eq(messages.senderId, ctx.userId),
-          eq(messages.receiverId, ctx.userId),
-        ),
-      ),
-      orderBy: [desc(messages.createdAt)],
-      limit: 300,
+    // Step 1: find the latest message id per thread using a subquery.
+    // A thread is (listingId, otherUserId) — we store the smaller/larger
+    // participant as the canonical key via LEAST/GREATEST so both directions
+    // of a conversation collapse to one row.
+    const latestMessageIds = await db.execute<{ id: string }>(sql`
+      SELECT DISTINCT ON (m.listing_id, LEAST(m.sender_id, m.receiver_id), GREATEST(m.sender_id, m.receiver_id))
+        m.id
+      FROM messages m
+      WHERE m.is_deleted = false
+        AND (m.sender_id = ${ctx.userId} OR m.receiver_id = ${ctx.userId})
+      ORDER BY
+        m.listing_id,
+        LEAST(m.sender_id, m.receiver_id),
+        GREATEST(m.sender_id, m.receiver_id),
+        m.created_at DESC
+    `);
+
+    if (latestMessageIds.rows.length === 0) {
+      return [];
+    }
+
+    const ids = latestMessageIds.rows.map((r) => r.id);
+
+    // Step 2: fetch those messages with their relations in one query.
+    const latestMessages = await db.query.messages.findMany({
+      where: inArray(messages.id, ids),
       with: {
-        listing: {
-          columns: {
-            id: true,
-            title: true,
-          },
-        },
-        sender: {
-          columns: {
-            id: true,
-            avatarUrl: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-        receiver: {
-          columns: {
-            id: true,
-            avatarUrl: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
+        listing: { columns: { id: true, title: true } },
+        sender: { columns: { id: true, avatarUrl: true, firstName: true, lastName: true } },
+        receiver: { columns: { id: true, avatarUrl: true, firstName: true, lastName: true } },
       },
     });
 
-    const threadMap = new Map<
-      string,
-      {
-        threadId: string;
-        listing: { id: string; title: string };
-        otherUser: {
-          id: string;
-          displayName: string;
-          avatarUrl: string | null;
-        };
-        lastMessage: {
-          id: string;
-          body: string;
-          mediaUrl: string | null;
-          createdAt: Date;
-          senderId: string;
-        };
-        unreadCount: number;
-      }
-    >();
+    // Step 3: unread counts — one aggregate query.
+    const unreadRows = await db.execute<{ listing_id: string; other_user_id: string; cnt: string }>(sql`
+      SELECT listing_id, sender_id AS other_user_id, COUNT(*)::int AS cnt
+      FROM messages
+      WHERE receiver_id = ${ctx.userId}
+        AND is_read = false
+        AND is_deleted = false
+      GROUP BY listing_id, sender_id
+    `);
+    const unreadMap = new Map(
+      unreadRows.rows.map((r) => [encodeThreadId(r.listing_id, r.other_user_id), Number(r.cnt)]),
+    );
 
-    for (const message of messageList) {
-      const otherUser =
-        message.senderId === ctx.userId
-          ? {
-              avatarUrl: message.receiver.avatarUrl,
-              displayName: formatProfileName({
-                firstName: message.receiver.firstName,
-                lastName: message.receiver.lastName,
-              }),
-              id: message.receiver.id,
-            }
-          : {
-              avatarUrl: message.sender.avatarUrl,
-              displayName: formatProfileName({
-                firstName: message.sender.firstName,
-                lastName: message.sender.lastName,
-              }),
-              id: message.sender.id,
-            };
-      const threadId = encodeThreadId(message.listingId, otherUser.id);
-      const currentThread = threadMap.get(threadId);
+    // Step 4: inquiry statuses (lister-only).
+    const inquiryRows =
+      ctx.role === "lister" || ctx.role === "admin"
+        ? await db.query.inquiryStatuses.findMany({
+            where: eq(inquiryStatuses.listerId, ctx.userId),
+            columns: { finderId: true, listingId: true, status: true },
+          })
+        : [];
+    const inquiryStatusMap = new Map(
+      inquiryRows.map((row) => [
+        encodeThreadId(row.listingId, row.finderId),
+        row.status,
+      ]),
+    );
 
-      if (!currentThread) {
-        threadMap.set(threadId, {
-          threadId,
-          listing: message.listing,
-          otherUser,
+    return latestMessages
+      .map((message) => {
+        const otherUser =
+          message.senderId === ctx.userId
+            ? {
+                avatarUrl: message.receiver.avatarUrl,
+                displayName: formatProfileName({
+                  firstName: message.receiver.firstName,
+                  lastName: message.receiver.lastName,
+                }),
+                id: message.receiver.id,
+              }
+            : {
+                avatarUrl: message.sender.avatarUrl,
+                displayName: formatProfileName({
+                  firstName: message.sender.firstName,
+                  lastName: message.sender.lastName,
+                }),
+                id: message.sender.id,
+              };
+
+        const threadId = encodeThreadId(message.listingId, otherUser.id);
+
+        return {
+          inquiryStatus: inquiryStatusMap.get(threadId) ?? ("pending" as const),
           lastMessage: {
             id: message.id,
             body: message.body,
             mediaUrl: message.mediaUrl,
             createdAt: message.createdAt,
+            isRead: message.isRead,
+            readAt: message.readAt,
             senderId: message.senderId,
           },
-          unreadCount:
-            message.receiverId === ctx.userId && !message.isRead ? 1 : 0,
-        });
-        continue;
-      }
-
-      if (message.receiverId === ctx.userId && !message.isRead) {
-        currentThread.unreadCount += 1;
-      }
-    }
-
-    return [...threadMap.values()].sort(
-      (left, right) =>
-        right.lastMessage.createdAt.getTime() -
-        left.lastMessage.createdAt.getTime(),
-    );
+          listing: message.listing,
+          otherUser,
+          threadId,
+          unreadCount: unreadMap.get(threadId) ?? 0,
+        };
+      })
+      .sort(
+        (left, right) =>
+          right.lastMessage.createdAt.getTime() -
+          left.lastMessage.createdAt.getTime(),
+      );
   }),
 
   getMessages: protectedProcedure
@@ -226,7 +246,24 @@ export const messagesRouter = router({
             })
           : null;
 
+      const listingOwner = await db.query.listings.findFirst({
+        where: eq(listings.id, listingId),
+        columns: { listerId: true },
+      });
+      const inquiryStatus =
+        listingOwner?.listerId === ctx.userId
+          ? await db.query.inquiryStatuses.findFirst({
+              where: and(
+                eq(inquiryStatuses.finderId, otherUserId),
+                eq(inquiryStatuses.listerId, ctx.userId),
+                eq(inquiryStatuses.listingId, listingId),
+              ),
+              columns: { status: true },
+            })
+          : null;
+
       return {
+        inquiryStatus: inquiryStatus?.status ?? null,
         threadId: input.threadId,
         listing: fallbackListing,
         otherUser:
@@ -297,6 +334,35 @@ export const messagesRouter = router({
         });
       }
 
+      const listing = await db.query.listings.findFirst({
+        where: eq(listings.id, input.listingId),
+        columns: { id: true, listerId: true },
+      });
+      const senderProfile = await db.query.profiles.findFirst({
+        where: eq(profiles.id, ctx.userId),
+        columns: { role: true },
+      });
+
+      if (!listing) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Listing not found.",
+        });
+      }
+
+      const senderIsLister = listing.listerId === ctx.userId;
+      const receiverIsLister = listing.listerId === input.receiverId;
+
+      if (
+        senderProfile?.role !== "admin" &&
+        (!receiverIsLister || senderIsLister)
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Messaging is only for finder-to-lister listing inquiries.",
+        });
+      }
+
       const existingThread = await db.query.messages.findFirst({
         where: and(
           eq(messages.listingId, input.listingId),
@@ -325,12 +391,35 @@ export const messagesRouter = router({
         })
         .returning();
 
+      if (!message) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Message could not be created.",
+        });
+      }
+
       if (!existingThread) {
         await db
           .update(listings)
           .set({ inquiryCount: sql`${listings.inquiryCount} + 1` })
           .where(eq(listings.id, input.listingId));
+
+        await db.insert(inquiryStatuses).values({
+          finderId: ctx.userId,
+          listingId: input.listingId,
+          listerId: input.receiverId,
+          status: "pending",
+        });
       }
+
+      await createNotification({
+        body: input.body.length > 0 ? input.body : "You received a new attachment.",
+        referenceId: encodeThreadId(input.listingId, ctx.userId),
+        referenceType: "thread",
+        title: "New message",
+        type: "new_message",
+        userId: input.receiverId,
+      });
 
       return {
         ...message,
@@ -385,5 +474,75 @@ export const messagesRouter = router({
         .returning();
 
       return block;
+    }),
+
+  reportConversation: protectedProcedure
+    .input(reportConversationSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { listingId, otherUserId } = decodeThreadId(input.threadId);
+
+      const [report] = await db
+        .insert(conversationReports)
+        .values({
+          listingId,
+          notes: input.notes,
+          reason: input.reason,
+          reportedUserId: otherUserId,
+          reporterId: ctx.userId,
+        })
+        .returning();
+
+      return report;
+    }),
+
+  setInquiryStatus: protectedProcedure
+    .input(setInquiryStatusSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { listingId, otherUserId } = decodeThreadId(input.threadId);
+      const listing = await db.query.listings.findFirst({
+        where: eq(listings.id, listingId),
+        columns: { listerId: true },
+      });
+
+      if (!listing || listing.listerId !== ctx.userId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only the lister can update inquiry status.",
+        });
+      }
+
+      const existing = await db.query.inquiryStatuses.findFirst({
+        where: and(
+          eq(inquiryStatuses.finderId, otherUserId),
+          eq(inquiryStatuses.listerId, ctx.userId),
+          eq(inquiryStatuses.listingId, listingId),
+        ),
+        columns: { id: true },
+      });
+
+      if (!existing) {
+        const [created] = await db
+          .insert(inquiryStatuses)
+          .values({
+            finderId: otherUserId,
+            listingId,
+            listerId: ctx.userId,
+            status: input.status,
+          })
+          .returning();
+
+        return created;
+      }
+
+      const [updated] = await db
+        .update(inquiryStatuses)
+        .set({
+          status: input.status,
+          updatedAt: new Date(),
+        })
+        .where(eq(inquiryStatuses.id, existing.id))
+        .returning();
+
+      return updated;
     }),
 });

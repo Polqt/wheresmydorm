@@ -1,4 +1,4 @@
-import { db, listings } from "@wheresmydorm/db";
+import { db, listings, listingStatusEnum, propertyTypeEnum } from "@wheresmydorm/db";
 import { and, desc, eq, gte, ilike, inArray, isNull, lte, or } from "drizzle-orm";
 import { z } from "zod";
 
@@ -7,16 +7,8 @@ import {
   distanceBetweenMeters,
 } from "./finder-search";
 
-export const propertyTypeValues = [
-  "dorm",
-  "apartment",
-  "bedspace",
-  "condo",
-  "boarding_house",
-  "studio",
-] as const;
-
-export const listingStatusValues = ["active", "paused", "archived"] as const;
+export const propertyTypeValues = propertyTypeEnum.enumValues;
+export const listingStatusValues = listingStatusEnum.enumValues;
 
 export const listingBodySchema = z.object({
   title: z.string().trim().min(4).max(120),
@@ -31,7 +23,7 @@ export const listingBodySchema = z.object({
   city: z.string().trim().min(2).max(100),
   barangay: z.string().trim().max(100).optional(),
   amenities: z.array(z.string().trim().min(1).max(60)).max(30).default([]),
-  photoUrls: z.array(z.string().url()).max(10).default([]),
+  photoUrls: z.array(z.string().url()).max(15).default([]),
 });
 
 export const listingListSchema = z.object({

@@ -2,7 +2,6 @@ import { TRPCError } from "@trpc/server";
 import {
   db,
   listings,
-  profiles,
   reviewHelpfulVotes,
   reviewReports,
   reviews,
@@ -11,23 +10,13 @@ import {
 import { and, desc, eq, inArray, lt } from "drizzle-orm";
 import { z } from "zod";
 
-import { protectedProcedure, router } from "../index";
+import { ensureFinder, ensureListingOwner } from "../lib/guards";
+import { adminProcedure, protectedProcedure, router } from "../index";
+import { moderationStatusValues, reportReasonValues } from "../lib/moderation";
+import { createNotification } from "../lib/notifications";
 import { formatProfileName } from "../lib/profile";
 
 const reviewRatingSchema = z.number().min(1).max(5);
-const reviewReportReasonValues = [
-  "spam",
-  "fake",
-  "offensive",
-  "misleading",
-  "other",
-] as const;
-const moderationStatusValues = [
-  "pending",
-  "reviewed",
-  "actioned",
-  "dismissed",
-] as const;
 
 const listingIdInputSchema = z.object({
   listingId: z.string().uuid(),
@@ -58,7 +47,7 @@ const respondSchema = z.object({
 
 const reportSchema = z.object({
   reviewId: z.string().uuid(),
-  reason: z.enum(reviewReportReasonValues),
+  reason: z.enum(reportReasonValues),
   notes: z.string().trim().max(500).optional(),
 });
 
@@ -66,15 +55,6 @@ const moderateReportSchema = z.object({
   reportId: z.string().uuid(),
   status: z.enum(moderationStatusValues),
 });
-
-async function getCurrentProfileRole(userId: string) {
-  const profile = await db.query.profiles.findFirst({
-    where: eq(profiles.id, userId),
-    columns: { role: true },
-  });
-
-  return profile?.role ?? null;
-}
 
 async function getReviewEligibility(userId: string, listingId: string) {
   const existingReview = await db.query.reviews.findFirst({
@@ -175,9 +155,9 @@ export const reviewsRouter = router({
   getEligibility: protectedProcedure
     .input(z.object({ listingId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      const role = await getCurrentProfileRole(ctx.userId);
-
-      if (role !== "finder" && role !== "admin") {
+      try {
+        await ensureFinder({ userId: ctx.userId });
+      } catch {
         return {
           canCreate: false,
           reason: "Only finders can leave reviews.",
@@ -190,14 +170,10 @@ export const reviewsRouter = router({
   create: protectedProcedure
     .input(createReviewSchema)
     .mutation(async ({ ctx, input }) => {
-      const role = await getCurrentProfileRole(ctx.userId);
-
-      if (role !== "finder" && role !== "admin") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Only finders can create reviews.",
-        });
-      }
+      await ensureFinder({
+        message: "Only finders can create reviews.",
+        userId: ctx.userId,
+      });
 
       const eligibility = await getReviewEligibility(ctx.userId, input.listingId);
 
@@ -223,6 +199,22 @@ export const reviewsRouter = router({
           photoUrls: input.photoUrls,
         })
         .returning();
+
+      const listing = await db.query.listings.findFirst({
+        where: eq(listings.id, input.listingId),
+        columns: { id: true, listerId: true, title: true },
+      });
+
+      if (listing && listing.listerId !== ctx.userId) {
+        await createNotification({
+          body: `A finder reviewed ${listing.title}.`,
+          referenceId: listing.id,
+          referenceType: "listing",
+          title: "New review",
+          type: "new_review",
+          userId: listing.listerId,
+        });
+      }
 
       return review;
     }),
@@ -275,12 +267,15 @@ export const reviewsRouter = router({
         columns: { id: true, listerId: true },
       });
 
-      if (!listing || listing.listerId !== ctx.userId) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Only the listing owner can respond to this review.",
-        });
+      if (!listing) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Listing not found." });
       }
+
+      await ensureListingOwner({
+        listingId: listing.id,
+        message: "Only the listing owner can respond to this review.",
+        userId: ctx.userId,
+      });
 
       const [updated] = await db
         .update(reviews)
@@ -290,6 +285,22 @@ export const reviewsRouter = router({
         })
         .where(eq(reviews.id, input.reviewId))
         .returning();
+
+      if (!updated) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Review response could not be saved.",
+        });
+      }
+
+      await createNotification({
+        body: "A lister replied to your review.",
+        referenceId: review.listingId,
+        referenceType: "listing",
+        title: "Review response",
+        type: "review_response",
+        userId: updated.finderId,
+      });
 
       return updated;
     }),
@@ -321,6 +332,7 @@ export const reviewsRouter = router({
             title: true,
             city: true,
             barangay: true,
+            pricePerMonth: true,
           },
         },
       },
@@ -329,16 +341,7 @@ export const reviewsRouter = router({
     return rows;
   }),
 
-  listReports: protectedProcedure.query(async ({ ctx }) => {
-    const role = await getCurrentProfileRole(ctx.userId);
-
-    if (role !== "admin") {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "Only admins can view review reports.",
-      });
-    }
-
+  listReports: adminProcedure.query(async () => {
     return db.query.reviewReports.findMany({
       orderBy: [desc(reviewReports.createdAt)],
       with: {
@@ -365,18 +368,9 @@ export const reviewsRouter = router({
     });
   }),
 
-  moderateReport: protectedProcedure
+  moderateReport: adminProcedure
     .input(moderateReportSchema)
     .mutation(async ({ ctx, input }) => {
-      const role = await getCurrentProfileRole(ctx.userId);
-
-      if (role !== "admin") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Only admins can moderate review reports.",
-        });
-      }
-
       const [updated] = await db
         .update(reviewReports)
         .set({
