@@ -9,6 +9,7 @@ export type FinderQuotaRow = {
   daily_limit: number;
   is_paid: boolean;
   remaining_finds: number;
+  /** Reused to carry lifetime-used count (was per-day; now lifetime per PRD 6.1). */
   used_today: number;
 };
 
@@ -18,11 +19,13 @@ export function toFinderQuotaStatus(row: FinderQuotaRow) {
   return {
     advancedFiltersEnabled: row.is_paid,
     canFind: row.allowed,
-    dailyLimit: row.daily_limit,
+    /** Total lifetime searches allowed for free finders (5 per PRD 6.1). */
+    lifetimeLimit: row.daily_limit,
     hasUnlimitedFinds: row.is_paid,
     isPaid: row.is_paid,
     remainingFinds: row.remaining_finds,
-    usedToday: row.used_today,
+    /** Lifetime total used (not per-day). */
+    usedTotal: row.used_today,
   };
 }
 

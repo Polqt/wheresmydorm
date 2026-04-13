@@ -3,7 +3,7 @@ import { db, searchEvents } from "@wheresmydorm/db";
 
 import { protectedProcedure } from "../index";
 import {
-  FREE_FINDER_DAILY_FIND_LIMIT,
+  FREE_FINDER_LIFETIME_FIND_LIMIT,
   hasAdvancedFinderFilters,
 } from "../lib/finder-search";
 import { ensureFinder } from "../lib/guards";
@@ -65,11 +65,11 @@ export const listingDiscoveryProcedures = {
       return {
         advancedFiltersEnabled: false,
         canFind: false,
-        dailyLimit: FREE_FINDER_DAILY_FIND_LIMIT,
+        lifetimeLimit: FREE_FINDER_LIFETIME_FIND_LIMIT,
         hasUnlimitedFinds: false,
         isPaid: false,
         remainingFinds: 0,
-        usedToday: 0,
+        usedTotal: 0,
       };
     }
 
@@ -99,7 +99,7 @@ export const listingDiscoveryProcedures = {
       if (!quota.allowed) {
         throw new TRPCError({
           code: "FORBIDDEN",
-          message: `Free finders get ${FREE_FINDER_DAILY_FIND_LIMIT} nearby finds per day. Upgrade your finder plan for unlimited searches.`,
+          message: `Free finders get ${FREE_FINDER_LIFETIME_FIND_LIMIT} lifetime nearby searches. Upgrade your finder plan for unlimited searches.`,
         });
       }
 

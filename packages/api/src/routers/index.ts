@@ -1,5 +1,6 @@
 import { publicProcedure, router } from "../index";
 import { adminRouter } from "./admin";
+import { chatRouter } from "./chat";
 import { listingsRouter } from "./listings";
 import { messagesRouter } from "./messages";
 import { notificationsRouter } from "./notifications";
@@ -13,6 +14,7 @@ export const appRouter = router({
     return "OK";
   }),
   admin: adminRouter,
+  chat: chatRouter,
   profiles: profilesRouter,
   listings: listingsRouter,
   messages: messagesRouter,

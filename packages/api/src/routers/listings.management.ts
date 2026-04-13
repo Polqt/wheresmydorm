@@ -10,7 +10,7 @@ import {
 import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
-import { protectedProcedure } from "../index";
+import { adminProcedure, protectedProcedure } from "../index";
 import { ensureLister, ensureListingOwner } from "../lib/guards";
 import {
   FREE_LISTING_QUOTA,
@@ -313,4 +313,17 @@ export const listingManagementProcedures = {
 
       return updated;
     }),
+
+  /**
+   * Admin-only: trigger the listing expiry job manually.
+   * In production this is also called by a Supabase Edge Function cron.
+   * Returns the number of listings that were paused.
+   */
+  runExpiry: adminProcedure.mutation(async () => {
+    const result = await db.execute<{ expire_listings: number }>(
+      sql`SELECT public.expire_listings()`,
+    );
+    const count = result.rows[0]?.expire_listings ?? 0;
+    return { expiredCount: Number(count) };
+  }),
 };
