@@ -2,7 +2,7 @@ import { db, listings } from "@wheresmydorm/db";
 import { eq } from "drizzle-orm";
 
 import { protectedProcedure } from "../index";
-import { ensureLister } from "../lib/guards";
+import { assertLister } from "../lib/guards";
 import {
   FREE_LISTING_QUOTA,
   getFreeListingIdsForLister,
@@ -11,10 +11,7 @@ import {
 
 export const listingQuotaProcedures = {
   listerQuotaStatus: protectedProcedure.query(async ({ ctx }) => {
-    await ensureLister({
-      message: "Only listers can access listing quota status.",
-      userId: ctx.userId,
-    });
+    assertLister(ctx, "Only listers can access listing quota status.");
 
     const ownedListings = await db.query.listings.findMany({
       where: eq(listings.listerId, ctx.userId),

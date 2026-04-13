@@ -11,7 +11,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { adminProcedure, protectedProcedure } from "../index";
-import { ensureLister, ensureListingOwner } from "../lib/guards";
+import { assertLister, assertListingOwner } from "../lib/guards";
 import {
   FREE_LISTING_QUOTA,
   getFreeListingIdsForLister,
@@ -27,10 +27,7 @@ export const listingManagementProcedures = {
   create: protectedProcedure
     .input(listingBodySchema)
     .mutation(async ({ ctx, input }) => {
-      await ensureLister({
-        message: "Only listers can create listings.",
-        userId: ctx.userId,
-      });
+      assertLister(ctx, "Only listers can create listings.");
 
       const existingListingCount = await db
         .select({ count: sql<number>`count(*)::int` })
@@ -222,7 +219,7 @@ export const listingManagementProcedures = {
     )
     .mutation(async ({ ctx, input }) => {
       const { id, photoUrls, ...fields } = input;
-      await ensureListingOwner({
+      await assertListingOwner({
         listingId: id,
         userId: ctx.userId,
       });
@@ -277,7 +274,7 @@ export const listingManagementProcedures = {
       z.object({ id: z.string().uuid(), status: z.enum(listingStatusValues) }),
     )
     .mutation(async ({ ctx, input }) => {
-      const existing = await ensureListingOwner({
+      const existing = await assertListingOwner({
         listingId: input.id,
         userId: ctx.userId,
       });

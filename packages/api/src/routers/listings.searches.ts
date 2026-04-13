@@ -4,7 +4,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { protectedProcedure } from "../index";
-import { ensureFinder } from "../lib/guards";
+import { assertFinder } from "../lib/guards";
 import {
   buildSearchFiltersPayload,
   SAVEABLE_SEARCH_LIMIT,
@@ -13,7 +13,7 @@ import {
 
 export const listingSearchProcedures = {
   recentSearches: protectedProcedure.query(async ({ ctx }) => {
-    await ensureFinder({ userId: ctx.userId });
+    assertFinder(ctx);
 
     const rows = await db.query.searchEvents.findMany({
       where: and(
@@ -33,7 +33,7 @@ export const listingSearchProcedures = {
   }),
 
   savedSearches: protectedProcedure.query(async ({ ctx }) => {
-    await ensureFinder({ userId: ctx.userId });
+    assertFinder(ctx);
 
     const rows = await db.query.savedSearches.findMany({
       where: eq(savedSearches.finderId, ctx.userId),
@@ -50,7 +50,7 @@ export const listingSearchProcedures = {
   saveSearch: protectedProcedure
     .input(saveSearchSchema)
     .mutation(async ({ ctx, input }) => {
-      await ensureFinder({ userId: ctx.userId });
+      assertFinder(ctx);
 
       const existingCount = await db
         .select({ count: sql<number>`count(*)::int` })
@@ -79,7 +79,7 @@ export const listingSearchProcedures = {
   deleteSavedSearch: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      await ensureFinder({ userId: ctx.userId });
+      assertFinder(ctx);
 
       await db
         .delete(savedSearches)

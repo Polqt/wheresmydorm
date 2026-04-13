@@ -6,7 +6,7 @@ import {
   FREE_FINDER_LIFETIME_FIND_LIMIT,
   hasAdvancedFinderFilters,
 } from "../lib/finder-search";
-import { ensureFinder } from "../lib/guards";
+import { assertFinder } from "../lib/guards";
 import {
   consumeFinderFindRow,
   getFinderQuotaRow,
@@ -80,10 +80,7 @@ export const listingDiscoveryProcedures = {
   findNearby: protectedProcedure
     .input(findNearbySchema)
     .mutation(async ({ ctx, input }) => {
-      await ensureFinder({
-        message: "Only finders can run nearby searches.",
-        userId: ctx.userId,
-      });
+      assertFinder(ctx, "Only finders can run nearby searches.");
 
       const quotaBeforeFind = await getFinderQuotaRow(ctx.userId);
 
@@ -122,7 +119,7 @@ export const listingDiscoveryProcedures = {
     }),
 
   discover: protectedProcedure.query(async ({ ctx }) => {
-    await ensureFinder({ userId: ctx.userId });
+    assertFinder(ctx);
 
     const [topRated, newArrivals, underThreeThousand] = await Promise.all([
       getDiscoverySection({ sortBy: "top_rated" }),

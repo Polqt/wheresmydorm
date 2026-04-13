@@ -7,7 +7,7 @@ import {
   createPaymongoPaymentIntent,
   markPaymentAsPaid,
 } from "../lib/paymongo";
-import { ensureFinder, ensureLister, ensureListingOwner } from "../lib/guards";
+import { assertFinder, assertLister, assertListingOwner } from "../lib/guards";
 import { protectedProcedure, router } from "../index";
 
 const listPaymentsSchema = z.object({
@@ -64,20 +64,14 @@ export const paymentsRouter = router({
     .input(createPaymentIntentSchema)
     .mutation(async ({ ctx, input }) => {
       if (input.type === "finder_upgrade") {
-        await ensureFinder({
-          message: "Only finders can create finder upgrade payments.",
-          userId: ctx.userId,
-        });
+        assertFinder(ctx, "Only finders can create finder upgrade payments.");
       } else {
-        await ensureLister({
-          message: "Only listers can create listing payments.",
-          userId: ctx.userId,
-        });
+        assertLister(ctx, "Only listers can create listing payments.");
       }
 
       if (input.listingId) {
         if (input.type === "listing_fee" || input.type === "listing_boost") {
-          await ensureListingOwner({
+          await assertListingOwner({
             listingId: input.listingId,
             message: "Only the listing owner can create this payment.",
             userId: ctx.userId,

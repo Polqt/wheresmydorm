@@ -4,7 +4,7 @@ import { db, searchEvents } from "@wheresmydorm/db";
 import { z } from "zod";
 
 import { protectedProcedure, router } from "../index";
-import { ensureFinder } from "../lib/guards";
+import { assertFinder } from "../lib/guards";
 
 const messageSchema = z.object({
   role: z.enum(["user", "assistant"]),
@@ -25,10 +25,7 @@ export const chatRouter = router({
   send: protectedProcedure
     .input(sendMessageSchema)
     .mutation(async ({ ctx, input }) => {
-      await ensureFinder({
-        message: "AI chat is available for finders only.",
-        userId: ctx.userId,
-      });
+      assertFinder(ctx, "AI chat is available for finders only.");
 
       const apiKey = process.env.ANTHROPIC_API_KEY;
 

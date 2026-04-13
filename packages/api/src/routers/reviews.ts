@@ -10,7 +10,7 @@ import {
 import { and, desc, eq, inArray, lt } from "drizzle-orm";
 import { z } from "zod";
 
-import { ensureFinder, ensureListingOwner } from "../lib/guards";
+import { assertFinder, assertListingOwner } from "../lib/guards";
 import { adminProcedure, protectedProcedure, router } from "../index";
 import { moderationStatusValues, reportReasonValues } from "../lib/moderation";
 import { createNotification } from "../lib/notifications";
@@ -155,13 +155,8 @@ export const reviewsRouter = router({
   getEligibility: protectedProcedure
     .input(z.object({ listingId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      try {
-        await ensureFinder({ userId: ctx.userId });
-      } catch {
-        return {
-          canCreate: false,
-          reason: "Only finders can leave reviews.",
-        };
+      if (ctx.role !== "finder" && ctx.role !== "admin") {
+        return { canCreate: false, reason: "Only finders can leave reviews." };
       }
 
       return getReviewEligibility(ctx.userId, input.listingId);
@@ -170,10 +165,7 @@ export const reviewsRouter = router({
   create: protectedProcedure
     .input(createReviewSchema)
     .mutation(async ({ ctx, input }) => {
-      await ensureFinder({
-        message: "Only finders can create reviews.",
-        userId: ctx.userId,
-      });
+      assertFinder(ctx, "Only finders can create reviews.");
 
       const eligibility = await getReviewEligibility(ctx.userId, input.listingId);
 
@@ -271,7 +263,7 @@ export const reviewsRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Listing not found." });
       }
 
-      await ensureListingOwner({
+      await assertListingOwner({
         listingId: listing.id,
         message: "Only the listing owner can respond to this review.",
         userId: ctx.userId,
