@@ -7,19 +7,13 @@ import {
   postReports,
   posts,
 } from "@wheresmydorm/db";
-import { and, asc, desc, eq, inArray, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
 import { z } from "zod";
-import { protectedProcedure, router } from "../index";
+import { adminProcedure, protectedProcedure, router } from "../index";
+import { moderationStatusValues, reportReasonValues } from "../lib/moderation";
 import { formatProfileName } from "../lib/profile";
 
 const reactionValues = ["like", "helpful", "funny"] as const;
-const reportReasonValues = [
-  "spam",
-  "fake",
-  "offensive",
-  "misleading",
-  "other",
-] as const;
 const defaultFeedLimit = 10;
 
 const createPostSchema = z.object({
@@ -49,6 +43,11 @@ const reportInputSchema = z.object({
   postId: z.string().uuid(),
   reason: z.enum(reportReasonValues),
   notes: z.string().trim().max(500).optional(),
+});
+const moderatePostReportSchema = z.object({
+  reportId: z.string().uuid(),
+  removePost: z.boolean().optional(),
+  status: z.enum(moderationStatusValues),
 });
 
 const postIdInputSchema = z.object({
@@ -241,6 +240,69 @@ export const postsRouter = router({
       };
     }),
 
+  trending: protectedProcedure
+    .input(feedInputSchema)
+    .query(async ({ ctx, input }) => {
+      const cursorDate = input.cursor ? new Date(input.cursor) : null;
+      const cutoffDate = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+
+      const postList = await db.query.posts.findMany({
+        where: and(
+          eq(posts.isRemoved, false),
+          gte(posts.createdAt, cutoffDate),
+          cursorDate ? lt(posts.createdAt, cursorDate) : undefined,
+        ),
+        orderBy: [
+          desc(
+            sql`${posts.likeCount} + (${posts.commentCount} * 2) + (${posts.shareCount} * 3)`,
+          ),
+          desc(posts.createdAt),
+        ],
+        limit: input.limit + 1,
+        with: {
+          author: {
+            columns: {
+              id: true,
+              avatarUrl: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          listing: {
+            columns: {
+              id: true,
+              title: true,
+            },
+          },
+        },
+      });
+
+      const normalizedPostList = postList.map((post) => ({
+        ...post,
+        author: {
+          avatarUrl: post.author.avatarUrl,
+          displayName: formatProfileName({
+            firstName: post.author.firstName,
+            lastName: post.author.lastName,
+          }),
+          id: post.author.id,
+        },
+      }));
+
+      const hasNextPage = normalizedPostList.length > input.limit;
+      const items = hasNextPage
+        ? normalizedPostList.slice(0, input.limit)
+        : normalizedPostList;
+      const enrichedItems = await enrichPosts(items, ctx.userId);
+
+      return {
+        items: enrichedItems,
+        nextCursor: hasNextPage
+          ? (items[items.length - 1]?.createdAt.toISOString() ?? null)
+          : null,
+      };
+    }),
+
   getById: protectedProcedure
     .input(postIdInputSchema)
     .query(async ({ ctx, input }) => {
@@ -337,6 +399,10 @@ export const postsRouter = router({
           userId: ctx.userId,
           reaction: input.reaction,
         });
+        await db
+          .update(posts)
+          .set({ likeCount: sql`${posts.likeCount} + 1` })
+          .where(eq(posts.id, input.postId));
         return { status: "created" as const };
       }
 
@@ -349,6 +415,10 @@ export const postsRouter = router({
               eq(postReactions.userId, ctx.userId),
             ),
           );
+        await db
+          .update(posts)
+          .set({ likeCount: sql`${posts.likeCount} - 1` })
+          .where(eq(posts.id, input.postId));
         return { status: "removed" as const };
       }
 
@@ -378,6 +448,11 @@ export const postsRouter = router({
         })
         .returning();
 
+      await db
+        .update(posts)
+        .set({ commentCount: sql`${posts.commentCount} + 1` })
+        .where(eq(posts.id, input.postId));
+
       return comment;
     }),
 
@@ -395,5 +470,59 @@ export const postsRouter = router({
         .returning();
 
       return report;
+    }),
+
+  listReports: adminProcedure.query(async () => {
+    return db.query.postReports.findMany({
+      orderBy: [desc(postReports.createdAt)],
+      with: {
+        post: {
+          with: {
+            author: {
+              columns: {
+                id: true,
+                avatarUrl: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }),
+
+  moderateReport: adminProcedure
+    .input(moderatePostReportSchema)
+    .mutation(async ({ ctx, input }) => {
+      const [updatedReport] = await db
+        .update(postReports)
+        .set({
+          reviewedAt: new Date(),
+          reviewedBy: ctx.userId,
+          status: input.status,
+        })
+        .where(eq(postReports.id, input.reportId))
+        .returning();
+
+      if (!updatedReport) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Post report not found.",
+        });
+      }
+
+      if (input.removePost) {
+        await db
+          .update(posts)
+          .set({
+            isRemoved: true,
+            removedAt: new Date(),
+            removedBy: ctx.userId,
+          })
+          .where(eq(posts.id, updatedReport.postId));
+      }
+
+      return updatedReport;
     }),
 });

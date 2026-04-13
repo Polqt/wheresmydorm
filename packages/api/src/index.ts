@@ -21,3 +21,14 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
     },
   });
 });
+
+// Admin — throws FORBIDDEN if the authenticated user is not an admin
+export const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.role !== "admin") {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Only admins can access this resource.",
+    });
+  }
+  return next({ ctx });
+});
