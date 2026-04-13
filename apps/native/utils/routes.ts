@@ -57,6 +57,26 @@ export function messagesInboxRoute(): Href {
   return "/messages";
 }
 
+export function notificationsRoute(): Href {
+  return "/notifications";
+}
+
+export function paymentsRoute(): Href {
+  return "/payments" as Href;
+}
+
+export function reviewsRoute(): Href {
+  return "/reviews" as Href;
+}
+
+export function adminConversationReportsRoute(): Href {
+  return "/admin/conversation-reports" as Href;
+}
+
+export function adminPostReportsRoute(): Href {
+  return "/admin/post-reports" as Href;
+}
+
 export function listingDetailRoute(id: string): Href {
   return {
     pathname: "/listing/[id]",

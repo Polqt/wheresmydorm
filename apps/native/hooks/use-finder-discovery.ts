@@ -1,11 +1,14 @@
-import { useQueries } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useCurrentProfile } from "@/hooks/use-current-profile";
 import { useAuth } from "@/providers/auth-provider";
-import { buildDiscoveryPreset } from "@/services/discovery";
+import {
+  buildDiscoveryPreset,
+  mapRecentSearchToPreset,
+  mapSavedSearchToPreset,
+} from "@/services/discovery";
 import { getDiscoveryQueryInput } from "@/services/listings";
-import { useDiscoveryStore } from "@/stores/discovery";
 import { useFinderSearchStore } from "@/stores/finder-search";
 import type { DiscoverySearchPreset } from "@/types/discovery";
 import type { PropertyTypeFilter } from "@/types/map";
@@ -29,20 +32,12 @@ function normalizePropertyTypes(values: string[] | undefined) {
 
 export function useFinderDiscovery() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const profileQuery = useCurrentProfile(user);
   const lastNearbyItems = useFinderSearchStore((state) => state.items);
-  const hydrate = useDiscoveryStore((state) => state.hydrate);
-  const hydrated = useDiscoveryStore((state) => state.hydrated);
-  const recentSearches = useDiscoveryStore((state) => state.recentSearches);
-  const savedSearches = useDiscoveryStore((state) => state.savedSearches);
-  const pushRecentSearch = useDiscoveryStore((state) => state.pushRecentSearch);
-  const toggleSavedSearch = useDiscoveryStore((state) => state.toggleSavedSearch);
 
   const [searchText, setSearchText] = useState("");
-
-  useEffect(() => {
-    void hydrate();
-  }, [hydrate]);
+  const [submittedSearchText, setSubmittedSearchText] = useState("");
 
   const finderPropertyTypes = useMemo(
     () => normalizePropertyTypes(profileQuery.data?.finderPropertyTypes),
@@ -51,7 +46,31 @@ export function useFinderDiscovery() {
   const budgetMax = profileQuery.data?.finderBudgetMax
     ? Number(profileQuery.data.finderBudgetMax)
     : undefined;
-  const query = searchText.trim();
+  const query = submittedSearchText.trim();
+
+  const discoverQuery = useQuery(trpc.listings.discover.queryOptions());
+  const recentSearchesQuery = useQuery(trpc.listings.recentSearches.queryOptions());
+  const savedSearchesQuery = useQuery(trpc.listings.savedSearches.queryOptions());
+
+  const saveSearchMutation = useMutation(
+    trpc.listings.saveSearch.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({
+          queryKey: ["trpc", "listings", "savedSearches"],
+        });
+      },
+    }),
+  );
+
+  const deleteSavedSearchMutation = useMutation(
+    trpc.listings.deleteSavedSearch.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({
+          queryKey: ["trpc", "listings", "savedSearches"],
+        });
+      },
+    }),
+  );
 
   const currentPreset = useMemo(
     () =>
@@ -65,38 +84,19 @@ export function useFinderDiscovery() {
     [budgetMax, finderPropertyTypes, query],
   );
 
+  const recentSearches = useMemo(
+    () => (recentSearchesQuery.data ?? []).map(mapRecentSearchToPreset),
+    [recentSearchesQuery.data],
+  );
+  const savedSearches = useMemo(
+    () => (savedSearchesQuery.data ?? []).map(mapSavedSearchToPreset),
+    [savedSearchesQuery.data],
+  );
+
   const [
-    topRatedQuery,
-    newArrivalsQuery,
-    budgetQuery,
     searchResultsQuery,
   ] = useQueries({
     queries: [
-      trpc.listings.list.queryOptions(
-        getDiscoveryQueryInput({
-          amenities: [],
-          limit: 10,
-          propertyTypes: finderPropertyTypes,
-          sortBy: "top_rated",
-        }),
-      ),
-      trpc.listings.list.queryOptions(
-        getDiscoveryQueryInput({
-          amenities: [],
-          limit: 10,
-          propertyTypes: finderPropertyTypes,
-          sortBy: "newest",
-        }),
-      ),
-      trpc.listings.list.queryOptions(
-        getDiscoveryQueryInput({
-          amenities: [],
-          limit: 10,
-          maxPrice: budgetMax ?? 3000,
-          propertyTypes: finderPropertyTypes,
-          sortBy: "price_low_to_high",
-        }),
-      ),
       {
         ...trpc.listings.list.queryOptions(
           getDiscoveryQueryInput({
@@ -108,37 +108,59 @@ export function useFinderDiscovery() {
             sortBy: "best_match",
           }),
         ),
-        enabled: hydrated && query.length > 0,
+        enabled: query.length > 0,
       },
     ],
   });
 
-  const submitSearch = useCallback(() => {
-    if (!query) {
+  useEffect(() => {
+    if (query.length === 0 || !searchResultsQuery.data) {
       return;
     }
 
-    pushRecentSearch(
-      buildDiscoveryPreset({
-        label: `Search: ${query}`,
-        maxPrice: budgetMax,
-        propertyTypes: finderPropertyTypes,
-        query,
-      }),
-    );
-  }, [budgetMax, finderPropertyTypes, pushRecentSearch, query]);
+    void queryClient.invalidateQueries({
+      queryKey: ["trpc", "listings", "recentSearches"],
+    });
+  }, [query, queryClient, searchResultsQuery.data]);
+
+  const submitSearch = useCallback(() => {
+    setSubmittedSearchText(searchText.trim());
+  }, [searchText]);
 
   const applyPreset = useCallback(
     (preset: DiscoverySearchPreset) => {
       setSearchText(preset.query);
-      pushRecentSearch(preset);
+      setSubmittedSearchText(preset.query);
     },
-    [pushRecentSearch],
+    [],
   );
 
   const toggleSaveCurrentSearch = useCallback(() => {
-    toggleSavedSearch(currentPreset);
-  }, [currentPreset, toggleSavedSearch]);
+    const existingPreset = savedSearches.find(
+      (preset) => preset.id === currentPreset.id,
+    );
+
+    if (existingPreset?.serverId) {
+      deleteSavedSearchMutation.mutate({ id: existingPreset.serverId });
+      return;
+    }
+
+    saveSearchMutation.mutate({
+      filters: getDiscoveryQueryInput({
+        amenities: [],
+        maxPrice: currentPreset.maxPrice,
+        propertyTypes: currentPreset.propertyTypes,
+        query: currentPreset.query || undefined,
+        sortBy: currentPreset.sortBy,
+      }),
+      label: currentPreset.label,
+    });
+  }, [
+    currentPreset,
+    deleteSavedSearchMutation,
+    saveSearchMutation,
+    savedSearches,
+  ]);
 
   return {
     applyPreset,
@@ -146,9 +168,8 @@ export function useFinderDiscovery() {
     hasSavedCurrentSearch: savedSearches.some(
       (preset) => preset.id === currentPreset.id,
     ),
-    hydrated,
     lastNearbyItems,
-    newArrivals: newArrivalsQuery.data ?? [],
+    newArrivals: discoverQuery.data?.newArrivals ?? [],
     recentSearches,
     savedSearches,
     searchResults: searchResultsQuery.data ?? [],
@@ -156,7 +177,7 @@ export function useFinderDiscovery() {
     setSearchText,
     submitSearch,
     toggleSaveCurrentSearch,
-    topRated: topRatedQuery.data ?? [],
-    underBudget: budgetQuery.data ?? [],
+    topRated: discoverQuery.data?.topRated ?? [],
+    underBudget: discoverQuery.data?.underThreeThousand ?? [],
   };
 }

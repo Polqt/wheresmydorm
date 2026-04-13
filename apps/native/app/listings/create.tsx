@@ -13,19 +13,28 @@ export default function CreateListingScreen() {
 
   const createMutation = useMutation(
     trpc.listings.create.mutationOptions({
-      onSuccess: () => {
+      onSuccess: (listing) => {
         void queryClient.invalidateQueries({
           queryKey: ["trpc", "listings", "myListings"],
         });
         void queryClient.invalidateQueries({
           queryKey: ["trpc", "listings", "list"],
         });
-        Alert.alert("Listing created", "It is now live for finders.", [
-          {
-            text: "OK",
-            onPress: () => router.replace(myListingsRoute()),
-          },
-        ]);
+        void queryClient.invalidateQueries({
+          queryKey: ["trpc", "listings", "listerQuotaStatus"],
+        });
+        Alert.alert(
+          "Listing created",
+          listing.status === "paused"
+            ? "This listing used a paid slot and stays paused until the listing fee is paid."
+            : "It is now live for finders.",
+          [
+            {
+              text: "OK",
+              onPress: () => router.replace(myListingsRoute()),
+            },
+          ],
+        );
       },
     }),
   );

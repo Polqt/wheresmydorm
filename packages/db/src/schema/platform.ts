@@ -4,6 +4,7 @@ import {
   doublePrecision,
   index,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -29,6 +30,8 @@ export const searchEvents = pgTable("search_events", {
   centerLng: doublePrecision("center_lng"),
   radiusMeters: integer("radius_meters"),
   searchesRemainingAfter: integer("searches_remaining_after"),
+  searchFilters: jsonb("search_filters").$type<Record<string, unknown> | null>(),
+  searchText: text("search_text"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -87,8 +90,23 @@ export const savedListings = pgTable("saved_listings", {
   index("saved_listings_finder_idx").on(t.finderId),
 ]);
 
+export const savedSearches = pgTable("saved_searches", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  finderId: uuid("finder_id")
+    .notNull()
+    .references(() => profiles.id, { onDelete: "cascade" }),
+  label: text("label").notNull(),
+  filters: jsonb("filters").$type<Record<string, unknown>>().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index("saved_searches_finder_idx").on(t.finderId),
+  index("saved_searches_created_idx").on(t.createdAt),
+]);
+
 export type SearchEvent  = typeof searchEvents.$inferSelect;
 export type Payment      = typeof payments.$inferSelect;
 export type NewPayment   = typeof payments.$inferInsert;
 export type Notification = typeof notifications.$inferSelect;
 export type SavedListing = typeof savedListings.$inferSelect;
+export type SavedSearch = typeof savedSearches.$inferSelect;

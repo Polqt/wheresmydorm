@@ -3,6 +3,7 @@ import Constants, { ExecutionEnvironment } from "expo-constants";
 import * as Location from "expo-location";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useMutation } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
 import { Alert, Pressable, Switch, Text, View } from "react-native";
 import {
@@ -14,6 +15,7 @@ import { SetupProgressBar } from "@/components/ui/setup-progress-bar";
 import { ONBOARDING_STEPS } from "@/lib/auth";
 import { useAuth } from "@/providers/auth-provider";
 import { setOnboardingCompletion } from "@/services/onboarding";
+import { trpc } from "@/utils/api-client";
 
 const isExpoGo =
   Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
@@ -26,6 +28,9 @@ export default function PermissionsScreen() {
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const setNotificationToken = useMutation(
+    trpc.profiles.setNotificationToken.mutationOptions(),
+  );
 
   const bottomAreaStyle = useMemo(
     () => ({ paddingBottom: Math.max(insets.bottom + 8, 24) }),
@@ -57,10 +62,22 @@ export default function PermissionsScreen() {
       const { requestPermissionsAsync } = await import("expo-notifications");
       const { status } = await requestPermissionsAsync();
       setNotificationsEnabled(status === "granted");
+      if (status === "granted") {
+        const Notifications = await import("expo-notifications");
+        const devicePushToken = await Notifications.getDevicePushTokenAsync();
+        const token =
+          typeof devicePushToken.data === "string"
+            ? devicePushToken.data
+            : JSON.stringify(devicePushToken.data);
+
+        await setNotificationToken.mutateAsync({ fcmToken: token });
+      } else {
+        await setNotificationToken.mutateAsync({ fcmToken: null });
+      }
     } catch {
       setNotificationsEnabled(false);
     }
-  }, []);
+  }, [setNotificationToken]);
 
   const handleDone = useCallback(async () => {
     setIsSubmitting(true);
