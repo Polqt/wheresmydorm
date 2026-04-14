@@ -12,3 +12,4 @@ export type MessageThreadListItem = RouterOutputs["messages"]["getThreads"][numb
 export type AdminConversationReportItem =
   RouterOutputs["admin"]["listConversationReports"][number];
 export type AdminPostReportItem = RouterOutputs["admin"]["listPostReports"][number];
+export type AdminUserItem = RouterOutputs["admin"]["listUsers"]["items"][number];
