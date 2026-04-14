@@ -19,7 +19,9 @@ export type NativeProfile = {
   firstName: string;
   fullName: string;
   id: string;
+  analyticsExpiresAt: string | null;
   isPaidFinder: boolean;
+  isVerifiedLister: boolean;
   isVerifiedMember: boolean;
   lastName: string | null;
   listerPropertyCount: number | null;
@@ -39,7 +41,9 @@ type ProfileRow = {
   finder_property_types: string[];
   first_name: string;
   id: string;
+  analytics_expires_at: string | null;
   is_paid_finder: boolean;
+  is_verified_lister: boolean;
   is_verified_member: boolean;
   last_name: string | null;
   lister_property_count: number | null;
@@ -49,7 +53,7 @@ type ProfileRow = {
 };
 
 const PROFILE_SELECT =
-  "id, role, first_name, last_name, avatar_url, bio, contact_email, contact_phone, is_verified_member, is_paid_finder, preferred_area, finder_budget_min, finder_budget_max, finder_property_types, property_types, lister_property_count, created_at";
+  "id, role, first_name, last_name, avatar_url, bio, contact_email, contact_phone, is_verified_member, is_paid_finder, is_verified_lister, analytics_expires_at, preferred_area, finder_budget_min, finder_budget_max, finder_property_types, property_types, lister_property_count, created_at";
 
 function getProfileDefaults(user: User) {
   const { firstName, lastName } = getProfileNamePartsFromUser(user);
@@ -79,8 +83,10 @@ function normalizeProfile(row: ProfileRow): NativeProfile {
       firstName: row.first_name,
       lastName: row.last_name,
     }),
+    analyticsExpiresAt: row.analytics_expires_at,
     id: row.id,
     isPaidFinder: row.is_paid_finder,
+    isVerifiedLister: row.is_verified_lister,
     isVerifiedMember: row.is_verified_member,
     lastName: row.last_name,
     listerPropertyCount: row.lister_property_count,

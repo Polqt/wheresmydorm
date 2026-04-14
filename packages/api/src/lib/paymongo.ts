@@ -8,7 +8,7 @@ import { createNotification } from "./notifications";
 type PaymongoMetadata = {
   listingId?: string;
   paymentId: string;
-  type: "finder_upgrade" | "listing_boost" | "listing_fee";
+  type: "finder_upgrade" | "listing_boost" | "listing_fee" | "verified_badge" | "lister_analytics";
   userId: string;
 };
 
@@ -181,9 +181,11 @@ export async function markPaymentAsPaid(paymentId: string, paymongoPaymentId?: s
   }
 
   if (payment.type === "listing_boost" && payment.listingId) {
+    const boostExpiresAt = new Date();
+    boostExpiresAt.setDate(boostExpiresAt.getDate() + 7); // 7-day boost
     await db
       .update(listings)
-      .set({ isFeatured: true })
+      .set({ isFeatured: true, boostExpiresAt })
       .where(eq(listings.id, payment.listingId));
   }
 
@@ -194,11 +196,33 @@ export async function markPaymentAsPaid(paymentId: string, paymongoPaymentId?: s
       .where(eq(listings.id, payment.listingId));
   }
 
+  if (payment.type === "verified_badge") {
+    await db
+      .update(profiles)
+      .set({ isVerifiedLister: true })
+      .where(eq(profiles.id, payment.userId));
+  }
+
+  if (payment.type === "lister_analytics") {
+    const analyticsExpiresAt = new Date();
+    analyticsExpiresAt.setMonth(analyticsExpiresAt.getMonth() + 1); // 30-day subscription
+    await db
+      .update(profiles)
+      .set({ analyticsExpiresAt })
+      .where(eq(profiles.id, payment.userId));
+  }
+
   await createNotification({
     body:
       payment.type === "finder_upgrade"
-        ? "Your finder plan is now active."
-        : "Your payment has been confirmed.",
+        ? "Your Finder Pro plan is now active. Enjoy unlimited searches and advanced filters."
+        : payment.type === "verified_badge"
+          ? "Your Verified Lister badge is now active. Students can trust your listings."
+          : payment.type === "lister_analytics"
+            ? "Your Analytics subscription is now active. Track views, inquiries, and saves for 30 days."
+            : payment.type === "listing_boost"
+              ? "Your listing is now boosted and pinned to the top of map results for 7 days."
+              : "Your payment has been confirmed.",
     referenceId: updatedPayment.id,
     referenceType: "payment",
     title: "Payment confirmed",

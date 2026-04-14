@@ -18,6 +18,8 @@ export const profiles = pgTable("profiles", {
 
   isPaidFinder: boolean("is_paid_finder").notNull().default(false),
   isVerifiedMember: boolean("is_verified_member").notNull().default(false),
+  isVerifiedLister: boolean("is_verified_lister").notNull().default(false),
+  analyticsExpiresAt: timestamp("analytics_expires_at", { withTimezone: true }),
 
   bio: text("bio"),
   contactEmail: text("contact_email"),

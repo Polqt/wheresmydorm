@@ -4,10 +4,11 @@ import {
   listingPhotos,
   listings,
   payments,
+  profiles,
   savedListings,
   searchEvents,
 } from "@wheresmydorm/db";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { adminProcedure, protectedProcedure } from "../index";
@@ -309,6 +310,76 @@ export const listingManagementProcedures = {
         .returning({ id: listings.id, status: listings.status });
 
       return updated;
+    }),
+
+  /**
+   * Analytics for a lister's own listings.
+   * Requires an active lister_analytics subscription (analyticsExpiresAt > now).
+   */
+  analytics: protectedProcedure
+    .input(z.object({ listingId: z.string().uuid().optional() }))
+    .query(async ({ ctx, input }) => {
+      assertLister(ctx, "Only listers can access listing analytics.");
+
+      const profile = await db.query.profiles.findFirst({
+        where: eq(profiles.id, ctx.userId),
+        columns: { analyticsExpiresAt: true },
+      });
+
+      const hasAnalytics =
+        profile?.analyticsExpiresAt != null &&
+        profile.analyticsExpiresAt > new Date();
+
+      if (!hasAnalytics) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Active Lister Analytics subscription required.",
+        });
+      }
+
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const myListingIds = await db.query.listings.findMany({
+        where: input.listingId
+          ? and(
+              eq(listings.id, input.listingId),
+              eq(listings.listerId, ctx.userId),
+            )
+          : eq(listings.listerId, ctx.userId),
+        columns: { id: true, title: true, viewCount: true, bookmarkCount: true, inquiryCount: true, isFeatured: true, boostExpiresAt: true },
+      });
+
+      const thirtyDayViews = await db
+        .select({
+          listingId: searchEvents.listingId,
+          views: sql<number>`count(*)::int`,
+        })
+        .from(searchEvents)
+        .where(
+          and(
+            eq(searchEvents.eventType, "listing_view"),
+            gte(searchEvents.createdAt, thirtyDaysAgo),
+          ),
+        )
+        .groupBy(searchEvents.listingId);
+
+      const viewsMap = new Map(
+        thirtyDayViews
+          .filter((r) => r.listingId != null)
+          .map((r) => [r.listingId!, r.views]),
+      );
+
+      return myListingIds.map((listing) => ({
+        id: listing.id,
+        title: listing.title,
+        totalViews: listing.viewCount,
+        totalSaves: listing.bookmarkCount,
+        totalInquiries: listing.inquiryCount,
+        viewsLast30Days: viewsMap.get(listing.id) ?? 0,
+        isBoosted: listing.isFeatured && (listing.boostExpiresAt == null || listing.boostExpiresAt > new Date()),
+        boostExpiresAt: listing.boostExpiresAt?.toISOString() ?? null,
+      }));
     }),
 
   /**

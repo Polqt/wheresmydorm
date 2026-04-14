@@ -19,7 +19,7 @@ const createPaymentIntentSchema = z.object({
   amount: z.number().positive(),
   listingId: z.string().uuid().optional(),
   paymentMethod: z.string().trim().max(100).optional(),
-  type: z.enum(["finder_upgrade", "listing_fee", "listing_boost"]),
+  type: z.enum(["finder_upgrade", "listing_fee", "listing_boost", "verified_badge", "lister_analytics"]),
 });
 
 const paymentIdSchema = z.object({
@@ -111,9 +111,11 @@ export const paymentsRouter = router({
       }
 
       const paymentDescriptions: Record<typeof input.type, string> = {
-        finder_upgrade: "Finder upgrade",
-        listing_boost: "Listing boost",
+        finder_upgrade: "Finder Pro upgrade",
+        listing_boost: "Listing boost (7 days)",
         listing_fee: "Listing fee",
+        verified_badge: "Verified Lister badge",
+        lister_analytics: "Lister Analytics (30 days)",
       };
 
       const intent = await createPaymongoPaymentIntent({
