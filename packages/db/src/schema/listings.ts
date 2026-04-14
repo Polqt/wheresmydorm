@@ -42,7 +42,8 @@ export const listings = pgTable("listings", {
   viewCount:     integer("view_count").notNull().default(0),
   bookmarkCount: integer("bookmark_count").notNull().default(0),
   inquiryCount:  integer("inquiry_count").notNull().default(0),
-  isFeatured:    boolean("is_featured").notNull().default(false),
+  isFeatured:     boolean("is_featured").notNull().default(false),
+  boostExpiresAt: timestamp("boost_expires_at", { withTimezone: true }),
 
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

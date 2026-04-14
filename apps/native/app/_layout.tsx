@@ -80,6 +80,11 @@ export default function RootLayout() {
               <Stack.Screen name="post" />
               <Stack.Screen name="listings" />
               <Stack.Screen name="messages" />
+              <Stack.Screen name="notifications" />
+              <Stack.Screen name="payments" />
+              <Stack.Screen name="reviews" />
+              <Stack.Screen name="admin" />
+              <Stack.Screen name="chat" />
             </Stack>
           </AuthProvider>
         </GestureHandlerRootView>

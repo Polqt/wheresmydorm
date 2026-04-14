@@ -26,6 +26,12 @@ const updateProfileInputSchema = z.object({
   preferredArea: z.string().trim().max(120).nullable().optional(),
   propertyTypes: z.array(z.string().trim().min(1)).max(12).optional(),
 });
+const notificationTokenInputSchema = z.object({
+  fcmToken: z.string().trim().min(1).max(500).nullable(),
+});
+const deleteAccountInputSchema = z.object({
+  confirm: z.literal(true),
+});
 
 export const profilesRouter = router({
   sync: protectedProcedure.mutation(async ({ ctx }) => {
@@ -91,22 +97,24 @@ export const profilesRouter = router({
   update: protectedProcedure
     .input(updateProfileInputSchema)
     .mutation(async ({ ctx, input }) => {
+      const updates: Partial<typeof profiles.$inferInsert> = {};
+
+      if (input.avatarUrl !== undefined) updates.avatarUrl = input.avatarUrl;
+      if (input.bio !== undefined) updates.bio = input.bio;
+      if (input.contactEmail !== undefined) updates.contactEmail = input.contactEmail;
+      if (input.contactPhone !== undefined) updates.contactPhone = input.contactPhone;
+      if (input.finderBudgetMax !== undefined) updates.finderBudgetMax = input.finderBudgetMax;
+      if (input.finderBudgetMin !== undefined) updates.finderBudgetMin = input.finderBudgetMin;
+      if (input.finderPropertyTypes !== undefined) updates.finderPropertyTypes = input.finderPropertyTypes;
+      if (input.firstName !== undefined) updates.firstName = input.firstName;
+      if (input.lastName !== undefined) updates.lastName = input.lastName;
+      if (input.listerPropertyCount !== undefined) updates.listerPropertyCount = input.listerPropertyCount;
+      if (input.preferredArea !== undefined) updates.preferredArea = input.preferredArea;
+      if (input.propertyTypes !== undefined) updates.propertyTypes = input.propertyTypes;
+
       const [profile] = await db
         .update(profiles)
-        .set({
-          avatarUrl: input.avatarUrl,
-          bio: input.bio,
-          contactEmail: input.contactEmail,
-          contactPhone: input.contactPhone,
-          finderBudgetMax: input.finderBudgetMax,
-          finderBudgetMin: input.finderBudgetMin,
-          finderPropertyTypes: input.finderPropertyTypes,
-          firstName: input.firstName,
-          lastName: input.lastName,
-          listerPropertyCount: input.listerPropertyCount,
-          preferredArea: input.preferredArea,
-          propertyTypes: input.propertyTypes,
-        })
+        .set(updates)
         .where(eq(profiles.id, ctx.userId))
         .returning();
 
@@ -118,6 +126,41 @@ export const profilesRouter = router({
       }
 
       return profile;
+    }),
+
+  setNotificationToken: protectedProcedure
+    .input(notificationTokenInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const [profile] = await db
+        .update(profiles)
+        .set({ fcmToken: input.fcmToken })
+        .where(eq(profiles.id, ctx.userId))
+        .returning();
+
+      if (!profile) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Profile not found for the current user.",
+        });
+      }
+
+      return { success: true };
+    }),
+
+  deleteAccount: protectedProcedure
+    .input(deleteAccountInputSchema)
+    .mutation(async ({ ctx }) => {
+      const { error } = await ctx.supabaseAdmin.auth.admin.deleteUser(ctx.userId);
+
+      if (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Account deletion failed.",
+          cause: error,
+        });
+      }
+
+      return { success: true };
     }),
 
   toggleFollow: protectedProcedure

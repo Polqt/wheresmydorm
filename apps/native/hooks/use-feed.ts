@@ -90,6 +90,7 @@ export function useFeed() {
 
   return {
     items,
+    isError: feedQuery.isError,
     isFetchingNextPage: feedQuery.isFetchingNextPage,
     isLoading: feedQuery.isLoading,
     onCreatePost: handleCreatePost,
@@ -97,6 +98,7 @@ export function useFeed() {
     onFollow: handleFollow,
     onPressPost: handlePostPress,
     onReact: handleReact,
+    onRefetch: () => feedQuery.refetch(),
     onShare: handleShare,
   };
 }

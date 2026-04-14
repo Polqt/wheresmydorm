@@ -138,17 +138,19 @@ export default function ProfileSetupScreen() {
 
           <View className="px-6" style={bottomAreaStyle}>
             <Pressable
-              className="h-[52px] w-full items-center justify-center rounded-xl"
+              className={`h-[52px] w-full items-center justify-center rounded-2xl ${
+                canContinue ? "bg-brand-orange" : "bg-[#E8E3DC]"
+              }`}
               disabled={!canContinue}
               onPress={handleContinue}
-              style={{ backgroundColor: canContinue ? "#04170E" : "#E8E3DC" }}
             >
               {isSubmitting ? (
                 <ActivityIndicator color="#ffffff" size="small" />
               ) : (
                 <Text
-                  className="text-[15px] font-semibold"
-                  style={{ color: canContinue ? "#ffffff" : "#A09A90" }}
+                  className={`text-[15px] font-bold ${
+                    canContinue ? "text-white" : "text-[#A09A90]"
+                  }`}
                 >
                   Continue
                 </Text>

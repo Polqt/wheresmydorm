@@ -1,66 +1,40 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { useMemo } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ProfileAvatar } from "@/components/profile/profile-avatar";
 import { ProfileRow } from "@/components/profile/profile-row";
 import { ProfileSection } from "@/components/profile/profile-section";
 import { ProfileStatsRow } from "@/components/profile/profile-stat";
-import { useCurrentProfile } from "@/hooks/use-current-profile";
-import { useAuth } from "@/providers/auth-provider";
-import { formatMemberSince, getInitials } from "@/utils/profile";
+import { useProfileScreen } from "@/hooks/use-profile-screen";
 import {
+  adminConversationReportsRoute,
+  adminPostReportsRoute,
+  adminUsersRoute,
+  aiChatRoute,
   createListingRoute,
   listerListingsTabRoute,
   messagesInboxRoute,
+  notificationsRoute,
+  paymentsRoute,
   profileEditRoute,
+  reviewsRoute,
   savedListingsRoute,
 } from "@/utils/routes";
-import { trpc } from "@/utils/api-client";
 
 export default function ProfileTabScreen() {
-  const { signOut, user, role } = useAuth();
-
-  const { data: profile } = useCurrentProfile(user);
-  const myListingsQuery = useQuery({
-    ...trpc.listings.myListings.queryOptions(),
-    enabled: role === "lister",
-  });
-  const savedListingsQuery = useQuery({
-    ...trpc.listings.savedListings.queryOptions(),
-    enabled: role === "finder",
-  });
-
-  const initials = useMemo(
-    () => getInitials(profile?.firstName, profile?.lastName),
-    [profile?.firstName, profile?.lastName],
-  );
-
-  const displayName =
-    profile?.fullName ?? user?.email?.split("@")[0] ?? "Member";
-
-  const stats = useMemo(
-    () => [
-      {
-        label: role === "lister" ? "Listings" : "Saved",
-        value:
-          role === "lister"
-            ? String(myListingsQuery.data?.length ?? 0)
-            : String(savedListingsQuery.data?.length ?? 0),
-      },
-      { label: "Reviews", value: "0" },
-      { label: "Member since", value: formatMemberSince(profile?.createdAt) },
-    ],
-    [
-      myListingsQuery.data?.length,
-      profile?.createdAt,
-      role,
-      savedListingsQuery.data?.length,
-    ],
-  );
+  const {
+    deleteAccount,
+    displayName,
+    initials,
+    profile,
+    role,
+    signOut,
+    stats,
+    unreadCount,
+    user,
+  } = useProfileScreen();
 
   const goEdit = () => router.push(profileEditRoute());
 
@@ -183,8 +157,37 @@ export default function ProfileTabScreen() {
               <ProfileRow
                 icon="chatbubble-outline"
                 label="Messages"
-                last
                 onPress={() => router.push(messagesInboxRoute())}
+              />
+              <ProfileRow
+                icon="star-outline"
+                label="My reviews"
+                onPress={() => router.push(reviewsRoute())}
+              />
+              <ProfileRow
+                icon="sparkles-outline"
+                label="AI Housing Assistant"
+                last
+                onPress={() => router.push(aiChatRoute())}
+              />
+            </ProfileSection>
+          ) : role === "admin" ? (
+            <ProfileSection title="Moderation">
+              <ProfileRow
+                icon="shield-checkmark-outline"
+                label="Conversation reports"
+                onPress={() => router.push(adminConversationReportsRoute())}
+              />
+              <ProfileRow
+                icon="chatbox-ellipses-outline"
+                label="Post reports"
+                onPress={() => router.push(adminPostReportsRoute())}
+              />
+              <ProfileRow
+                icon="people-outline"
+                label="User management"
+                last
+                onPress={() => router.push(adminUsersRoute())}
               />
             </ProfileSection>
           ) : null}
@@ -193,13 +196,14 @@ export default function ProfileTabScreen() {
             <ProfileRow
               icon="notifications-outline"
               label="Notifications"
-              onPress={() => {}}
+              onPress={() => router.push(notificationsRoute())}
+              value={unreadCount > 0 ? `${unreadCount} unread` : null}
             />
             <ProfileRow
-              icon="moon-outline"
-              label="Appearance"
+              icon="card-outline"
+              label="Payments"
               last
-              onPress={() => {}}
+              onPress={() => router.push(paymentsRoute())}
             />
           </ProfileSection>
 
@@ -223,6 +227,25 @@ export default function ProfileTabScreen() {
           </ProfileSection>
 
           <ProfileSection>
+            <ProfileRow
+              destructive
+              icon="trash-outline"
+              label="Delete account"
+              onPress={() => {
+                Alert.alert(
+                  "Delete account?",
+                  "This permanently deletes your account and associated data.",
+                  [
+                    { text: "Cancel", style: "cancel" },
+                    {
+                      text: "Delete",
+                      style: "destructive",
+                      onPress: () => deleteAccount.mutate({ confirm: true }),
+                    },
+                  ],
+                );
+              }}
+            />
             <ProfileRow
               destructive
               icon="log-out-outline"

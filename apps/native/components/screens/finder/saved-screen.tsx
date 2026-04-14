@@ -7,6 +7,8 @@ import { memo, useCallback } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorRetry } from "@/components/ui/error-retry";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import type { SavedListing } from "@/types/listings";
 import { formatCurrency } from "@/utils/profile";
@@ -101,7 +103,12 @@ export default function SavedTabScreen() {
         title="Saved"
       />
 
-      {savedQuery.isLoading ? (
+      {savedQuery.isError ? (
+        <ErrorRetry
+          message="Failed to load saved listings."
+          onRetry={() => savedQuery.refetch()}
+        />
+      ) : savedQuery.isLoading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator color="#0B2D23" size="large" />
         </View>
@@ -158,22 +165,12 @@ export default function SavedTabScreen() {
             ) : null
           }
           ListEmptyComponent={
-            <View className="mt-20 items-center px-8">
-              <Text className="text-[18px] font-extrabold text-[#1A1A1A]">
-                No saved listings
-              </Text>
-              <Text className="mt-2 text-center text-[14px] leading-[22px] text-[#706A5F]">
-                Bookmark listings from the map or discover tab.
-              </Text>
-              <Pressable
-                className="mt-5 rounded-full bg-[#111827] px-[22px] py-[13px]"
-                onPress={() => router.replace(finderHomeRoute())}
-              >
-                <Text className="text-[14px] font-bold text-white">
-                  Browse map
-                </Text>
-              </Pressable>
-            </View>
+            <EmptyState
+              illustration="🏠"
+              title="No saved listings yet"
+              description="Bookmark listings from the map or discover tab to build your shortlist."
+              action={{ label: "Browse map", onPress: () => router.replace(finderHomeRoute()) }}
+            />
           }
           renderItem={renderItem}
           showsVerticalScrollIndicator={false}

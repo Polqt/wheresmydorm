@@ -6,7 +6,7 @@ import type {
 import type { MapFilters } from "@/types/map";
 
 export const DEFAULT_FIND_RADIUS_METERS = 500;
-export const FREE_FINDER_DAILY_FIND_LIMIT = 5;
+export const FREE_FINDER_LIFETIME_FIND_LIMIT = 5;
 
 type CreateFindNearbyInputArgs = {
   coords: { latitude: number; longitude: number };
@@ -48,7 +48,7 @@ export function getFinderQuotaCopy(
   quota: FinderQuotaStatus | null | undefined,
 ) {
   if (!quota) {
-    return `Free finder accounts get ${FREE_FINDER_DAILY_FIND_LIMIT} nearby finds each day.`;
+    return `Free finder accounts get ${FREE_FINDER_LIFETIME_FIND_LIMIT} nearby finds total.`;
   }
 
   if (quota.hasUnlimitedFinds) {
@@ -56,10 +56,10 @@ export function getFinderQuotaCopy(
   }
 
   if (quota.remainingFinds <= 0) {
-    return `You used all ${quota.dailyLimit} free finds for today.`;
+    return `You used all ${quota.lifetimeLimit} free finds.`;
   }
 
-  return `${quota.remainingFinds} of ${quota.dailyLimit} free finds left today.`;
+  return `${quota.remainingFinds} of ${quota.lifetimeLimit} free finds remaining.`;
 }
 
 export function getFinderSearchLabel(input: {

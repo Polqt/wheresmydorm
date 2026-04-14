@@ -1,5 +1,5 @@
 export const DEFAULT_FIND_RADIUS_METERS = 500;
-export const FREE_FINDER_DAILY_FIND_LIMIT = 5;
+export const FREE_FINDER_LIFETIME_FIND_LIMIT = 5;
 
 function toRadians(value: number) {
   return (value * Math.PI) / 180;

@@ -4,6 +4,8 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { FeedPostCard } from "@/components/feed/post-card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorRetry } from "@/components/ui/error-retry";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { useFeed } from "@/hooks/use-feed";
 import type { FeedItem } from "@/types/posts";
@@ -14,6 +16,7 @@ function FeedSeparator() {
 
 export function FinderFeedScreen() {
   const {
+    isError,
     items,
     isFetchingNextPage,
     isLoading,
@@ -22,6 +25,7 @@ export function FinderFeedScreen() {
     onFollow,
     onPressPost,
     onReact,
+    onRefetch,
     onShare,
   } = useFeed();
 
@@ -41,7 +45,12 @@ export function FinderFeedScreen() {
         }
       />
 
-      {isLoading ? (
+      {isError ? (
+        <ErrorRetry
+          message="Failed to load feed."
+          onRetry={onRefetch}
+        />
+      ) : isLoading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator color="#0B2D23" size="large" />
         </View>
@@ -58,14 +67,12 @@ export function FinderFeedScreen() {
           ItemSeparatorComponent={FeedSeparator}
           keyExtractor={(item: FeedItem) => item.id}
           ListEmptyComponent={
-            <View className="items-center px-8">
-              <Text className="text-[18px] font-extrabold text-[#1A1A1A]">
-                Nothing in your feed yet
-              </Text>
-              <Text className="mt-2 text-center text-[14px] leading-[22px] text-[#706A5F]">
-                Follow other users or create a post to get things going.
-              </Text>
-            </View>
+            <EmptyState
+              illustration="🌱"
+              title="Nothing in your feed yet"
+              description="Follow other users or write your first post to get things going."
+              action={{ label: "Write a post", onPress: onCreatePost }}
+            />
           }
           ListFooterComponent={
             isFetchingNextPage ? (

@@ -3,10 +3,10 @@ import { db, searchEvents } from "@wheresmydorm/db";
 
 import { protectedProcedure } from "../index";
 import {
-  FREE_FINDER_DAILY_FIND_LIMIT,
+  FREE_FINDER_LIFETIME_FIND_LIMIT,
   hasAdvancedFinderFilters,
 } from "../lib/finder-search";
-import { ensureFinder } from "../lib/guards";
+import { assertFinder } from "../lib/guards";
 import {
   consumeFinderFindRow,
   getFinderQuotaRow,
@@ -65,11 +65,11 @@ export const listingDiscoveryProcedures = {
       return {
         advancedFiltersEnabled: false,
         canFind: false,
-        dailyLimit: FREE_FINDER_DAILY_FIND_LIMIT,
+        lifetimeLimit: FREE_FINDER_LIFETIME_FIND_LIMIT,
         hasUnlimitedFinds: false,
         isPaid: false,
         remainingFinds: 0,
-        usedToday: 0,
+        usedTotal: 0,
       };
     }
 
@@ -80,10 +80,7 @@ export const listingDiscoveryProcedures = {
   findNearby: protectedProcedure
     .input(findNearbySchema)
     .mutation(async ({ ctx, input }) => {
-      await ensureFinder({
-        message: "Only finders can run nearby searches.",
-        userId: ctx.userId,
-      });
+      assertFinder(ctx, "Only finders can run nearby searches.");
 
       const quotaBeforeFind = await getFinderQuotaRow(ctx.userId);
 
@@ -99,7 +96,7 @@ export const listingDiscoveryProcedures = {
       if (!quota.allowed) {
         throw new TRPCError({
           code: "FORBIDDEN",
-          message: `Free finders get ${FREE_FINDER_DAILY_FIND_LIMIT} nearby finds per day. Upgrade your finder plan for unlimited searches.`,
+          message: `Free finders get ${FREE_FINDER_LIFETIME_FIND_LIMIT} lifetime nearby searches. Upgrade your finder plan for unlimited searches.`,
         });
       }
 
@@ -122,7 +119,7 @@ export const listingDiscoveryProcedures = {
     }),
 
   discover: protectedProcedure.query(async ({ ctx }) => {
-    await ensureFinder({ userId: ctx.userId });
+    assertFinder(ctx);
 
     const [topRated, newArrivals, underThreeThousand] = await Promise.all([
       getDiscoverySection({ sortBy: "top_rated" }),

@@ -70,9 +70,30 @@ const ListingRow = memo(function ListingRow({
               {item.status}
             </Text>
           </View>
-          <Text className="text-[12px] font-semibold text-[#7B7468]">
-            {item.inquiryCount} inquiries
-          </Text>
+          <View className="items-end">
+            <Text className="text-[12px] font-semibold text-[#7B7468]">
+              {item.inquiryCount} inquiries
+            </Text>
+            {item.requiresListingFee ? (
+              <Text
+                className={`mt-1 text-[11px] font-bold ${
+                  item.listingFeeStatus === "paid"
+                    ? "text-[#0B4A30]"
+                    : "text-[#C05A18]"
+                }`}
+              >
+                {item.listingFeeStatus === "paid"
+                  ? "Fee cleared"
+                  : item.listingFeeStatus === "pending"
+                    ? "Fee pending"
+                    : "Fee required"}
+              </Text>
+            ) : (
+              <Text className="mt-1 text-[11px] font-bold text-[#0B4A30]">
+                Free slot
+              </Text>
+            )}
+          </View>
         </View>
       </View>
 

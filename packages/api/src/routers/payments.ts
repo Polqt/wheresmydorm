@@ -7,7 +7,7 @@ import {
   createPaymongoPaymentIntent,
   markPaymentAsPaid,
 } from "../lib/paymongo";
-import { ensureFinder, ensureLister, ensureListingOwner } from "../lib/guards";
+import { assertFinder, assertLister, assertListingOwner } from "../lib/guards";
 import { protectedProcedure, router } from "../index";
 
 const listPaymentsSchema = z.object({
@@ -19,7 +19,7 @@ const createPaymentIntentSchema = z.object({
   amount: z.number().positive(),
   listingId: z.string().uuid().optional(),
   paymentMethod: z.string().trim().max(100).optional(),
-  type: z.enum(["finder_upgrade", "listing_fee", "listing_boost"]),
+  type: z.enum(["finder_upgrade", "listing_fee", "listing_boost", "verified_badge", "lister_analytics"]),
 });
 
 const paymentIdSchema = z.object({
@@ -64,20 +64,14 @@ export const paymentsRouter = router({
     .input(createPaymentIntentSchema)
     .mutation(async ({ ctx, input }) => {
       if (input.type === "finder_upgrade") {
-        await ensureFinder({
-          message: "Only finders can create finder upgrade payments.",
-          userId: ctx.userId,
-        });
+        assertFinder(ctx, "Only finders can create finder upgrade payments.");
       } else {
-        await ensureLister({
-          message: "Only listers can create listing payments.",
-          userId: ctx.userId,
-        });
+        assertLister(ctx, "Only listers can create listing payments.");
       }
 
       if (input.listingId) {
         if (input.type === "listing_fee" || input.type === "listing_boost") {
-          await ensureListingOwner({
+          await assertListingOwner({
             listingId: input.listingId,
             message: "Only the listing owner can create this payment.",
             userId: ctx.userId,
@@ -117,9 +111,11 @@ export const paymentsRouter = router({
       }
 
       const paymentDescriptions: Record<typeof input.type, string> = {
-        finder_upgrade: "Finder upgrade",
-        listing_boost: "Listing boost",
+        finder_upgrade: "Finder Pro upgrade",
+        listing_boost: "Listing boost (7 days)",
         listing_fee: "Listing fee",
+        verified_badge: "Verified Lister badge",
+        lister_analytics: "Lister Analytics (30 days)",
       };
 
       const intent = await createPaymongoPaymentIntent({

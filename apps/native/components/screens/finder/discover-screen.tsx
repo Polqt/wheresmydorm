@@ -1,15 +1,19 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
+import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { memo, useCallback } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorRetry } from "@/components/ui/error-retry";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { useFinderDiscovery } from "@/hooks/use-finder-discovery";
 import type { DiscoverySearchPreset } from "@/types/discovery";
 import type { ListingListItem } from "@/types/listings";
+import { trpc } from "@/utils/api-client";
 import { formatCurrency } from "@/utils/profile";
 import {
   finderHomeRoute,
@@ -188,6 +192,7 @@ function DiscoverySection({
 }
 
 export function FinderDiscoverScreen() {
+  const finderQuotaQuery = useQuery(trpc.listings.findQuotaStatus.queryOptions());
   const {
     applyPreset,
     currentPreset,
@@ -217,6 +222,17 @@ export function FinderDiscoverScreen() {
   );
 
   const activeSearchCount = searchText.trim().length > 0 ? searchResults.length : 0;
+
+  if (finderQuotaQuery.isError) {
+    return (
+      <SafeAreaView className="flex-1 bg-[#F7F4EE]" edges={["top"]}>
+        <ErrorRetry
+          message="Failed to load finder data."
+          onRetry={() => finderQuotaQuery.refetch()}
+        />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-[#F7F4EE]" edges={["top"]}>
@@ -278,16 +294,20 @@ export function FinderDiscoverScreen() {
 
           <View className="mt-5 flex-row gap-2.5">
             <FinderMetric
+              label={finderQuotaQuery.data?.isPaid ? "Finder plan" : "Finds left"}
+              value={
+                finderQuotaQuery.data?.isPaid
+                  ? "Unlimited"
+                  : String(finderQuotaQuery.data?.remainingFinds ?? 0)
+              }
+            />
+            <FinderMetric
               label="Saved searches"
               value={String(savedSearches.length)}
             />
             <FinderMetric
               label="Nearby picks"
-              value={String(lastNearbyItems.length)}
-            />
-            <FinderMetric
-              label="Live results"
-              value={String(activeSearchCount)}
+              value={String(lastNearbyItems.length || activeSearchCount)}
             />
           </View>
         </View>
@@ -342,12 +362,21 @@ export function FinderDiscoverScreen() {
         ) : null}
 
         {searchText.trim().length > 0 ? (
-          <DiscoverySection
-            items={searchResults}
-            onPressItem={handleListingPress}
-            subtitle={`${searchResults.length} matches across titles, descriptions, and location fields.`}
-            title="Search results"
-          />
+          searchResults.length > 0 ? (
+            <DiscoverySection
+              items={searchResults}
+              onPressItem={handleListingPress}
+              subtitle={`${searchResults.length} matches across titles, descriptions, and location fields.`}
+              title="Search results"
+            />
+          ) : (
+            <EmptyState
+              illustration="🔍"
+              title="No results found"
+              description={`No listings matched "${searchText}". Try a different area, barangay, or landmark.`}
+              action={{ label: "Clear search", onPress: () => setSearchText("") }}
+            />
+          )
         ) : null}
 
         <DiscoverySection
@@ -376,8 +405,8 @@ export function FinderDiscoverScreen() {
         <DiscoverySection
           items={underBudget}
           onPressItem={handleListingPress}
-          subtitle="Budget-friendly picks to keep your shortlist realistic."
-          title="Under your budget"
+          subtitle="Budget-friendly picks curated for the P3,000-and-below range."
+          title="Under P3,000"
         />
       </ScrollView>
     </SafeAreaView>

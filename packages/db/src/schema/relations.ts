@@ -3,8 +3,8 @@ import { profiles } from "./profiles";
 import { listings, listingPhotos } from "./listings";
 import { reviews, reviewHelpfulVotes, reviewReports } from "./reviews";
 import { posts, postComments, postReactions, postReports, follows } from "./social";
-import { messages, userBlocks } from "./messaging";
-import { searchEvents, payments, notifications, savedListings } from "./platform";
+import { conversationReports, inquiryStatuses, messages, userBlocks } from "./messaging";
+import { searchEvents, payments, notifications, savedListings, savedSearches } from "./platform";
 
 // ─── profiles ────────────────────────────────────────────────────────────────
 export const profilesRelations = relations(profiles, ({ many }) => ({
@@ -20,6 +20,7 @@ export const profilesRelations = relations(profiles, ({ many }) => ({
   searchEvents:    many(searchEvents),
   payments:        many(payments),
   notifications:   many(notifications),
+  savedSearches:   many(savedSearches),
 }));
 
 // ─── listings ─────────────────────────────────────────────────────────────────
@@ -88,6 +89,18 @@ export const userBlocksRelations = relations(userBlocks, ({ one }) => ({
   blocked: one(profiles, { fields: [userBlocks.blockedId], references: [profiles.id] }),
 }));
 
+export const inquiryStatusesRelations = relations(inquiryStatuses, ({ one }) => ({
+  finder: one(profiles, { fields: [inquiryStatuses.finderId], references: [profiles.id] }),
+  lister: one(profiles, { fields: [inquiryStatuses.listerId], references: [profiles.id] }),
+  listing: one(listings, { fields: [inquiryStatuses.listingId], references: [listings.id] }),
+}));
+
+export const conversationReportsRelations = relations(conversationReports, ({ one }) => ({
+  listing: one(listings, { fields: [conversationReports.listingId], references: [listings.id] }),
+  reporter: one(profiles, { fields: [conversationReports.reporterId], references: [profiles.id] }),
+  reportedUser: one(profiles, { fields: [conversationReports.reportedUserId], references: [profiles.id] }),
+}));
+
 // ─── platform ─────────────────────────────────────────────────────────────────
 export const searchEventsRelations = relations(searchEvents, ({ one }) => ({
   user:    one(profiles, { fields: [searchEvents.userId],    references: [profiles.id] }),
@@ -106,4 +119,8 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
 export const savedListingsRelations = relations(savedListings, ({ one }) => ({
   finder:  one(profiles, { fields: [savedListings.finderId],  references: [profiles.id] }),
   listing: one(listings, { fields: [savedListings.listingId], references: [listings.id] }),
+}));
+
+export const savedSearchesRelations = relations(savedSearches, ({ one }) => ({
+  finder: one(profiles, { fields: [savedSearches.finderId], references: [profiles.id] }),
 }));

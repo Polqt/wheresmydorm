@@ -46,6 +46,21 @@ const DashboardListingRow = memo(function DashboardListingRow({
         <Text className="mt-1.5 text-[13px] font-extrabold text-[#0B2D23]">
           {formatCurrency(item.pricePerMonth)}/mo
         </Text>
+        <Text
+          className={`mt-1 text-[11px] font-bold ${
+            item.requiresListingFee && item.listingFeeStatus !== "paid"
+              ? "text-[#C05A18]"
+              : "text-[#0B4A30]"
+          }`}
+        >
+          {item.requiresListingFee
+            ? item.listingFeeStatus === "paid"
+              ? "Listing fee cleared"
+              : item.listingFeeStatus === "pending"
+                ? "Listing fee pending"
+                : "Listing fee required"
+            : "Free listing slot"}
+        </Text>
       </View>
       <View className="items-end gap-2">
         <View
@@ -93,6 +108,10 @@ export default function ListerDashboardTabScreen() {
   const profileQuery = useCurrentProfile(user);
   const listingsQuery = useQuery({
     ...trpc.listings.myListings.queryOptions(),
+    enabled: role === "lister",
+  });
+  const quotaQuery = useQuery({
+    ...trpc.listings.listerQuotaStatus.queryOptions(),
     enabled: role === "lister",
   });
   const threadsQuery = useQuery({
@@ -211,8 +230,8 @@ export default function ListerDashboardTabScreen() {
               />
               <StatBlock
                 accent="#2563EB"
-                label="Unread"
-                value={String(unreadThreads)}
+                label="Pending fees"
+                value={String(quotaQuery.data?.pendingListingFeesCount ?? 0)}
               />
             </View>
 
@@ -267,11 +286,14 @@ export default function ListerDashboardTabScreen() {
                   Focus now
                 </Text>
                 <Text className="mt-2 text-[16px] font-bold text-[#111827]">
-                  Keep active listings fresh
+                  {quotaQuery.data?.pendingListingFeesCount
+                    ? "Clear listing fees"
+                    : "Keep active listings fresh"}
                 </Text>
                 <Text className="mt-1.5 text-[13px] leading-[19px] text-[#4B5563]">
-                  Updated pricing and recent photos keep you visible in finder
-                  search results.
+                  {quotaQuery.data?.pendingListingFeesCount
+                    ? `${quotaQuery.data.pendingListingFeesCount} listings are paused until payment is cleared.`
+                    : "Updated pricing and recent photos keep you visible in finder search results."}
                 </Text>
               </View>
             </View>
