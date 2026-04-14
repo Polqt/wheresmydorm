@@ -2,7 +2,7 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { FlashList } from "@shopify/flash-list";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { NotificationListItem } from "@/types/platform";
@@ -108,34 +108,65 @@ export default function NotificationsScreen() {
   const unreadCount = unreadCountQuery.data?.count ?? 0;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <FontAwesome name="arrow-left" size={16} color="#0f172a" />
-        </Pressable>
-        <Text style={styles.headerTitle}>Notifications</Text>
+    <View className="flex-1 bg-[#f7f4ee]" style={{ paddingTop: insets.top }}>
+      {/* Header */}
+      <View className="flex-row items-center border-b border-[#E7E0D5] bg-[#fffdf9] px-4 py-3.5">
         <Pressable
+          className="h-9 w-9 items-center justify-center rounded-full bg-[#F0EBE3]"
+          onPress={() => router.back()}
+        >
+          <FontAwesome color="#0f172a" name="arrow-left" size={16} />
+        </Pressable>
+        <Text className="flex-1 text-center text-base font-extrabold text-slate-900">
+          Notifications
+        </Text>
+        <Pressable
+          className="min-w-[58px] items-end"
           disabled={unreadCount === 0 || markAllRead.isPending}
           onPress={() => markAllRead.mutate()}
-          style={styles.headerAction}
         >
-          <Text style={styles.headerActionText}>Read all</Text>
+          <Text className="text-[12px] font-bold text-[#0B4A30]">Read all</Text>
         </Pressable>
       </View>
 
-      <View style={styles.summary}>
-        <Text style={styles.summaryTitle}>{unreadCount} unread</Text>
-        <Text style={styles.summaryBody}>
+      {/* Summary */}
+      <View className="mx-4 mt-3.5 rounded-3xl bg-[#fffdf9] px-4 py-4">
+        <Text className="text-xl font-extrabold text-slate-900">
+          {unreadCount} unread
+        </Text>
+        <Text className="mt-1 text-[13px] leading-5 text-[#706A5F]">
           Updates for messages, reviews, and payments land here.
         </Text>
       </View>
 
+      {/* Error state */}
+      {notificationsQuery.isError ? (
+        <View className="mx-4 mt-3 rounded-2xl bg-red-50 px-4 py-3">
+          <Text className="text-[13px] font-semibold text-red-700">
+            Failed to load notifications.
+          </Text>
+          <Pressable
+            className="mt-2 self-start"
+            onPress={() => notificationsQuery.refetch()}
+          >
+            <Text className="text-[13px] font-bold text-red-700 underline">
+              Retry
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
+
+      {/* List */}
       <FlashList
-        contentContainerStyle={styles.list}
+        contentContainerStyle={{ paddingBottom: 24 }}
         data={items}
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
-          <Text style={styles.endNote}>No notifications yet</Text>
+          notificationsQuery.isLoading ? null : (
+            <Text className="py-7 text-center text-[13px] font-semibold text-[#9E9890]">
+              No notifications yet
+            </Text>
+          )
         }
         renderItem={({ item }) => {
           const unread = !item.isRead;
@@ -143,36 +174,49 @@ export default function NotificationsScreen() {
 
           return (
             <Pressable
+              className={`flex-row items-start gap-3 border-b border-[#EDE8DF] px-4 py-3.5 ${
+                unread ? "bg-[#F5F0E8]" : "bg-[#fffdf9]"
+              }`}
               onPress={async () => {
                 if (unread) {
                   await markRead.mutateAsync({ notificationId: item.id });
                 }
-
                 if (route) {
                   router.push(route);
                 }
               }}
-              style={[styles.item, unread && styles.itemUnread]}
             >
-              <View style={[styles.iconBox, unread && styles.iconBoxUnread]}>
+              <View
+                className={`mt-0.5 h-10 w-10 items-center justify-center rounded-2xl ${
+                  unread ? "bg-[#D8EDE3]" : "bg-[#EDE8DF]"
+                }`}
+              >
                 <FontAwesome
+                  color={unread ? "#0B2D23" : "#706A5F"}
                   name={getNotificationIcon(item.type)}
                   size={16}
-                  color={unread ? "#0B2D23" : "#706A5F"}
                 />
               </View>
-              <View style={styles.itemContent}>
-                <View style={styles.itemRow}>
-                  <Text style={[styles.itemTitle, unread && styles.itemTitleUnread]}>
+              <View className="flex-1 gap-1">
+                <View className="flex-row items-center justify-between gap-2">
+                  <Text
+                    className={`flex-1 text-[14px] font-bold ${
+                      unread ? "text-slate-900" : "text-slate-500"
+                    }`}
+                  >
                     {item.title}
                   </Text>
-                  <Text style={styles.itemTime}>
+                  <Text className="text-[11px] font-semibold text-[#9E9890]">
                     {formatNotificationTime(String(item.createdAt))}
                   </Text>
                 </View>
-                <Text style={styles.itemBody}>{item.body}</Text>
+                <Text className="text-[13px] leading-5 text-[#706A5F]">
+                  {item.body}
+                </Text>
               </View>
-              {unread ? <View style={styles.dot} /> : null}
+              {unread ? (
+                <View className="mt-1.5 h-2 w-2 rounded-full bg-brand-orange" />
+              ) : null}
             </Pressable>
           );
         }}
@@ -180,134 +224,3 @@ export default function NotificationsScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f7f4ee",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E7E0D5",
-    backgroundColor: "#fffdf9",
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#F0EBE3",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: "center",
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#0f172a",
-  },
-  headerAction: {
-    minWidth: 58,
-    alignItems: "flex-end",
-  },
-  headerActionText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#0B4A30",
-  },
-  summary: {
-    marginHorizontal: 16,
-    marginTop: 14,
-    marginBottom: 10,
-    borderRadius: 24,
-    backgroundColor: "#fffdf9",
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-  },
-  summaryTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: "#0f172a",
-  },
-  summaryBody: {
-    marginTop: 4,
-    fontSize: 13,
-    lineHeight: 19,
-    color: "#706A5F",
-  },
-  list: {
-    paddingBottom: 24,
-  },
-  item: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "#EDE8DF",
-    backgroundColor: "#fffdf9",
-  },
-  itemUnread: {
-    backgroundColor: "#F5F0E8",
-  },
-  iconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 16,
-    backgroundColor: "#EDE8DF",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 1,
-  },
-  iconBoxUnread: {
-    backgroundColor: "#D8EDE3",
-  },
-  itemContent: {
-    flex: 1,
-    gap: 4,
-  },
-  itemRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 8,
-  },
-  itemTitle: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#475569",
-  },
-  itemTitleUnread: {
-    color: "#0f172a",
-  },
-  itemTime: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#9E9890",
-  },
-  itemBody: {
-    fontSize: 13,
-    color: "#706A5F",
-    lineHeight: 19,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#EA580C",
-    marginTop: 6,
-  },
-  endNote: {
-    textAlign: "center",
-    color: "#9E9890",
-    fontSize: 13,
-    fontWeight: "600",
-    paddingVertical: 28,
-  },
-});

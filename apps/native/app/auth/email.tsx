@@ -127,8 +127,8 @@ export default function EmailSignInScreen() {
 
           <View className="px-6" style={bottomAreaStyle}>
             <Pressable
-              className={`h-[52px] w-full items-center justify-center rounded-xl ${
-                canContinue ? "bg-[#04170E]" : "bg-[#E8E3DC]"
+              className={`h-[52px] w-full items-center justify-center rounded-2xl ${
+                canContinue ? "bg-brand-orange" : "bg-[#E8E3DC]"
               }`}
               disabled={!canContinue}
               onPress={handleContinue}

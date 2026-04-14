@@ -160,9 +160,9 @@ export default function RoleSelectScreen() {
 
         <View className="px-5" style={bottomAreaStyle}>
           <Pressable
-            className={`h-[52px] w-full items-center justify-center rounded-xl ${
+            className={`h-[52px] w-full items-center justify-center rounded-2xl ${
               selectedRole && !setRoleMutation.isPending
-                ? "bg-[#04170E]"
+                ? "bg-brand-orange"
                 : "bg-[#E8E3DC]"
             }`}
             disabled={!selectedRole || setRoleMutation.isPending}
@@ -172,7 +172,7 @@ export default function RoleSelectScreen() {
               <ActivityIndicator color="#ffffff" size="small" />
             ) : (
               <Text
-                className={`font-semibold text-[15px] ${
+                className={`font-bold text-[15px] ${
                   selectedRole ? "text-white" : "text-[#A09A90]"
                 }`}
               >

@@ -33,13 +33,15 @@ function FilterChip({
 }) {
   return (
     <Pressable
-      className="mr-2 rounded-full px-3.5 py-2"
+      className={`mr-2 rounded-full px-3.5 py-2 ${
+        active ? "bg-slate-900" : "bg-[#E7E5E4]"
+      }`}
       onPress={onPress}
-      style={{ backgroundColor: active ? "#111827" : "#E7E5E4" }}
     >
       <Text
-        className="text-[12px] font-bold"
-        style={{ color: active ? "#FFFFFF" : "#334155" }}
+        className={`text-[12px] font-bold ${
+          active ? "text-white" : "text-slate-700"
+        }`}
       >
         {label}
       </Text>

@@ -6,6 +6,7 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { FeedPostCard } from "@/components/feed/post-card";
+import { ErrorRetry } from "@/components/ui/error-retry";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { useFeed } from "@/hooks/use-feed";
 import type { FeedItem } from "@/types/posts";
@@ -18,6 +19,7 @@ function FeedSeparator() {
 
 export function ListerFeedScreen() {
   const {
+    isError,
     items,
     isFetchingNextPage,
     isLoading,
@@ -26,6 +28,7 @@ export function ListerFeedScreen() {
     onFollow,
     onPressPost,
     onReact,
+    onRefetch,
     onShare,
   } = useFeed();
 
@@ -54,7 +57,9 @@ export function ListerFeedScreen() {
         }
       />
 
-      {isLoading ? (
+      {isError ? (
+        <ErrorRetry message="Failed to load feed." onRetry={onRefetch} />
+      ) : isLoading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator color="#0B2D23" size="large" />
         </View>

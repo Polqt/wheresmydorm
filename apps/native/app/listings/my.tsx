@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { ErrorRetry } from "@/components/ui/error-retry";
 import type { MyListing } from "@/types/listings";
 import { formatCurrency } from "@/utils/profile";
 import { createListingRoute, listingEditRoute } from "@/utils/routes";
@@ -178,7 +179,12 @@ export default function MyListingsScreen() {
         </Pressable>
       </View>
 
-      {listingsQuery.isLoading ? (
+      {listingsQuery.isError ? (
+        <ErrorRetry
+          message={listingsQuery.error?.message ?? "Failed to load listings."}
+          onRetry={() => listingsQuery.refetch()}
+        />
+      ) : listingsQuery.isLoading ? (
         <View style={styles.loading}>
           <ActivityIndicator color="#0B2D23" size="large" />
         </View>

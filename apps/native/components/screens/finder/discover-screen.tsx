@@ -7,6 +7,8 @@ import { memo, useCallback } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorRetry } from "@/components/ui/error-retry";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { useFinderDiscovery } from "@/hooks/use-finder-discovery";
 import type { DiscoverySearchPreset } from "@/types/discovery";
@@ -221,6 +223,17 @@ export function FinderDiscoverScreen() {
 
   const activeSearchCount = searchText.trim().length > 0 ? searchResults.length : 0;
 
+  if (finderQuotaQuery.isError) {
+    return (
+      <SafeAreaView className="flex-1 bg-[#F7F4EE]" edges={["top"]}>
+        <ErrorRetry
+          message="Failed to load finder data."
+          onRetry={() => finderQuotaQuery.refetch()}
+        />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-[#F7F4EE]" edges={["top"]}>
       <ScreenHeader
@@ -349,12 +362,21 @@ export function FinderDiscoverScreen() {
         ) : null}
 
         {searchText.trim().length > 0 ? (
-          <DiscoverySection
-            items={searchResults}
-            onPressItem={handleListingPress}
-            subtitle={`${searchResults.length} matches across titles, descriptions, and location fields.`}
-            title="Search results"
-          />
+          searchResults.length > 0 ? (
+            <DiscoverySection
+              items={searchResults}
+              onPressItem={handleListingPress}
+              subtitle={`${searchResults.length} matches across titles, descriptions, and location fields.`}
+              title="Search results"
+            />
+          ) : (
+            <EmptyState
+              illustration="🔍"
+              title="No results found"
+              description={`No listings matched "${searchText}". Try a different area, barangay, or landmark.`}
+              action={{ label: "Clear search", onPress: () => setSearchText("") }}
+            />
+          )
         ) : null}
 
         <DiscoverySection

@@ -15,23 +15,12 @@ import {
   pollPaymentIntentUntilSettled,
 } from "@/services/paymongo";
 import type { MyListing } from "@/types/listings";
+import type { CheckoutStatus, CheckoutStatusTone } from "@/types/payments";
 import type { PaymentCreateIntentInput, PaymentListItem } from "@/types/platform";
 import { trpc } from "@/utils/api-client";
 import { formatCurrency } from "@/utils/profile";
 
 const PAYMENT_METHODS = ["gcash", "paymaya"] as const;
-
-type CheckoutStatusTone = {
-  bg: string;
-  border: string;
-  text: string;
-};
-
-type CheckoutStatus = {
-  body: string;
-  title: string;
-  tone: CheckoutStatusTone;
-};
 
 function getPaymentLabel(payment: PaymentListItem) {
   switch (payment.type) {

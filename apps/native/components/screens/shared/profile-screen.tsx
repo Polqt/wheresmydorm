@@ -1,7 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { useMemo } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -9,9 +7,7 @@ import { ProfileAvatar } from "@/components/profile/profile-avatar";
 import { ProfileRow } from "@/components/profile/profile-row";
 import { ProfileSection } from "@/components/profile/profile-section";
 import { ProfileStatsRow } from "@/components/profile/profile-stat";
-import { useCurrentProfile } from "@/hooks/use-current-profile";
-import { useAuth } from "@/providers/auth-provider";
-import { formatMemberSince, getInitials } from "@/utils/profile";
+import { useProfileScreen } from "@/hooks/use-profile-screen";
 import {
   adminConversationReportsRoute,
   adminPostReportsRoute,
@@ -26,79 +22,21 @@ import {
   reviewsRoute,
   savedListingsRoute,
 } from "@/utils/routes";
-import { trpc } from "@/utils/api-client";
 
 export default function ProfileTabScreen() {
-  const { signOut, user, role } = useAuth();
-  const queryClient = useQueryClient();
-
-  const { data: profile } = useCurrentProfile(user);
-  const myListingsQuery = useQuery({
-    ...trpc.listings.myListings.queryOptions(),
-    enabled: role === "lister",
-  });
-  const savedListingsQuery = useQuery({
-    ...trpc.listings.savedListings.queryOptions(),
-    enabled: role === "finder",
-  });
-  const myReviewsQuery = useQuery({
-    ...trpc.reviews.myReviews.queryOptions(),
-    enabled: role === "finder",
-  });
-  const unreadNotificationsQuery = useQuery(
-    trpc.notifications.unreadCount.queryOptions(),
-  );
-  const deleteAccount = useMutation(
-    trpc.profiles.deleteAccount.mutationOptions({
-      onSuccess: async () => {
-        await queryClient.clear();
-        await signOut();
-      },
-    }),
-  );
-
-  const initials = useMemo(
-    () => getInitials(profile?.firstName, profile?.lastName),
-    [profile?.firstName, profile?.lastName],
-  );
-
-  const displayName =
-    profile?.fullName ?? user?.email?.split("@")[0] ?? "Member";
-
-  const stats = useMemo(
-    () => [
-      {
-        label: role === "lister" ? "Listings" : "Saved",
-        value:
-          role === "lister"
-            ? String(myListingsQuery.data?.length ?? 0)
-            : String(savedListingsQuery.data?.length ?? 0),
-      },
-      {
-        label: "Reviews",
-        value:
-          role === "finder"
-            ? String(myReviewsQuery.data?.length ?? 0)
-            : String(
-                (myListingsQuery.data ?? []).reduce(
-                  (count, listing) => count + (listing.reviewCount ?? 0),
-                  0,
-                ),
-              ),
-      },
-      { label: "Member since", value: formatMemberSince(profile?.createdAt) },
-    ],
-    [
-      myListingsQuery.data?.length,
-      profile?.createdAt,
-      myReviewsQuery.data?.length,
-      role,
-      savedListingsQuery.data?.length,
-    ],
-  );
+  const {
+    deleteAccount,
+    displayName,
+    initials,
+    profile,
+    role,
+    signOut,
+    stats,
+    unreadCount,
+    user,
+  } = useProfileScreen();
 
   const goEdit = () => router.push(profileEditRoute());
-  const unreadCount = unreadNotificationsQuery.data?.count ?? 0;
 
   return (
     <SafeAreaView className="flex-1 bg-[#F5F0E8]" edges={["top"]}>

@@ -175,12 +175,11 @@ export default function PermissionsScreen() {
 
         <View className="px-6" style={bottomAreaStyle}>
           <Pressable
-            className="h-[52px] w-full items-center justify-center rounded-xl"
+            className="h-[52px] w-full items-center justify-center rounded-2xl bg-brand-orange"
             disabled={isSubmitting}
             onPress={handleDone}
-            style={{ backgroundColor: "#04170E" }}
           >
-            <Text className="text-[15px] font-semibold text-white">
+            <Text className="text-[15px] font-bold text-white">
               {isSubmitting ? "Setting up\u2026" : "Get started"}
             </Text>
           </Pressable>

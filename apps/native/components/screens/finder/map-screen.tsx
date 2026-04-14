@@ -26,6 +26,7 @@ import PinIcon from "@/assets/icons/pin.svg";
 import SearchIcon from "@/assets/icons/search.svg";
 import { FilterBar } from "@/components/map/FilterBar";
 import { ListingSheet } from "@/components/map/ListingSheet";
+import { NearbyListingsSheet } from "@/components/map/NearbyListingsSheet";
 import { PropertyPin } from "@/components/map/PropertyPin";
 import { useDiscoveryListings } from "@/hooks/use-discovery-listings";
 import { getFinderQuotaCopy } from "@/services/finder-search";
@@ -95,6 +96,7 @@ function LocationButton({ onPress }: { onPress: () => void }) {
 export default function MapTabScreen() {
   const insets = useSafeAreaInsets();
   const bottomSheetRef = useRef<BottomSheet | null>(null);
+  const nearbySheetRef = useRef<BottomSheet | null>(null);
   const mapRef = useRef<MapView | null>(null);
   const userMarkerRef = useRef<any>(null);
 
@@ -339,6 +341,20 @@ export default function MapTabScreen() {
         sheetRef={bottomSheetRef}
       />
 
+      <NearbyListingsSheet
+        items={items}
+        onClose={() => nearbySheetRef.current?.close()}
+        onPressDetails={(id) => {
+          nearbySheetRef.current?.close();
+          router.push(listingDetailRoute(id));
+        }}
+        onSelectListing={(id) => {
+          nearbySheetRef.current?.close();
+          setSelectedListingId(id);
+        }}
+        sheetRef={nearbySheetRef}
+      />
+
       <View
         className="absolute left-3 rounded-[18px] border border-[#DDD8CF] bg-[rgba(255,253,249,0.95)] px-[14px] py-[12px]"
         style={{ bottom: insets.bottom + 16 }}
@@ -369,8 +385,9 @@ export default function MapTabScreen() {
       >
         <Pressable
           disabled={isSearching}
-          onPress={() => {
-            void runSearch();
+          onPress={async () => {
+            await runSearch();
+            nearbySheetRef.current?.snapToIndex(0);
           }}
           className={`h-[56px] w-[56px] items-center justify-center rounded-full bg-[#0B2D23] ${
             isSearching ? "opacity-60" : ""

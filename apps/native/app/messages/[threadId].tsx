@@ -16,6 +16,7 @@ import { useAuth } from "@/providers/auth-provider";
 import { uploadPickedAsset } from "@/services/storage";
 import { supabase } from "@/utils/supabase";
 import { trpc } from "@/utils/api-client";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function statusTone(status: "closed" | "pending" | "responded") {
   switch (status) {
@@ -43,6 +44,7 @@ function statusTone(status: "closed" | "pending" | "responded") {
 export default function ThreadScreen() {
   const { threadId } = useLocalSearchParams<{ threadId: string }>();
   const { role, user } = useAuth();
+  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const [body, setBody] = useState("");
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(
@@ -363,7 +365,7 @@ export default function ThreadScreen() {
         }}
       />
 
-      <View className="pb-6">
+      <View style={{ paddingBottom: insets.bottom + 8 }}>
         {attachmentPreview ? (
           <Image
             contentFit="cover"

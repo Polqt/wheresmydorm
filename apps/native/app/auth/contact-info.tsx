@@ -152,15 +152,14 @@ export default function ContactInfoScreen() {
 
           <View className="px-6" style={bottomAreaStyle}>
             <Pressable
-              className="h-[52px] w-full items-center justify-center rounded-xl"
+              className="h-[52px] w-full items-center justify-center rounded-2xl bg-brand-orange"
               disabled={isSubmitting}
               onPress={handleContinue}
-              style={{ backgroundColor: "#04170E" }}
             >
               {isSubmitting ? (
                 <ActivityIndicator color="#ffffff" size="small" />
               ) : (
-                <Text className="text-[15px] font-semibold text-white">Continue</Text>
+                <Text className="text-[15px] font-bold text-white">Continue</Text>
               )}
             </Pressable>
           </View>
