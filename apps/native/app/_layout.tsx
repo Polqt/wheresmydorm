@@ -84,6 +84,7 @@ export default function RootLayout() {
               <Stack.Screen name="payments" />
               <Stack.Screen name="reviews" />
               <Stack.Screen name="admin" />
+              <Stack.Screen name="chat" />
             </Stack>
           </AuthProvider>
         </GestureHandlerRootView>
