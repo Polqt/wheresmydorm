@@ -15,6 +15,8 @@ import { formatMemberSince, getInitials } from "@/utils/profile";
 import {
   adminConversationReportsRoute,
   adminPostReportsRoute,
+  adminUsersRoute,
+  aiChatRoute,
   createListingRoute,
   listerListingsTabRoute,
   messagesInboxRoute,
@@ -222,8 +224,13 @@ export default function ProfileTabScreen() {
               <ProfileRow
                 icon="star-outline"
                 label="My reviews"
-                last
                 onPress={() => router.push(reviewsRoute())}
+              />
+              <ProfileRow
+                icon="sparkles-outline"
+                label="AI Housing Assistant"
+                last
+                onPress={() => router.push(aiChatRoute())}
               />
             </ProfileSection>
           ) : role === "admin" ? (
@@ -236,8 +243,13 @@ export default function ProfileTabScreen() {
               <ProfileRow
                 icon="chatbox-ellipses-outline"
                 label="Post reports"
-                last
                 onPress={() => router.push(adminPostReportsRoute())}
+              />
+              <ProfileRow
+                icon="people-outline"
+                label="User management"
+                last
+                onPress={() => router.push(adminUsersRoute())}
               />
             </ProfileSection>
           ) : null}

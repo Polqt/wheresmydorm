@@ -1,3 +1,4 @@
+import { FlashList } from "@shopify/flash-list";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
@@ -6,7 +7,6 @@ import { useEffect, useState } from "react";
 import {
   Alert,
   Pressable,
-  ScrollView,
   Text,
   TextInput,
   View,
@@ -154,7 +154,12 @@ export default function ThreadScreen() {
           table: "messages",
         },
         () => {
-          queryClient.invalidateQueries();
+          void queryClient.invalidateQueries({
+            queryKey: ["trpc", "messages", "getMessages"],
+          });
+          void queryClient.invalidateQueries({
+            queryKey: ["trpc", "messages", "getThreads"],
+          });
         },
       )
       .subscribe();
@@ -315,16 +320,16 @@ export default function ThreadScreen() {
         ) : null}
       </View>
 
-      <ScrollView
+      <FlashList
         className="mt-4 flex-1"
         contentContainerStyle={{ paddingBottom: 24 }}
-      >
-        {(threadQuery.data?.items ?? []).map((message) => {
+        data={threadQuery.data?.items ?? []}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item: message }) => {
           const isOwnMessage = message.senderId === user?.id;
 
           return (
             <View
-              key={message.id}
               className={`mb-3 max-w-[82%] rounded-[24px] px-4 py-3 ${
                 isOwnMessage
                   ? "ml-auto bg-brand-orange"
@@ -355,8 +360,8 @@ export default function ThreadScreen() {
               </Text>
             </View>
           );
-        })}
-      </ScrollView>
+        }}
+      />
 
       <View className="pb-6">
         {attachmentPreview ? (

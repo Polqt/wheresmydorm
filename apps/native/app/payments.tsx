@@ -488,7 +488,7 @@ export default function PaymentsScreen() {
           <Text style={styles.infoBody}>
             {finderQuotaQuery.data?.isPaid
               ? "Unlimited nearby finds and advanced filters are enabled."
-              : `${finderQuotaQuery.data?.remainingFinds ?? 0} finds remain today before an upgrade is needed.`}
+              : `${finderQuotaQuery.data?.remainingFinds ?? 0} lifetime finds remain before an upgrade is needed.`}
           </Text>
         </View>
       ) : null}
