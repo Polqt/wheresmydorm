@@ -2,8 +2,6 @@ import { withSentryConfig } from "@sentry/nextjs";
 import "@wheresmydorm/env/web";
 import type { NextConfig } from "next";
 
-import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
-
 const nextConfig: NextConfig = {
   typedRoutes: true,
   reactCompiler: true,
@@ -46,5 +44,3 @@ export default withSentryConfig(nextConfig, {
     },
   },
 });
-
-initOpenNextCloudflareForDev();

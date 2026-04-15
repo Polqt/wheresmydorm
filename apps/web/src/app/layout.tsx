@@ -1,18 +1,19 @@
 import type { Metadata } from "next";
-
-import { Geist, Geist_Mono } from "next/font/google";
-
+import { DM_Sans, DM_Serif_Display } from "next/font/google";
 import "../index.css";
-import Header from "@/components/header";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans", 
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const dmSerifDisplay = DM_Serif_Display({
+  variable: "--font-dm-serif",
   subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -28,10 +29,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-          <div className="grid grid-rows-[auto_1fr] h-svh">
-            {children}
-          </div>
+      <body
+        className={`${dmSans.variable} ${dmSerifDisplay.variable} antialiased`}
+      >
+        {children}
       </body>
     </html>
   );

@@ -50,7 +50,7 @@ function FaqItem({
   const panelId = `faq-panel-${index}`;
 
   return (
-    <div className="rounded-[16px] bg-white border border-[#E2E8F0] overflow-hidden">
+    <div className="overflow-hidden rounded-[16px] border border-[#FDFBF7]/10 bg-[#FDFBF7]/05">
       <h3>
         <button
           id={id}
@@ -58,19 +58,19 @@ function FaqItem({
           aria-expanded={open}
           aria-controls={panelId}
           onClick={() => setOpen((prev) => !prev)}
-          className="flex w-full items-center justify-between gap-4 px-6 text-left text-[#0F172A] font-semibold text-base transition-colors duration-[120ms] hover:text-[#5B6FD1] focus-visible:outline-2 focus-visible:outline-[#5B6FD1] focus-visible:outline-offset-[-2px] min-h-[52px] py-4"
+          className="flex min-h-[52px] w-full items-center justify-between gap-4 px-6 py-4 text-left font-medium text-[#FDFBF7] text-base transition-colors duration-[120ms] hover:text-[#F4A67A] focus-visible:outline-2 focus-visible:outline-[#C4622D] focus-visible:outline-offset-[-2px]"
         >
           <span>{question}</span>
           <span
             className={cn(
-              "shrink-0 w-7 h-7 rounded-full border border-[#E2E8F0] bg-[#F5F7FF] flex items-center justify-center text-[#5B6FD1] transition-transform duration-[180ms]",
+              "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#FDFBF7]/15 bg-[#FDFBF7]/08 text-[#C4622D] transition-transform duration-[180ms]",
               open && "rotate-45",
             )}
             aria-hidden="true"
           >
             <svg
-              width="14"
-              height="14"
+              width="13"
+              height="13"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -94,7 +94,7 @@ function FaqItem({
           open ? "max-h-[480px] opacity-100" : "max-h-0 opacity-0",
         )}
       >
-        <p className="px-6 pb-5 text-sm text-[#475569] leading-relaxed">
+        <p className="px-6 pb-5 text-[#A8A29E] text-sm leading-relaxed">
           {answer}
         </p>
       </div>
@@ -107,28 +107,45 @@ export function Faq() {
     <section
       id="faq"
       aria-labelledby="faq-heading"
-      className="scroll-mt-24 bg-[#F5F7FF] border-b border-[#E2E8F0]"
+      className="relative scroll-mt-24 overflow-hidden bg-[#1C1917]"
     >
-      <div className="mx-auto max-w-[800px] px-5 lg:px-10 py-20 lg:py-24">
-        <div className="mb-12 text-center">
-          <span className="inline-flex items-center rounded-full border border-[#B5CAFF] bg-white px-3.5 py-1 text-xs font-semibold text-[#5B6FD1] mb-4">
+      {/* Grain */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 mix-blend-overlay"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+          backgroundSize: "200px 200px",
+          opacity: 0.04,
+        }}
+      />
+
+      <div className="relative z-10 mx-auto max-w-[800px] px-5 py-20 lg:px-10 lg:py-28">
+        <div className="mb-12">
+          <span className="mb-4 inline-flex items-center rounded-full border border-[#C4622D]/40 bg-[#C4622D]/10 px-3.5 py-1 font-semibold text-[#F4A67A] text-xs uppercase tracking-wide">
             FAQs
           </span>
           <h2
             id="faq-heading"
-            className="text-[clamp(1.75rem,4vw,2.75rem)] font-bold text-[#0F172A] tracking-tight leading-tight"
+            className="mb-4 text-[#FDFBF7] leading-tight tracking-[-0.02em]"
+            style={{
+              fontFamily: "var(--font-dm-serif)",
+              fontSize: "clamp(1.9rem, 4vw, 3rem)",
+            }}
           >
             Frequently asked questions
           </h2>
-          <p className="mt-4 text-[#475569] text-lg leading-relaxed">
+          <p className="text-[#78716C] text-base leading-relaxed">
             Can&rsquo;t find what you&rsquo;re looking for?{" "}
             <a
               href="#contact"
               onClick={(e) => {
                 e.preventDefault();
-                document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" });
+                document
+                  .querySelector("#contact")
+                  ?.scrollIntoView({ behavior: "smooth" });
               }}
-              className="text-[#5B6FD1] font-medium underline underline-offset-2 hover:text-[#3746A3] transition-colors duration-[120ms] focus-visible:outline-2 focus-visible:outline-[#5B6FD1] focus-visible:outline-offset-2 rounded"
+              className="rounded font-medium text-[#C4622D] underline underline-offset-2 transition-colors duration-[120ms] hover:text-[#F4A67A] focus-visible:outline-2 focus-visible:outline-[#C4622D] focus-visible:outline-offset-2"
             >
               Contact us
             </a>
@@ -136,10 +153,14 @@ export function Faq() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-3" role="list">
+        <div className="flex flex-col gap-2.5" role="list">
           {FAQS.map((item, i) => (
             <div key={item.question} role="listitem">
-              <FaqItem question={item.question} answer={item.answer} index={i} />
+              <FaqItem
+                question={item.question}
+                answer={item.answer}
+                index={i}
+              />
             </div>
           ))}
         </div>

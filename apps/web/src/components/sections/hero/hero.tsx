@@ -1,114 +1,212 @@
 import Image from "next/image";
 import heroImg from "@/assets/images/JP227.jpeg";
+import { HeroCanvasLoader } from "./hero-canvas-loader";
+
+const GRAIN_SVG =
+  "data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E";
+
+const anim = (name: string, delay: number, duration = 700) =>
+  ({
+    animation: `${name} ${duration}ms cubic-bezier(0.22,1,0.36,1) both`,
+    animationDelay: `${delay}ms`,
+  }) as React.CSSProperties;
 
 export function Hero() {
   return (
     <section
       aria-label="Hero"
-      className="relative overflow-hidden bg-[#0F172A] text-white"
+      className="relative overflow-hidden bg-[#1C1917]"
     >
-      {/* Background gradient wash */}
+      {/* Three.js particle network — procedural oscillation */}
+      <HeroCanvasLoader />
+
+      {/* Grain texture */}
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-gradient-to-br from-[#1D2662]/60 via-[#0F172A] to-[#0B0F19] pointer-events-none"
+        className="pointer-events-none absolute inset-0 z-[1] mix-blend-overlay"
+        style={{
+          backgroundImage: `url("${GRAIN_SVG}")`,
+          backgroundSize: "200px 200px",
+          opacity: 0.06,
+        }}
       />
 
-      {/* Decorative blobs */}
+      {/* Giant decorative letterform */}
       <div
         aria-hidden="true"
-        className="absolute -top-32 -left-32 w-[480px] h-[480px] rounded-full bg-[#5B6FD1]/20 blur-3xl pointer-events-none"
-      />
+        className="pointer-events-none absolute top-1/2 right-[-4vw] z-0 -translate-y-[55%] select-none font-serif text-[#FDFBF7] leading-none"
+        style={{
+          fontSize: "clamp(260px, 32vw, 520px)",
+          opacity: 0.035,
+          fontFamily: "var(--font-dm-serif)",
+        }}
+      >
+        D
+      </div>
+
+      {/* Warm radial glow */}
       <div
         aria-hidden="true"
-        className="absolute -bottom-24 right-0 w-[360px] h-[360px] rounded-full bg-[#EA580C]/10 blur-3xl pointer-events-none"
+        className="pointer-events-none absolute top-0 left-[-10%] z-0 h-[600px] w-[600px] rounded-full"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(196,98,45,0.12) 0%, transparent 70%)",
+        }}
       />
 
-      <div className="relative mx-auto max-w-[1200px] px-5 lg:px-10 pt-24 pb-20 lg:pt-32 lg:pb-28">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Copy */}
-          <div className="max-w-xl">
+      {/* Diagonal bottom transition to cream */}
+      <div
+        aria-hidden="true"
+        className="absolute right-0 bottom-0 left-0 z-[2] h-20 bg-[#FDFBF7]"
+        style={{ clipPath: "polygon(0 100%, 100% 100%, 100% 0)" }}
+      />
+
+      <div className="relative z-[3] mx-auto max-w-[1200px] px-5 pt-24 pb-32 lg:px-10 lg:pt-28 lg:pb-44">
+        <div className="grid items-center gap-14 lg:grid-cols-[1.15fr_0.85fr]">
+          {/* ── Copy ── */}
+          <div>
             {/* Pill badge */}
-            <span className="inline-flex items-center gap-2 rounded-full border border-[#3746A3] bg-[#1D2662]/60 px-4 py-1.5 text-xs font-medium text-[#829AFF] mb-8">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#5B6FD1] animate-pulse" aria-hidden="true" />
-              Now available for students across campuses
+            <span
+              className="mb-8 inline-flex items-center gap-2 rounded-full border border-[#C4622D]/40 bg-[#C4622D]/10 px-4 py-1.5 font-medium text-[#F4A67A] text-xs"
+              style={anim("fade-up", 0)}
+            >
+              <span
+                className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#C4622D]"
+                aria-hidden="true"
+              />
+              Now available across 40+ campuses
             </span>
 
-            <h1 className="text-[clamp(2.25rem,5vw,3.5rem)] font-bold leading-[1.05] tracking-tight text-white mb-6">
-              Find your space.{" "}
-              <span className="text-[#829AFF]">Choose with Confidence.</span>
+            <h1
+              className="mb-6 text-[#FDFBF7] leading-[1.0] tracking-[-0.02em]"
+              style={{
+                ...anim("fade-up", 100),
+                fontFamily: "var(--font-dm-serif)",
+                fontSize: "clamp(3rem, 6.5vw, 5.5rem)",
+              }}
+            >
+              Find your
+              <br />
+              <em
+                className="text-[#C4622D] not-italic"
+                style={{
+                  fontStyle: "italic",
+                  fontFamily: "var(--font-dm-serif)",
+                }}
+              >
+                perfect
+              </em>{" "}
+              dorm.
             </h1>
 
-            <p className="text-lg text-[#94A3B8] leading-relaxed mb-10 max-w-[52ch]">
-              Where&rsquo;sMyDorm helps you discover, compare, and review dorms and rentals through real locations and real experiences
+            <p
+              className="mb-10 max-w-[46ch] text-[#A8A29E] text-lg leading-relaxed"
+              style={anim("fade-up", 200)}
+            >
+              Where&rsquo;sMyDorm helps you discover, compare, and review dorms
+              and rentals through real locations and real student experiences.
             </p>
 
-            <div className="flex flex-wrap items-center gap-4">
+            <div
+              className="flex flex-wrap items-center gap-4"
+              style={anim("fade-up", 300)}
+            >
               <a
                 href="#"
-                className="inline-flex items-center h-13 px-7 rounded-full bg-[#5B6FD1] text-white font-medium text-base hover:bg-[#3746A3] transition-colors duration-[180ms] shadow-[0_6px_20px_rgba(91,111,209,0.35)] focus-visible:outline-2 focus-visible:outline-[#B5CAFF] focus-visible:outline-offset-2 active:scale-[0.98]"
+                className="inline-flex h-12 items-center rounded-full bg-[#C4622D] px-7 font-medium text-base text-white shadow-[0_6px_24px_rgba(196,98,45,0.38)] transition-colors duration-[180ms] hover:bg-[#A84E23] focus-visible:outline-2 focus-visible:outline-[#F4A67A] focus-visible:outline-offset-2 active:scale-[0.98]"
               >
                 Get the app
               </a>
               <a
                 href="#product"
-                className="inline-flex items-center h-13 px-7 rounded-full border border-white/20 text-white/80 font-medium text-base hover:bg-white/10 hover:text-white transition-colors duration-[180ms] focus-visible:outline-2 focus-visible:outline-[#B5CAFF] focus-visible:outline-offset-2 active:scale-[0.98]"
+                className="inline-flex h-12 items-center rounded-full border border-[#FDFBF7]/20 px-7 font-medium text-[#FDFBF7]/75 text-base transition-colors duration-[180ms] hover:border-[#FDFBF7]/35 hover:bg-[#FDFBF7]/08 hover:text-[#FDFBF7] focus-visible:outline-2 focus-visible:outline-[#F4A67A] focus-visible:outline-offset-2 active:scale-[0.98]"
               >
                 See how it works
               </a>
             </div>
 
-            {/* Social proof strip */}
-            <div className="mt-10 flex flex-wrap items-center gap-6 text-sm text-[#64748B]">
-              <span className="flex items-center gap-2">
-                <span className="text-[#0F766E] font-semibold text-base">12,000+</span>
-                verified listings
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="text-[#5B6FD1] font-semibold text-base">40+</span>
-                partner campuses
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="text-[#F59E0B] font-semibold text-base">4.8★</span>
-                student rating
-              </span>
+            {/* Stats strip */}
+            <div
+              className="mt-12 flex flex-wrap items-center gap-x-8 gap-y-3 border-[#FDFBF7]/08 border-t pt-10"
+              style={anim("fade-up", 430)}
+            >
+              {[
+                {
+                  value: "12,000+",
+                  label: "verified listings",
+                  color: "#F0A500",
+                },
+                { value: "40+", label: "partner campuses", color: "#C4622D" },
+                { value: "4.8★", label: "student rating", color: "#6DB88E" },
+              ].map(({ value, label, color }) => (
+                <div key={label} className="flex items-baseline gap-1.5">
+                  <span
+                    className="font-semibold text-xl tabular-nums"
+                    style={{ color }}
+                  >
+                    {value}
+                  </span>
+                  <span className="text-[#6B6560] text-sm">{label}</span>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Editorial image placeholder */}
+          {/* ── Image card ── */}
           <div
             aria-hidden="true"
-            className="hidden lg:block relative"
+            className="hidden lg:block"
+            style={anim("slide-in-right", 200, 800)}
           >
-            <div className="relative rounded-[20px] overflow-hidden border border-white/10 shadow-[0_16px_40px_rgba(15,23,42,0.5)]">
-              <div className="aspect-[4/3] relative">
+            <div
+              className="relative overflow-hidden rounded-[24px] border border-[#FDFBF7]/10 shadow-[0_32px_80px_rgba(0,0,0,0.5)]"
+              style={{ transform: "rotate(1.8deg)" }}
+            >
+              <div className="relative aspect-[3/4]">
                 <Image
                   src={heroImg}
                   alt="JP227 Residences building exterior — a modern student housing property"
                   fill
                   className="object-cover"
                   priority
-                  sizes="(max-width: 1024px) 0px, 50vw"
+                  sizes="(max-width: 1024px) 0px, 45vw"
                 />
-                {/* Subtle dark gradient to blend bottom with overlay card */}
                 <div
                   aria-hidden="true"
-                  className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/60 via-transparent to-transparent pointer-events-none"
+                  className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#1C1917]/85 via-[#1C1917]/15 to-transparent"
                 />
               </div>
-              {/* Floating card overlay */}
-              <div className="absolute bottom-4 left-4 right-4 rounded-[16px] bg-white/10 backdrop-blur-sm border border-white/10 p-4">
+
+              {/* Floating availability card */}
+              <div className="absolute right-4 bottom-5 left-4 rounded-[16px] border border-[#FDFBF7]/10 bg-[#1C1917]/70 p-4 backdrop-blur-md">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#5B6FD1]/40 border border-[#5B6FD1]/30 flex items-center justify-center shrink-0">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B5CAFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#C4622D]/30 bg-[#C4622D]/25">
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#F4A67A"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
                       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                       <circle cx="12" cy="10" r="3" />
                     </svg>
                   </div>
                   <div>
-                    <p className="text-white text-sm font-medium">JP227 Residences</p>
-                    <p className="text-[#94A3B8] text-xs">0.3 km from campus · 2 rooms left</p>
+                    <p className="font-medium text-[#FDFBF7] text-sm">
+                      JP227 Residences
+                    </p>
+                    <p className="text-[#78716C] text-xs">
+                      0.3 km from campus · 2 rooms left
+                    </p>
                   </div>
-                  <span className="ml-auto text-xs font-semibold text-[#34D399] bg-[#0F766E]/20 rounded-full px-2.5 py-1">Available</span>
+                  <span className="ml-auto rounded-full bg-[#6DB88E]/15 px-2.5 py-1 font-semibold text-[#6DB88E] text-xs">
+                    Available
+                  </span>
                 </div>
               </div>
             </div>
