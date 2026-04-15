@@ -26,10 +26,7 @@ export default function OnboardingScreen() {
   const setCurrentIndex = useOnboardingStore((state) => state.setCurrentIndex);
   const isLast = currentIndex === ONBOARDING_SLIDES.length - 1;
 
-  const contentContainerStyle = useMemo(
-    () => ({ flexGrow: 1 }),
-    [],
-  );
+  const contentContainerStyle = useMemo(() => ({ flexGrow: 1 }), []);
 
   const bottomAreaStyle = useMemo(
     () => ({
@@ -89,9 +86,7 @@ export default function OnboardingScreen() {
           className="rounded-full bg-white/70 px-4 py-2"
           onPress={handleFinish}
         >
-          <Text className="text-[13px] font-semibold text-[#6A716A]">
-            Skip
-          </Text>
+          <Text className="font-semibold text-[#6A716A] text-[13px]">Skip</Text>
         </Pressable>
       </View>
 
@@ -132,9 +127,7 @@ export default function OnboardingScreen() {
             className="h-14 w-full items-center justify-center rounded-full bg-[#0B2D23]"
             onPress={handleNext}
           >
-            <Text className="font-semibold text-base text-white">
-              Next
-            </Text>
+            <Text className="font-semibold text-base text-white">Next</Text>
           </Pressable>
         )}
       </View>

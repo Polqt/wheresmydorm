@@ -35,9 +35,7 @@ export function PropertyPin({
       <Pressable onPress={onPress} className="items-center">
         <View
           className={`min-w-[84px] rounded-[18px] border bg-[#FFFDF9] px-[10px] py-2 shadow-sm ${
-            isSelected
-              ? "border-[#0B2D23] bg-[#EEF5F1]"
-              : "border-[#D8D0C6]"
+            isSelected ? "border-[#0B2D23] bg-[#EEF5F1]" : "border-[#D8D0C6]"
           }`}
           style={isSelected ? { transform: [{ scale: 1.03 }] } : undefined}
         >
@@ -47,13 +45,13 @@ export function PropertyPin({
               color="#0B2D23"
               size={14}
             />
-            <Text className="text-[12px] font-extrabold text-[#0F172A]">
+            <Text className="font-extrabold text-[#0F172A] text-[12px]">
               {formatCompactPrice(listing.pricePerMonth)}
             </Text>
           </View>
           <View className="mt-1.5 flex-row self-start rounded-full bg-[#F5F0E7] px-2 py-[3px]">
             <FontAwesome name="star" color="#f59e0b" size={10} />
-            <Text className="ml-1 text-[11px] font-bold text-slate-700">
+            <Text className="ml-1 font-bold text-[11px] text-slate-700">
               {listing.ratingOverall ? listing.ratingOverall.toFixed(1) : "New"}
             </Text>
           </View>

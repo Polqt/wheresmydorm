@@ -50,7 +50,7 @@ function FaqItem({
   const panelId = `faq-panel-${index}`;
 
   return (
-    <div className="rounded-[16px] border border-[#FDFBF7]/10 bg-[#FDFBF7]/05 overflow-hidden">
+    <div className="overflow-hidden rounded-[16px] border border-[#FDFBF7]/10 bg-[#FDFBF7]/05">
       <h3>
         <button
           id={id}
@@ -58,12 +58,12 @@ function FaqItem({
           aria-expanded={open}
           aria-controls={panelId}
           onClick={() => setOpen((prev) => !prev)}
-          className="flex w-full items-center justify-between gap-4 px-6 text-left text-[#FDFBF7] font-medium text-base transition-colors duration-[120ms] hover:text-[#F4A67A] focus-visible:outline-2 focus-visible:outline-[#C4622D] focus-visible:outline-offset-[-2px] min-h-[52px] py-4"
+          className="flex min-h-[52px] w-full items-center justify-between gap-4 px-6 py-4 text-left font-medium text-[#FDFBF7] text-base transition-colors duration-[120ms] hover:text-[#F4A67A] focus-visible:outline-2 focus-visible:outline-[#C4622D] focus-visible:outline-offset-[-2px]"
         >
           <span>{question}</span>
           <span
             className={cn(
-              "shrink-0 w-7 h-7 rounded-full border border-[#FDFBF7]/15 bg-[#FDFBF7]/08 flex items-center justify-center text-[#C4622D] transition-transform duration-[180ms]",
+              "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#FDFBF7]/15 bg-[#FDFBF7]/08 text-[#C4622D] transition-transform duration-[180ms]",
               open && "rotate-45",
             )}
             aria-hidden="true"
@@ -94,7 +94,7 @@ function FaqItem({
           open ? "max-h-[480px] opacity-100" : "max-h-0 opacity-0",
         )}
       >
-        <p className="px-6 pb-5 text-sm text-[#A8A29E] leading-relaxed">
+        <p className="px-6 pb-5 text-[#A8A29E] text-sm leading-relaxed">
           {answer}
         </p>
       </div>
@@ -107,7 +107,7 @@ export function Faq() {
     <section
       id="faq"
       aria-labelledby="faq-heading"
-      className="scroll-mt-24 bg-[#1C1917] relative overflow-hidden"
+      className="relative scroll-mt-24 overflow-hidden bg-[#1C1917]"
     >
       {/* Grain */}
       <div
@@ -120,14 +120,14 @@ export function Faq() {
         }}
       />
 
-      <div className="relative z-10 mx-auto max-w-[800px] px-5 lg:px-10 py-20 lg:py-28">
+      <div className="relative z-10 mx-auto max-w-[800px] px-5 py-20 lg:px-10 lg:py-28">
         <div className="mb-12">
-          <span className="inline-flex items-center rounded-full border border-[#C4622D]/40 bg-[#C4622D]/10 px-3.5 py-1 text-xs font-semibold text-[#F4A67A] mb-4 tracking-wide uppercase">
+          <span className="mb-4 inline-flex items-center rounded-full border border-[#C4622D]/40 bg-[#C4622D]/10 px-3.5 py-1 font-semibold text-[#F4A67A] text-xs uppercase tracking-wide">
             FAQs
           </span>
           <h2
             id="faq-heading"
-            className="text-[#FDFBF7] tracking-[-0.02em] leading-tight mb-4"
+            className="mb-4 text-[#FDFBF7] leading-tight tracking-[-0.02em]"
             style={{
               fontFamily: "var(--font-dm-serif)",
               fontSize: "clamp(1.9rem, 4vw, 3rem)",
@@ -145,7 +145,7 @@ export function Faq() {
                   .querySelector("#contact")
                   ?.scrollIntoView({ behavior: "smooth" });
               }}
-              className="text-[#C4622D] font-medium underline underline-offset-2 hover:text-[#F4A67A] transition-colors duration-[120ms] focus-visible:outline-2 focus-visible:outline-[#C4622D] focus-visible:outline-offset-2 rounded"
+              className="rounded font-medium text-[#C4622D] underline underline-offset-2 transition-colors duration-[120ms] hover:text-[#F4A67A] focus-visible:outline-2 focus-visible:outline-[#C4622D] focus-visible:outline-offset-2"
             >
               Contact us
             </a>
@@ -156,7 +156,11 @@ export function Faq() {
         <div className="flex flex-col gap-2.5" role="list">
           {FAQS.map((item, i) => (
             <div key={item.question} role="listitem">
-              <FaqItem question={item.question} answer={item.answer} index={i} />
+              <FaqItem
+                question={item.question}
+                answer={item.answer}
+                index={i}
+              />
             </div>
           ))}
         </div>

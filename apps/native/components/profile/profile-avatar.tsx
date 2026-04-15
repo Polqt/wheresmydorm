@@ -39,7 +39,10 @@ export const ProfileAvatar = memo(function ProfileAvatar({
           className="items-center justify-center bg-[#0B2D23]"
           style={{ width: size, height: size, borderRadius: radius }}
         >
-          <Text className="font-bold text-white" style={{ fontSize: size * 0.3 }}>
+          <Text
+            className="font-bold text-white"
+            style={{ fontSize: size * 0.3 }}
+          >
             {initials}
           </Text>
         </View>

@@ -3,12 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -52,8 +47,8 @@ const RoleCard = React.memo(function RoleCard({
       </View>
 
       <View className="flex-1">
-        <Text className="font-bold text-[16px] text-[#1A1A1A]">{title}</Text>
-        <Text className="mt-0.5 text-[13px] leading-5 text-[#8A8480]">
+        <Text className="font-bold text-[#1A1A1A] text-[16px]">{title}</Text>
+        <Text className="mt-0.5 text-[#8A8480] text-[13px] leading-5">
           {subtitle}
         </Text>
       </View>
@@ -120,7 +115,7 @@ export default function RoleSelectScreen() {
       <View className="flex-1">
         <View className="flex-row items-center px-4 pt-2">
           <Pressable
-            className="h-10 w-10 items-center justify-center rounded-full bg-white border border-[#EAE5DE]"
+            className="h-10 w-10 items-center justify-center rounded-full border border-[#EAE5DE] bg-white"
             onPress={handleBack}
           >
             <Ionicons color="#1A1A1A" name="chevron-back" size={20} />
@@ -129,14 +124,18 @@ export default function RoleSelectScreen() {
 
         <View className="flex-1 px-5 pt-6">
           <View className="items-center">
-            <AppLogo containerClassName="h-[60px] w-[60px] rounded-[18px]" size={32} />
+            <AppLogo
+              containerClassName="h-[60px] w-[60px] rounded-[18px]"
+              size={32}
+            />
           </View>
 
-          <Text className="mt-6 text-center font-bold text-[28px] leading-[34px] text-[#1A1A1A]">
+          <Text className="mt-6 text-center font-bold text-[#1A1A1A] text-[28px] leading-[34px]">
             How will you use{"\n"}WheresMyDorm?
           </Text>
-          <Text className="mt-2 text-center text-[14px] leading-6 text-[#8A8480]">
-            Pick the path that fits you best. Your role shapes the whole app experience.
+          <Text className="mt-2 text-center text-[#8A8480] text-[14px] leading-6">
+            Pick the path that fits you best. Your role shapes the whole app
+            experience.
           </Text>
 
           <View className="mt-8 gap-3">
@@ -153,7 +152,7 @@ export default function RoleSelectScreen() {
 
           {setRoleMutation.error ? (
             <Text className="mt-4 text-center text-[13px] text-red-500">
-              {setRoleMutation.error.message}
+              Something went wrong. Please try again.
             </Text>
           ) : null}
         </View>

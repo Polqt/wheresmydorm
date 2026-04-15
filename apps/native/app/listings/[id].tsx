@@ -5,8 +5,8 @@ import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 import { ListingForm } from "@/components/listings/listing-form";
 import { parseAmenities } from "@/services/listings";
 import { uploadPickedAsset } from "@/services/storage";
-import { myListingsRoute } from "@/utils/routes";
 import { trpc } from "@/utils/api-client";
+import { myListingsRoute } from "@/utils/routes";
 
 export default function EditListingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -55,7 +55,10 @@ export default function EditListingScreen() {
     return (
       <View className="flex-1 items-center justify-center bg-[#FAF8F5] px-6">
         <Text className="text-center font-bold text-base text-slate-900">
-          {listingQuery.error?.message ?? "Listing not found."}
+          This listing couldn't be loaded.
+        </Text>
+        <Text className="mt-1 text-center text-[#706A5F] text-[13px]">
+          It may have been removed or you may not have permission to view it.
         </Text>
         <Pressable
           className="mt-4 rounded-full bg-[#0B2D23] px-5 py-3"
@@ -85,7 +88,11 @@ export default function EditListingScreen() {
 
   return (
     <ListingForm
-      errorMessage={updateMutation.error?.message ?? null}
+      errorMessage={
+        updateMutation.isError
+          ? "Something went wrong while saving. Please try again."
+          : null
+      }
       initialListing={listingQuery.data}
       isSubmitting={updateMutation.isPending}
       mode="edit"

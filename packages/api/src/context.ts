@@ -22,23 +22,19 @@ export async function createContext(req: NextRequest) {
   const supabaseAnonKey = requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
   const supabaseServiceRoleKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
 
-  const supabase = createServerClient(
-    supabaseUrl,
-    supabaseAnonKey,
-    {
-      cookies: {
-        getAll: () => req.cookies.getAll(),
-        // trpc route handler - cookie writes (handled by middleware)
-        setAll: () => {},
-      },
-      global: {
-        // support bearer token from the native app
-        headers: {
-          Authorization: authorization,
-        },
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll: () => req.cookies.getAll(),
+      // trpc route handler - cookie writes (handled by middleware)
+      setAll: () => {},
+    },
+    global: {
+      // support bearer token from the native app
+      headers: {
+        Authorization: authorization,
       },
     },
-  );
+  });
   const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
     auth: {
       autoRefreshToken: false,

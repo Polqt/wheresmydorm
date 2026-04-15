@@ -2,7 +2,7 @@ import * as Location from "expo-location";
 import { useEffect, useState } from "react";
 
 import { DISCOVERY_FALLBACK_COORDS } from "@/services/listings";
-import { LocationState } from "@/types/location";
+import type { LocationState } from "@/types/location";
 
 const FALLBACK = DISCOVERY_FALLBACK_COORDS;
 

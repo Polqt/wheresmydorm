@@ -14,9 +14,7 @@ export const AppLogo = React.memo(function AppLogo({
   size = 36,
 }: AppLogoProps) {
   return (
-    <View
-      className={`items-center justify-center ${containerClassName ?? ""}`}
-    >
+    <View className={`items-center justify-center ${containerClassName ?? ""}`}>
       <LogoWhiteFill height={size} width={size} />
     </View>
   );

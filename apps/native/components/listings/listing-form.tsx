@@ -1,5 +1,5 @@
-import { FlashList } from "@shopify/flash-list";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
@@ -42,7 +42,7 @@ type Step = 0 | 1 | 2;
 
 function StepIndicator({ current, total }: { current: Step; total: number }) {
   return (
-    <View className="flex-row items-center gap-2 px-5 pb-4 pt-2">
+    <View className="flex-row items-center gap-2 px-5 pt-2 pb-4">
       {Array.from({ length: total }).map((_, i) => (
         <View
           key={i}
@@ -66,7 +66,7 @@ function FormField({
 }) {
   return (
     <View className="mb-5">
-      <Text className="mb-2 text-[13px] font-bold text-[#1A1A1A]">
+      <Text className="mb-2 font-bold text-[#1A1A1A] text-[13px]">
         {label}
         {required ? <Text className="text-red-500"> *</Text> : null}
       </Text>
@@ -103,7 +103,10 @@ export function ListingForm({
   }, [assets, initialListing?.photos]);
 
   const update = useCallback(
-    <K extends keyof ListingFormValues>(key: K, value: ListingFormValues[K]) => {
+    <K extends keyof ListingFormValues>(
+      key: K,
+      value: ListingFormValues[K],
+    ) => {
       setForm((prev) => ({ ...prev, [key]: value }));
     },
     [],
@@ -151,13 +154,16 @@ export function ListingForm({
         if (!form.description.trim()) return "Description is required.";
         if (!form.pricePerMonth.trim()) return "Monthly rent is required.";
         const price = Number(form.pricePerMonth);
-        if (Number.isNaN(price) || price <= 0) return "Enter a valid monthly rent.";
+        if (Number.isNaN(price) || price <= 0)
+          return "Enter a valid monthly rent.";
       }
       if (s === 1) {
         const lat = Number(form.lat);
         const lng = Number(form.lng);
-        if (Number.isNaN(lat) || Number.isNaN(lng)) return "Enter valid map coordinates.";
-        if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return "Coordinates are out of range.";
+        if (Number.isNaN(lat) || Number.isNaN(lng))
+          return "Enter valid map coordinates.";
+        if (lat < -90 || lat > 90 || lng < -180 || lng > 180)
+          return "Coordinates are out of range.";
         if (!form.city.trim()) return "City is required.";
       }
       return null;
@@ -204,7 +210,7 @@ export function ListingForm({
         className="flex-1"
       >
         {/* Header */}
-        <View className="flex-row items-center gap-3 px-4 pb-2 pt-2">
+        <View className="flex-row items-center gap-3 px-4 pt-2 pb-2">
           <Pressable
             className="h-10 w-10 items-center justify-center rounded-full bg-[#F5F0EA]"
             hitSlop={8}
@@ -213,10 +219,11 @@ export function ListingForm({
             <Ionicons color="#1A1A1A" name="chevron-back" size={22} />
           </Pressable>
           <View className="flex-1">
-            <Text className="text-[11px] font-bold uppercase tracking-[1px] text-[#9A9388]">
-              {mode === "create" ? "New listing" : "Edit listing"} · Step {step + 1} of 3
+            <Text className="font-bold text-[#9A9388] text-[11px] uppercase tracking-[1px]">
+              {mode === "create" ? "New listing" : "Edit listing"} · Step{" "}
+              {step + 1} of 3
             </Text>
-            <Text className="text-[18px] font-extrabold text-[#0F172A]">
+            <Text className="font-extrabold text-[#0F172A] text-[18px]">
               {stepTitle}
             </Text>
           </View>
@@ -229,31 +236,38 @@ export function ListingForm({
           showsVerticalScrollIndicator={false}
         >
           <View className="px-5 pb-10">
-
             {/* ── STEP 0: Photos & Basic Info ── */}
             {step === 0 ? (
               <>
                 <FormField label="Photos">
                   <Pressable
-                    className="flex-row items-center gap-3 rounded-2xl border border-dashed border-[#D0C9C0] bg-white px-4 py-4"
+                    className="flex-row items-center gap-3 rounded-2xl border border-[#D0C9C0] border-dashed bg-white px-4 py-4"
                     onPress={handlePickPhotos}
                   >
                     <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#F5F0E8]">
-                      <Ionicons color="#706A5F" name="camera-outline" size={20} />
+                      <Ionicons
+                        color="#706A5F"
+                        name="camera-outline"
+                        size={20}
+                      />
                     </View>
                     <View className="flex-1">
-                      <Text className="text-[14px] font-semibold text-[#1A1A1A]">
+                      <Text className="font-semibold text-[#1A1A1A] text-[14px]">
                         {assets.length > 0
                           ? `${assets.length} photo${assets.length > 1 ? "s" : ""} selected`
                           : photoPreviewUrls.length > 0
                             ? `${photoPreviewUrls.length} current photo${photoPreviewUrls.length > 1 ? "s" : ""}`
                             : "Add up to 10 photos"}
                       </Text>
-                      <Text className="text-[12px] text-[#9A9388]">
+                      <Text className="text-[#9A9388] text-[12px]">
                         Tap to choose from library
                       </Text>
                     </View>
-                    <Ionicons color="#C0B8B0" name="chevron-forward" size={18} />
+                    <Ionicons
+                      color="#C0B8B0"
+                      name="chevron-forward"
+                      size={18}
+                    />
                   </Pressable>
 
                   {photoPreviewUrls.length > 0 ? (
@@ -311,7 +325,7 @@ export function ListingForm({
                         onPress={() => update("propertyType", pt.value)}
                       >
                         <Text
-                          className={`text-[13px] font-semibold ${
+                          className={`font-semibold text-[13px] ${
                             form.propertyType === pt.value
                               ? "text-white"
                               : "text-[#706A5F]"
@@ -373,7 +387,7 @@ export function ListingForm({
                     onPress={() => void handleUseCurrentLocation()}
                   >
                     <Ionicons color="#0B2D23" name="locate-outline" size={16} />
-                    <Text className="text-[13px] font-bold text-[#0B2D23]">
+                    <Text className="font-bold text-[#0B2D23] text-[13px]">
                       Use current location
                     </Text>
                   </Pressable>
@@ -401,9 +415,14 @@ export function ListingForm({
                   </View>
                   {form.lat && form.lng ? (
                     <View className="mt-2 flex-row items-center gap-1.5">
-                      <Ionicons color="#0B4A30" name="checkmark-circle" size={14} />
-                      <Text className="text-[12px] font-semibold text-[#0B4A30]">
-                        Pin set at {Number(form.lat).toFixed(5)}, {Number(form.lng).toFixed(5)}
+                      <Ionicons
+                        color="#0B4A30"
+                        name="checkmark-circle"
+                        size={14}
+                      />
+                      <Text className="font-semibold text-[#0B4A30] text-[12px]">
+                        Pin set at {Number(form.lat).toFixed(5)},{" "}
+                        {Number(form.lng).toFixed(5)}
                       </Text>
                     </View>
                   ) : null}
@@ -452,26 +471,36 @@ export function ListingForm({
                     placeholderTextColor="#A09A90"
                     value={form.amenities}
                   />
-                  <Text className="mt-1.5 text-[12px] text-[#9A9388]">
+                  <Text className="mt-1.5 text-[#9A9388] text-[12px]">
                     Separate with commas. Free finders can filter by amenity.
                   </Text>
                 </FormField>
 
                 {/* Review summary */}
                 <View className="mt-2 rounded-3xl bg-white px-4 py-4">
-                  <Text className="text-[12px] font-extrabold uppercase tracking-[0.8px] text-[#0B4A30]">
+                  <Text className="font-extrabold text-[#0B4A30] text-[12px] uppercase tracking-[0.8px]">
                     Review
                   </Text>
                   <View className="mt-3 gap-2">
                     <ReviewRow label="Title" value={form.title || "—"} />
-                    <ReviewRow label="Type" value={form.propertyType.replaceAll("_", " ")} />
+                    <ReviewRow
+                      label="Type"
+                      value={form.propertyType.replaceAll("_", " ")}
+                    />
                     <ReviewRow
                       label="Rent"
-                      value={form.pricePerMonth ? `₱${Number(form.pricePerMonth).toLocaleString()}/mo` : "—"}
+                      value={
+                        form.pricePerMonth
+                          ? `₱${Number(form.pricePerMonth).toLocaleString()}/mo`
+                          : "—"
+                      }
                     />
                     <ReviewRow
                       label="Location"
-                      value={[form.city, form.barangay].filter(Boolean).join(", ") || "—"}
+                      value={
+                        [form.city, form.barangay].filter(Boolean).join(", ") ||
+                        "—"
+                      }
                     />
                     <ReviewRow
                       label="Photos"
@@ -489,7 +518,7 @@ export function ListingForm({
             {/* Error */}
             {localError || errorMessage ? (
               <View className="mt-4 rounded-2xl bg-red-50 px-4 py-3">
-                <Text className="text-[13px] font-semibold text-red-700">
+                <Text className="font-semibold text-[13px] text-red-700">
                   {localError ?? errorMessage}
                 </Text>
               </View>
@@ -498,7 +527,7 @@ export function ListingForm({
         </ScrollView>
 
         {/* Bottom CTA */}
-        <View className="border-t border-[#EAE5DE] bg-[#FAF8F5] px-5 pb-6 pt-4">
+        <View className="border-[#EAE5DE] border-t bg-[#FAF8F5] px-5 pt-4 pb-6">
           {isLastStep ? (
             <Pressable
               className={`h-[52px] w-full items-center justify-center rounded-2xl ${
@@ -510,7 +539,7 @@ export function ListingForm({
               {isSubmitting ? (
                 <ActivityIndicator color="#ffffff" size="small" />
               ) : (
-                <Text className="text-[15px] font-bold text-white">
+                <Text className="font-bold text-[15px] text-white">
                   {mode === "create" ? "Publish listing" : "Save changes"}
                 </Text>
               )}
@@ -520,9 +549,7 @@ export function ListingForm({
               className="h-[52px] w-full items-center justify-center rounded-2xl bg-brand-orange"
               onPress={handleNext}
             >
-              <Text className="text-[15px] font-bold text-white">
-                Continue
-              </Text>
+              <Text className="font-bold text-[15px] text-white">Continue</Text>
             </Pressable>
           )}
         </View>
@@ -534,8 +561,11 @@ export function ListingForm({
 function ReviewRow({ label, value }: { label: string; value: string }) {
   return (
     <View className="flex-row items-center justify-between gap-4">
-      <Text className="text-[13px] text-[#9A9388]">{label}</Text>
-      <Text className="flex-1 text-right text-[13px] font-semibold text-[#1A1A1A]" numberOfLines={1}>
+      <Text className="text-[#9A9388] text-[13px]">{label}</Text>
+      <Text
+        className="flex-1 text-right font-semibold text-[#1A1A1A] text-[13px]"
+        numberOfLines={1}
+      >
         {value}
       </Text>
     </View>

@@ -2,14 +2,14 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { FlashList } from "@shopify/flash-list";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "@/providers/auth-provider";
 import type { AdminConversationReportItem } from "@/types/platform";
-import { listingDetailRoute } from "@/utils/routes";
 import { trpc } from "@/utils/api-client";
+import { listingDetailRoute } from "@/utils/routes";
 
 const moderationStatuses = [
   "pending",
@@ -83,10 +83,14 @@ function ReportCard({
         {item.listing.title}
       </Text>
       <Text style={styles.cardMeta}>
-        Reporter: {`${item.reporter.firstName ?? ""} ${item.reporter.lastName ?? ""}`.trim() || "Member"}
+        Reporter:{" "}
+        {`${item.reporter.firstName ?? ""} ${item.reporter.lastName ?? ""}`.trim() ||
+          "Member"}
       </Text>
       <Text style={styles.cardMeta}>
-        Reported user: {`${item.reportedUser.firstName ?? ""} ${item.reportedUser.lastName ?? ""}`.trim() || "Member"}
+        Reported user:{" "}
+        {`${item.reportedUser.firstName ?? ""} ${item.reportedUser.lastName ?? ""}`.trim() ||
+          "Member"}
       </Text>
       <Text style={styles.reasonLabel}>Reason: {item.reason}</Text>
       {item.notes ? <Text style={styles.cardNotes}>{item.notes}</Text> : null}
@@ -103,7 +107,8 @@ function ReportCard({
           onPress={() => onModerate(item.id, "reviewed")}
           style={[
             styles.secondaryAction,
-            (item.status === "reviewed" || isModerating) && styles.actionDisabled,
+            (item.status === "reviewed" || isModerating) &&
+              styles.actionDisabled,
           ]}
         >
           <Text style={styles.secondaryActionText}>
@@ -118,7 +123,8 @@ function ReportCard({
           onPress={() => onModerate(item.id, "dismissed")}
           style={[
             styles.secondaryAction,
-            (item.status === "dismissed" || isModerating) && styles.actionDisabled,
+            (item.status === "dismissed" || isModerating) &&
+              styles.actionDisabled,
           ]}
         >
           <Text style={styles.secondaryActionText}>
@@ -130,7 +136,8 @@ function ReportCard({
           onPress={() => onModerate(item.id, "actioned")}
           style={[
             styles.primaryAction,
-            (item.status === "actioned" || isModerating) && styles.actionDisabled,
+            (item.status === "actioned" || isModerating) &&
+              styles.actionDisabled,
           ]}
         >
           <Text style={styles.primaryActionText}>
@@ -157,10 +164,10 @@ export default function ConversationReportsScreen() {
   });
   const moderateReport = useMutation(
     trpc.admin.moderateConversationReport.mutationOptions({
-      onError: (error) => {
+      onError: () => {
         setFeedback({
           tone: "error",
-          message: error.message || "Moderation update failed.",
+          message: "Moderation action failed. Please try again.",
         });
         setActiveReportId(null);
       },
@@ -182,7 +189,9 @@ export default function ConversationReportsScreen() {
 
   if (role !== "admin") {
     return (
-      <View style={[styles.container, styles.centered, { paddingTop: insets.top }]}>
+      <View
+        style={[styles.container, styles.centered, { paddingTop: insets.top }]}
+      >
         <Text style={styles.empty}>Admin access is required.</Text>
       </View>
     );

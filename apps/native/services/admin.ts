@@ -21,8 +21,12 @@ export function getRoleTone(role: AppRole): RoleTone {
   }
 }
 
-export function getUserDisplayName(user: Pick<AdminUserItem, "firstName" | "lastName">): string {
-  return [user.firstName, user.lastName].filter(Boolean).join(" ") || "Unnamed user";
+export function getUserDisplayName(
+  user: Pick<AdminUserItem, "firstName" | "lastName">,
+): string {
+  return (
+    [user.firstName, user.lastName].filter(Boolean).join(" ") || "Unnamed user"
+  );
 }
 
 export function formatAdminDate(value: Date | string): string {

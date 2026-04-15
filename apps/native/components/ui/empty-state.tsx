@@ -23,10 +23,10 @@ export function EmptyState({
         <Text style={{ fontSize: 40 }}>{illustration}</Text>
       </View>
 
-      <Text className="mt-6 text-center text-[20px] font-extrabold tracking-[-0.4px] text-slate-900">
+      <Text className="mt-6 text-center font-extrabold text-[20px] text-slate-900 tracking-[-0.4px]">
         {title}
       </Text>
-      <Text className="mt-2 text-center text-[14px] leading-[22px] text-[#706A5F]">
+      <Text className="mt-2 text-center text-[#706A5F] text-[14px] leading-[22px]">
         {description}
       </Text>
 
@@ -35,7 +35,9 @@ export function EmptyState({
           className="mt-6 rounded-2xl bg-brand-orange px-6 py-3.5"
           onPress={action.onPress}
         >
-          <Text className="text-[14px] font-bold text-white">{action.label}</Text>
+          <Text className="font-bold text-[14px] text-white">
+            {action.label}
+          </Text>
         </Pressable>
       ) : null}
     </View>

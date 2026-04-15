@@ -3,8 +3,8 @@ import { useMemo } from "react";
 
 import { useCurrentProfile } from "@/hooks/use-current-profile";
 import { useAuth } from "@/providers/auth-provider";
-import { formatMemberSince, getInitials } from "@/utils/profile";
 import { trpc } from "@/utils/api-client";
+import { formatMemberSince, getInitials } from "@/utils/profile";
 
 export function useProfileScreen() {
   const { signOut, user, role } = useAuth();

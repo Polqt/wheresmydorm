@@ -1,6 +1,13 @@
 import { FlashList } from "@shopify/flash-list";
 import { router } from "expo-router";
-import { KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ChatBubble } from "@/components/chat/chat-bubble";
@@ -28,14 +35,14 @@ export default function ChatScreen() {
       style={{ paddingTop: insets.top }}
     >
       {/* Header */}
-      <View className="flex-row items-center border-b border-[#E7E0D5] bg-[#FFFDF9] px-4 py-3.5">
+      <View className="flex-row items-center border-[#E7E0D5] border-b bg-[#FFFDF9] px-4 py-3.5">
         <Pressable
           className="h-9 w-9 items-center justify-center rounded-full bg-[#F0EBE3]"
           onPress={() => router.back()}
         >
-          <Text className="text-lg font-bold text-slate-900">←</Text>
+          <Text className="font-bold text-lg text-slate-900">←</Text>
         </Pressable>
-        <Text className="flex-1 text-center text-base font-extrabold text-slate-900">
+        <Text className="flex-1 text-center font-extrabold text-base text-slate-900">
           Housing Assistant
         </Text>
         <View className="w-9" />
@@ -44,11 +51,12 @@ export default function ChatScreen() {
       {/* Message list or empty state */}
       {messages.length === 0 ? (
         <View className="flex-1 items-center justify-center px-8">
-          <Text className="text-center text-[18px] font-extrabold text-slate-900">
+          <Text className="text-center font-extrabold text-[18px] text-slate-900">
             Ask anything about student housing
           </Text>
-          <Text className="mt-2 text-center text-[14px] leading-[21px] text-[#706A5F]">
-            Get advice on location, budget, amenities, and what to look for when viewing properties in the Philippines.
+          <Text className="mt-2 text-center text-[#706A5F] text-[14px] leading-[21px]">
+            Get advice on location, budget, amenities, and what to look for when
+            viewing properties in the Philippines.
           </Text>
         </View>
       ) : (
@@ -66,7 +74,7 @@ export default function ChatScreen() {
       {/* Typing indicator */}
       {isPending ? (
         <View className="px-5 py-2">
-          <Text className="text-[13px] italic text-slate-400">
+          <Text className="text-[13px] text-slate-400 italic">
             Assistant is typing...
           </Text>
         </View>
@@ -75,7 +83,7 @@ export default function ChatScreen() {
       {/* Error banner */}
       {errorMessage ? (
         <View className="mx-4 mb-2 rounded-xl bg-red-50 px-3.5 py-2.5">
-          <Text className="text-[13px] font-semibold text-red-700">
+          <Text className="font-semibold text-[13px] text-red-700">
             {errorMessage}
           </Text>
         </View>
@@ -83,7 +91,7 @@ export default function ChatScreen() {
 
       {/* Input row */}
       <View
-        className="flex-row items-end gap-2.5 border-t border-[#E7E0D5] bg-[#FFFDF9] px-4 pt-3"
+        className="flex-row items-end gap-2.5 border-[#E7E0D5] border-t bg-[#FFFDF9] px-4 pt-3"
         style={{ paddingBottom: insets.bottom + 8 }}
       >
         <TextInput
@@ -104,7 +112,7 @@ export default function ChatScreen() {
           disabled={!canSend}
           onPress={onSend}
         >
-          <Text className="text-[13px] font-extrabold text-white">Send</Text>
+          <Text className="font-extrabold text-[13px] text-white">Send</Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>

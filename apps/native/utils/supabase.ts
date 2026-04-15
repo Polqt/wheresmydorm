@@ -1,7 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
-
-import { asyncStorageAdapter } from "@/lib/mmkv";
 import { env } from "@wheresmydorm/env/native";
+import { asyncStorageAdapter } from "@/lib/mmkv";
 
 export const supabase = createClient(
   env.EXPO_PUBLIC_SUPABASE_URL,

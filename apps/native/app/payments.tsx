@@ -16,7 +16,10 @@ import {
 } from "@/services/paymongo";
 import type { MyListing } from "@/types/listings";
 import type { CheckoutStatus, CheckoutStatusTone } from "@/types/payments";
-import type { PaymentCreateIntentInput, PaymentListItem } from "@/types/platform";
+import type {
+  PaymentCreateIntentInput,
+  PaymentListItem,
+} from "@/types/platform";
 import { trpc } from "@/utils/api-client";
 import { formatCurrency } from "@/utils/profile";
 
@@ -46,7 +49,10 @@ function getPaymentTone(status: PaymentListItem["status"]) {
   }
 }
 
-function getWalletFailureMessage(method: (typeof PAYMENT_METHODS)[number], error: string) {
+function getWalletFailureMessage(
+  method: (typeof PAYMENT_METHODS)[number],
+  error: string,
+) {
   const normalized = error.toLowerCase();
 
   if (normalized.includes("cancel")) {
@@ -57,10 +63,7 @@ function getWalletFailureMessage(method: (typeof PAYMENT_METHODS)[number], error
     return `${method.toUpperCase()} session expired. Create a new payment intent and try again.`;
   }
 
-  if (
-    normalized.includes("insufficient") ||
-    normalized.includes("balance")
-  ) {
+  if (normalized.includes("insufficient") || normalized.includes("balance")) {
     return `${method.toUpperCase()} reported insufficient wallet balance.`;
   }
 
@@ -83,7 +86,9 @@ function getWalletFailureMessage(method: (typeof PAYMENT_METHODS)[number], error
   return `${method.toUpperCase()} checkout did not complete: ${error}`;
 }
 
-function getCheckoutTone(kind: "error" | "info" | "pending" | "success"): CheckoutStatusTone {
+function getCheckoutTone(
+  kind: "error" | "info" | "pending" | "success",
+): CheckoutStatusTone {
   switch (kind) {
     case "success":
       return { bg: "#E8F3EE", border: "#C8E1D4", text: "#0B4A30" };
@@ -103,14 +108,19 @@ export default function PaymentsScreen() {
   const profileQuery = useCurrentProfile(user);
   const [selectedMethod, setSelectedMethod] =
     useState<(typeof PAYMENT_METHODS)[number]>("gcash");
-  const [latestIntentMethod, setLatestIntentMethod] =
-    useState<(typeof PAYMENT_METHODS)[number] | null>(null);
+  const [latestIntentMethod, setLatestIntentMethod] = useState<
+    (typeof PAYMENT_METHODS)[number] | null
+  >(null);
   const [latestClientKey, setLatestClientKey] = useState<string | null>(null);
   const [isAttaching, setIsAttaching] = useState(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
-  const [checkoutStatus, setCheckoutStatus] = useState<CheckoutStatus | null>(null);
+  const [checkoutStatus, setCheckoutStatus] = useState<CheckoutStatus | null>(
+    null,
+  );
 
-  const paymentsQuery = useQuery(trpc.payments.list.queryOptions({ limit: 50 }));
+  const paymentsQuery = useQuery(
+    trpc.payments.list.queryOptions({ limit: 50 }),
+  );
   const listingsQuery = useQuery({
     ...trpc.listings.myListings.queryOptions(),
     enabled: role === "lister",
@@ -139,7 +149,9 @@ export default function PaymentsScreen() {
         );
 
         await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ["trpc", "payments", "list"] }),
+          queryClient.invalidateQueries({
+            queryKey: ["trpc", "payments", "list"],
+          }),
           queryClient.invalidateQueries({
             queryKey: ["trpc", "listings", "myListings"],
           }),
@@ -170,18 +182,14 @@ export default function PaymentsScreen() {
     () =>
       (listingsQuery.data ?? []).find(
         (listing) =>
-          listing.requiresListingFee &&
-          listing.listingFeeStatus !== "paid",
+          listing.requiresListingFee && listing.listingFeeStatus !== "paid",
       ) as MyListing | undefined,
     [listingsQuery.data],
   );
 
   const startPayment = (input: PaymentCreateIntentInput) => {
     setCheckoutStatus(null);
-    if (
-      input.paymentMethod === "gcash" ||
-      input.paymentMethod === "paymaya"
-    ) {
+    if (input.paymentMethod === "gcash" || input.paymentMethod === "paymaya") {
       setLatestIntentMethod(input.paymentMethod);
     } else {
       setLatestIntentMethod(null);
@@ -218,7 +226,10 @@ export default function PaymentsScreen() {
     const latestIntent = createIntent.data;
     const walletMethod = latestIntentMethod ?? selectedMethod;
 
-    if (!latestIntent?.clientKey || !latestIntent.payment.paymongoPaymentIntentId) {
+    if (
+      !latestIntent?.clientKey ||
+      !latestIntent.payment.paymongoPaymentIntentId
+    ) {
       setCheckoutStatus({
         body: "Start a payment first so the app has a PayMongo client key and payment intent to attach.",
         title: "Create an intent first",
@@ -327,17 +338,13 @@ export default function PaymentsScreen() {
       }
 
       setCheckoutStatus({
-        body:
-          "The payment intent was attached, but PayMongo has not marked it paid yet. You can wait a moment and retry checking status.",
+        body: "The payment intent was attached, but PayMongo has not marked it paid yet. You can wait a moment and retry checking status.",
         title: "Payment still pending",
         tone: getCheckoutTone("pending"),
       });
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Unable to continue checkout.";
-
+    } catch {
       setCheckoutStatus({
-        body: getWalletFailureMessage(walletMethod, message),
+        body: "We couldn't complete your checkout. Please try again or use a different payment method.",
         title: "Checkout failed",
         tone: getCheckoutTone("error"),
       });
@@ -350,7 +357,10 @@ export default function PaymentsScreen() {
     const latestIntent = createIntent.data;
     const walletMethod = latestIntentMethod ?? selectedMethod;
 
-    if (!latestIntent?.clientKey || !latestIntent.payment.paymongoPaymentIntentId) {
+    if (
+      !latestIntent?.clientKey ||
+      !latestIntent.payment.paymongoPaymentIntentId
+    ) {
       setCheckoutStatus({
         body: "Create and attach a payment intent first before checking its status again.",
         title: "No pending payment",
@@ -407,17 +417,13 @@ export default function PaymentsScreen() {
       }
 
       setCheckoutStatus({
-        body:
-          "PayMongo still shows this payment as pending. Wait a few seconds and check again if the wallet flow was already completed.",
+        body: "PayMongo still shows this payment as pending. Wait a few seconds and check again if the wallet flow was already completed.",
         title: "Payment still pending",
         tone: getCheckoutTone("pending"),
       });
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Unable to re-check payment status.";
-
+    } catch {
       setCheckoutStatus({
-        body: getWalletFailureMessage(walletMethod, message),
+        body: "We couldn't verify your payment status right now. Please wait a moment and try again.",
         title: "Status check failed",
         tone: getCheckoutTone("error"),
       });
@@ -439,7 +445,8 @@ export default function PaymentsScreen() {
       <View style={styles.summary}>
         <Text style={styles.summaryTitle}>Billing and upgrades</Text>
         <Text style={styles.summaryBody}>
-          Choose a payment method, create the next PayMongo intent, and inspect paid versus pending activity.
+          Choose a payment method, create the next PayMongo intent, and inspect
+          paid versus pending activity.
         </Text>
       </View>
 
@@ -453,7 +460,10 @@ export default function PaymentsScreen() {
               <Pressable
                 key={method}
                 onPress={() => setSelectedMethod(method)}
-                style={[styles.methodChip, selected && styles.methodChipSelected]}
+                style={[
+                  styles.methodChip,
+                  selected && styles.methodChipSelected,
+                ]}
               >
                 <Text
                   style={[
@@ -472,7 +482,9 @@ export default function PaymentsScreen() {
       {role === "finder" ? (
         <View style={styles.infoCard}>
           <Text style={styles.infoTitle}>
-            {finderQuotaQuery.data?.isPaid ? "Finder plan active" : "Free finder plan"}
+            {finderQuotaQuery.data?.isPaid
+              ? "Finder plan active"
+              : "Free finder plan"}
           </Text>
           <Text style={styles.infoBody}>
             {finderQuotaQuery.data?.isPaid
@@ -485,11 +497,14 @@ export default function PaymentsScreen() {
       {role === "lister" ? (
         <View style={styles.infoCard}>
           <Text style={styles.infoTitle}>
-            {listerQuotaQuery.data?.remainingFreeListings ?? 0} free listing slots left
+            {listerQuotaQuery.data?.remainingFreeListings ?? 0} free listing
+            slots left
           </Text>
           <Text style={styles.infoBody}>
-            {listerQuotaQuery.data?.pendingListingFeesCount ?? 0} listings are waiting on fee payment and{" "}
-            {listerQuotaQuery.data?.paidListingFeesCount ?? 0} paid listing fees are already cleared.
+            {listerQuotaQuery.data?.pendingListingFeesCount ?? 0} listings are
+            waiting on fee payment and{" "}
+            {listerQuotaQuery.data?.paidListingFeesCount ?? 0} paid listing fees
+            are already cleared.
           </Text>
         </View>
       ) : null}
@@ -523,7 +538,8 @@ export default function PaymentsScreen() {
             onPress={handleCheckStatusAgain}
             style={[
               styles.secondaryButton,
-              (isCheckingStatus || isAttaching) && styles.secondaryButtonDisabled,
+              (isCheckingStatus || isAttaching) &&
+                styles.secondaryButtonDisabled,
             ]}
           >
             <Text style={styles.secondaryButtonText}>
@@ -532,7 +548,8 @@ export default function PaymentsScreen() {
           </Pressable>
           {!profileQuery.data?.contactPhone ? (
             <Text style={styles.attachHelpText}>
-              Add a contact number in Profile first. PayMongo e-wallet checkout needs it.
+              Add a contact number in Profile first. PayMongo e-wallet checkout
+              needs it.
             </Text>
           ) : null}
         </View>
@@ -548,10 +565,20 @@ export default function PaymentsScreen() {
             },
           ]}
         >
-          <Text style={[styles.checkoutStatusTitle, { color: checkoutStatus.tone.text }]}>
+          <Text
+            style={[
+              styles.checkoutStatusTitle,
+              { color: checkoutStatus.tone.text },
+            ]}
+          >
             {checkoutStatus.title}
           </Text>
-          <Text style={[styles.checkoutStatusBody, { color: checkoutStatus.tone.text }]}>
+          <Text
+            style={[
+              styles.checkoutStatusBody,
+              { color: checkoutStatus.tone.text },
+            ]}
+          >
             {checkoutStatus.body}
           </Text>
         </View>
@@ -635,8 +662,12 @@ export default function PaymentsScreen() {
               <View style={styles.rowCopy}>
                 <View style={styles.rowHeader}>
                   <Text style={styles.rowTitle}>{getPaymentLabel(item)}</Text>
-                  <View style={[styles.statusBadge, { backgroundColor: tone.bg }]}>
-                    <Text style={[styles.statusBadgeText, { color: tone.text }]}>
+                  <View
+                    style={[styles.statusBadge, { backgroundColor: tone.bg }]}
+                  >
+                    <Text
+                      style={[styles.statusBadgeText, { color: tone.text }]}
+                    >
                       {item.status}
                     </Text>
                   </View>
@@ -648,7 +679,9 @@ export default function PaymentsScreen() {
                     : ""}
                 </Text>
               </View>
-              <Text style={styles.rowAmount}>{formatCurrency(item.amount)}</Text>
+              <Text style={styles.rowAmount}>
+                {formatCurrency(item.amount)}
+              </Text>
             </View>
           );
         }}

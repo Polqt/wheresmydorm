@@ -37,14 +37,20 @@ vi.mock("drizzle-orm", () => ({
   or: vi.fn(),
 }));
 
-import type { DiscoveryListingRow, FindNearbyInput, ListingListInput } from "./listings";
+import type {
+  DiscoveryListingRow,
+  FindNearbyInput,
+  ListingListInput,
+} from "./listings";
 import {
   getDiscoveryListingItems,
   getNearbyDiscoveryItems,
   toDiscoveryListingItem,
 } from "./listings";
 
-function makeRow(overrides: Partial<DiscoveryListingRow> = {}): DiscoveryListingRow {
+function makeRow(
+  overrides: Partial<DiscoveryListingRow> = {},
+): DiscoveryListingRow {
   return {
     amenities: ["wifi", "ac"],
     barangay: "Mandalagan",
@@ -68,7 +74,9 @@ function makeRow(overrides: Partial<DiscoveryListingRow> = {}): DiscoveryListing
   } as DiscoveryListingRow;
 }
 
-function makeListInput(overrides: Partial<ListingListInput> = {}): ListingListInput {
+function makeListInput(
+  overrides: Partial<ListingListInput> = {},
+): ListingListInput {
   return {
     amenities: [],
     limit: 10,
@@ -78,7 +86,9 @@ function makeListInput(overrides: Partial<ListingListInput> = {}): ListingListIn
   };
 }
 
-function makeNearbyInput(overrides: Partial<FindNearbyInput> = {}): FindNearbyInput {
+function makeNearbyInput(
+  overrides: Partial<FindNearbyInput> = {},
+): FindNearbyInput {
   return {
     amenities: [],
     lat: 10.6765,

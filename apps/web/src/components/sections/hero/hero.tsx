@@ -34,7 +34,7 @@ export function Hero() {
       {/* Giant decorative letterform */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute right-[-4vw] top-1/2 -translate-y-[55%] select-none leading-none z-0 font-serif text-[#FDFBF7]"
+        className="pointer-events-none absolute top-1/2 right-[-4vw] z-0 -translate-y-[55%] select-none font-serif text-[#FDFBF7] leading-none"
         style={{
           fontSize: "clamp(260px, 32vw, 520px)",
           opacity: 0.035,
@@ -47,7 +47,7 @@ export function Hero() {
       {/* Warm radial glow */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute top-0 left-[-10%] w-[600px] h-[600px] rounded-full z-0"
+        className="pointer-events-none absolute top-0 left-[-10%] z-0 h-[600px] w-[600px] rounded-full"
         style={{
           background:
             "radial-gradient(circle, rgba(196,98,45,0.12) 0%, transparent 70%)",
@@ -57,28 +57,28 @@ export function Hero() {
       {/* Diagonal bottom transition to cream */}
       <div
         aria-hidden="true"
-        className="absolute bottom-0 left-0 right-0 h-20 bg-[#FDFBF7] z-[2]"
+        className="absolute right-0 bottom-0 left-0 z-[2] h-20 bg-[#FDFBF7]"
         style={{ clipPath: "polygon(0 100%, 100% 100%, 100% 0)" }}
       />
 
-      <div className="relative z-[3] mx-auto max-w-[1200px] px-5 lg:px-10 pt-24 pb-32 lg:pt-28 lg:pb-44">
-        <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-14 items-center">
+      <div className="relative z-[3] mx-auto max-w-[1200px] px-5 pt-24 pb-32 lg:px-10 lg:pt-28 lg:pb-44">
+        <div className="grid items-center gap-14 lg:grid-cols-[1.15fr_0.85fr]">
           {/* ── Copy ── */}
           <div>
             {/* Pill badge */}
             <span
-              className="inline-flex items-center gap-2 rounded-full border border-[#C4622D]/40 bg-[#C4622D]/10 px-4 py-1.5 text-xs font-medium text-[#F4A67A] mb-8"
+              className="mb-8 inline-flex items-center gap-2 rounded-full border border-[#C4622D]/40 bg-[#C4622D]/10 px-4 py-1.5 font-medium text-[#F4A67A] text-xs"
               style={anim("fade-up", 0)}
             >
               <span
-                className="h-1.5 w-1.5 rounded-full bg-[#C4622D] animate-pulse"
+                className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#C4622D]"
                 aria-hidden="true"
               />
               Now available across 40+ campuses
             </span>
 
             <h1
-              className="text-[#FDFBF7] leading-[1.0] tracking-[-0.02em] mb-6"
+              className="mb-6 text-[#FDFBF7] leading-[1.0] tracking-[-0.02em]"
               style={{
                 ...anim("fade-up", 100),
                 fontFamily: "var(--font-dm-serif)",
@@ -88,8 +88,11 @@ export function Hero() {
               Find your
               <br />
               <em
-                className="not-italic text-[#C4622D]"
-                style={{ fontStyle: "italic", fontFamily: "var(--font-dm-serif)" }}
+                className="text-[#C4622D] not-italic"
+                style={{
+                  fontStyle: "italic",
+                  fontFamily: "var(--font-dm-serif)",
+                }}
               >
                 perfect
               </em>{" "}
@@ -97,7 +100,7 @@ export function Hero() {
             </h1>
 
             <p
-              className="text-[#A8A29E] text-lg leading-relaxed mb-10 max-w-[46ch]"
+              className="mb-10 max-w-[46ch] text-[#A8A29E] text-lg leading-relaxed"
               style={anim("fade-up", 200)}
             >
               Where&rsquo;sMyDorm helps you discover, compare, and review dorms
@@ -110,13 +113,13 @@ export function Hero() {
             >
               <a
                 href="#"
-                className="inline-flex items-center h-12 px-7 rounded-full bg-[#C4622D] text-white font-medium text-base hover:bg-[#A84E23] transition-colors duration-[180ms] shadow-[0_6px_24px_rgba(196,98,45,0.38)] focus-visible:outline-2 focus-visible:outline-[#F4A67A] focus-visible:outline-offset-2 active:scale-[0.98]"
+                className="inline-flex h-12 items-center rounded-full bg-[#C4622D] px-7 font-medium text-base text-white shadow-[0_6px_24px_rgba(196,98,45,0.38)] transition-colors duration-[180ms] hover:bg-[#A84E23] focus-visible:outline-2 focus-visible:outline-[#F4A67A] focus-visible:outline-offset-2 active:scale-[0.98]"
               >
                 Get the app
               </a>
               <a
                 href="#product"
-                className="inline-flex items-center h-12 px-7 rounded-full border border-[#FDFBF7]/20 text-[#FDFBF7]/75 font-medium text-base hover:bg-[#FDFBF7]/08 hover:text-[#FDFBF7] hover:border-[#FDFBF7]/35 transition-colors duration-[180ms] focus-visible:outline-2 focus-visible:outline-[#F4A67A] focus-visible:outline-offset-2 active:scale-[0.98]"
+                className="inline-flex h-12 items-center rounded-full border border-[#FDFBF7]/20 px-7 font-medium text-[#FDFBF7]/75 text-base transition-colors duration-[180ms] hover:border-[#FDFBF7]/35 hover:bg-[#FDFBF7]/08 hover:text-[#FDFBF7] focus-visible:outline-2 focus-visible:outline-[#F4A67A] focus-visible:outline-offset-2 active:scale-[0.98]"
               >
                 See how it works
               </a>
@@ -124,11 +127,15 @@ export function Hero() {
 
             {/* Stats strip */}
             <div
-              className="mt-12 flex flex-wrap items-center gap-x-8 gap-y-3 pt-10 border-t border-[#FDFBF7]/08"
+              className="mt-12 flex flex-wrap items-center gap-x-8 gap-y-3 border-[#FDFBF7]/08 border-t pt-10"
               style={anim("fade-up", 430)}
             >
               {[
-                { value: "12,000+", label: "verified listings", color: "#F0A500" },
+                {
+                  value: "12,000+",
+                  label: "verified listings",
+                  color: "#F0A500",
+                },
                 { value: "40+", label: "partner campuses", color: "#C4622D" },
                 { value: "4.8★", label: "student rating", color: "#6DB88E" },
               ].map(({ value, label, color }) => (
@@ -139,7 +146,7 @@ export function Hero() {
                   >
                     {value}
                   </span>
-                  <span className="text-sm text-[#6B6560]">{label}</span>
+                  <span className="text-[#6B6560] text-sm">{label}</span>
                 </div>
               ))}
             </div>
@@ -152,10 +159,10 @@ export function Hero() {
             style={anim("slide-in-right", 200, 800)}
           >
             <div
-              className="relative rounded-[24px] overflow-hidden border border-[#FDFBF7]/10 shadow-[0_32px_80px_rgba(0,0,0,0.5)]"
+              className="relative overflow-hidden rounded-[24px] border border-[#FDFBF7]/10 shadow-[0_32px_80px_rgba(0,0,0,0.5)]"
               style={{ transform: "rotate(1.8deg)" }}
             >
-              <div className="aspect-[3/4] relative">
+              <div className="relative aspect-[3/4]">
                 <Image
                   src={heroImg}
                   alt="JP227 Residences building exterior — a modern student housing property"
@@ -166,14 +173,14 @@ export function Hero() {
                 />
                 <div
                   aria-hidden="true"
-                  className="absolute inset-0 bg-gradient-to-t from-[#1C1917]/85 via-[#1C1917]/15 to-transparent pointer-events-none"
+                  className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#1C1917]/85 via-[#1C1917]/15 to-transparent"
                 />
               </div>
 
               {/* Floating availability card */}
-              <div className="absolute bottom-5 left-4 right-4 rounded-[16px] bg-[#1C1917]/70 backdrop-blur-md border border-[#FDFBF7]/10 p-4">
+              <div className="absolute right-4 bottom-5 left-4 rounded-[16px] border border-[#FDFBF7]/10 bg-[#1C1917]/70 p-4 backdrop-blur-md">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-[#C4622D]/25 border border-[#C4622D]/30 flex items-center justify-center shrink-0">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#C4622D]/30 bg-[#C4622D]/25">
                     <svg
                       width="15"
                       height="15"
@@ -190,14 +197,14 @@ export function Hero() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-[#FDFBF7] text-sm font-medium">
+                    <p className="font-medium text-[#FDFBF7] text-sm">
                       JP227 Residences
                     </p>
                     <p className="text-[#78716C] text-xs">
                       0.3 km from campus · 2 rooms left
                     </p>
                   </div>
-                  <span className="ml-auto text-xs font-semibold text-[#6DB88E] bg-[#6DB88E]/15 rounded-full px-2.5 py-1">
+                  <span className="ml-auto rounded-full bg-[#6DB88E]/15 px-2.5 py-1 font-semibold text-[#6DB88E] text-xs">
                     Available
                   </span>
                 </div>

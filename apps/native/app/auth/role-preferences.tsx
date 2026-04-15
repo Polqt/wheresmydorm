@@ -69,7 +69,9 @@ export default function RolePreferencesScreen() {
     setFinderPropertyTypes(
       (profile.finderPropertyTypes as ListingPropertyType[] | undefined) ?? [],
     );
-    setPropertyTypes((profile.propertyTypes as ListingPropertyType[] | undefined) ?? []);
+    setPropertyTypes(
+      (profile.propertyTypes as ListingPropertyType[] | undefined) ?? [],
+    );
     setListerPropertyCount(
       profile.listerPropertyCount ? String(profile.listerPropertyCount) : "",
     );
@@ -123,7 +125,9 @@ export default function RolePreferencesScreen() {
       queryClient.setQueryData([PROFILE_QUERY_KEY, user.id], nextProfile);
       router.replace("/auth/permissions");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save. Try again.");
+      setError(
+        err instanceof Error ? err.message : "Failed to save. Try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -160,10 +164,10 @@ export default function RolePreferencesScreen() {
           </View>
 
           <View className="flex-1 px-6 pt-8">
-            <Text className="text-[28px] font-bold leading-[34px] text-[#1A1A1A]">
+            <Text className="font-bold text-[#1A1A1A] text-[28px] leading-[34px]">
               {isFinder ? "Set your search lane" : "Set your listing lane"}
             </Text>
-            <Text className="mt-2 text-[14px] leading-6 text-[#8A8480]">
+            <Text className="mt-2 text-[#8A8480] text-[14px] leading-6">
               {isFinder
                 ? "Tell us where and how you usually search so Finder results feel more relevant from day one."
                 : "Tell us what kinds of spaces you manage so your Lister dashboard starts with the right context."}
@@ -172,13 +176,13 @@ export default function RolePreferencesScreen() {
             {isFinder ? (
               <View className="mt-8 gap-5">
                 <View>
-                  <Text className="mb-2 text-[13px] font-semibold text-[#4A4540]">
+                  <Text className="mb-2 font-semibold text-[#4A4540] text-[13px]">
                     Preferred area
                   </Text>
                   <TextInput
                     autoCapitalize="words"
                     autoCorrect={false}
-                    className="h-[52px] rounded-xl border border-[#D8D2CA] bg-white px-4 text-[15px] text-[#1A1A1A]"
+                    className="h-[52px] rounded-xl border border-[#D8D2CA] bg-white px-4 text-[#1A1A1A] text-[15px]"
                     onChangeText={(value) => {
                       setPreferredArea(value);
                       setError(null);
@@ -191,11 +195,11 @@ export default function RolePreferencesScreen() {
 
                 <View className="flex-row gap-3">
                   <View className="flex-1">
-                    <Text className="mb-2 text-[13px] font-semibold text-[#4A4540]">
+                    <Text className="mb-2 font-semibold text-[#4A4540] text-[13px]">
                       Budget min
                     </Text>
                     <TextInput
-                      className="h-[52px] rounded-xl border border-[#D8D2CA] bg-white px-4 text-[15px] text-[#1A1A1A]"
+                      className="h-[52px] rounded-xl border border-[#D8D2CA] bg-white px-4 text-[#1A1A1A] text-[15px]"
                       keyboardType="numeric"
                       onChangeText={setFinderBudgetMin}
                       placeholder="2500"
@@ -205,11 +209,11 @@ export default function RolePreferencesScreen() {
                   </View>
 
                   <View className="flex-1">
-                    <Text className="mb-2 text-[13px] font-semibold text-[#4A4540]">
+                    <Text className="mb-2 font-semibold text-[#4A4540] text-[13px]">
                       Budget max
                     </Text>
                     <TextInput
-                      className="h-[52px] rounded-xl border border-[#D8D2CA] bg-white px-4 text-[15px] text-[#1A1A1A]"
+                      className="h-[52px] rounded-xl border border-[#D8D2CA] bg-white px-4 text-[#1A1A1A] text-[15px]"
                       keyboardType="numeric"
                       onChangeText={setFinderBudgetMax}
                       placeholder="6000"
@@ -220,7 +224,7 @@ export default function RolePreferencesScreen() {
                 </View>
 
                 <View>
-                  <Text className="mb-3 text-[13px] font-semibold text-[#4A4540]">
+                  <Text className="mb-3 font-semibold text-[#4A4540] text-[13px]">
                     Search preferences
                   </Text>
                   <View className="flex-row flex-wrap gap-3">
@@ -242,7 +246,7 @@ export default function RolePreferencesScreen() {
                           }
                         >
                           <Text
-                            className={`text-[13px] font-semibold ${
+                            className={`font-semibold text-[13px] ${
                               isSelected ? "text-[#0B2D23]" : "text-[#4A4540]"
                             }`}
                           >
@@ -257,11 +261,11 @@ export default function RolePreferencesScreen() {
             ) : (
               <View className="mt-8 gap-5">
                 <View>
-                  <Text className="mb-2 text-[13px] font-semibold text-[#4A4540]">
+                  <Text className="mb-2 font-semibold text-[#4A4540] text-[13px]">
                     Number of properties
                   </Text>
                   <TextInput
-                    className="h-[52px] rounded-xl border border-[#D8D2CA] bg-white px-4 text-[15px] text-[#1A1A1A]"
+                    className="h-[52px] rounded-xl border border-[#D8D2CA] bg-white px-4 text-[#1A1A1A] text-[15px]"
                     keyboardType="numeric"
                     onChangeText={setListerPropertyCount}
                     placeholder="1"
@@ -271,12 +275,14 @@ export default function RolePreferencesScreen() {
                 </View>
 
                 <View>
-                  <Text className="mb-3 text-[13px] font-semibold text-[#4A4540]">
+                  <Text className="mb-3 font-semibold text-[#4A4540] text-[13px]">
                     Property types you manage
                   </Text>
                   <View className="flex-row flex-wrap gap-3">
                     {LISTING_PROPERTY_TYPES.map((propertyType) => {
-                      const isSelected = propertyTypes.includes(propertyType.value);
+                      const isSelected = propertyTypes.includes(
+                        propertyType.value,
+                      );
 
                       return (
                         <Pressable
@@ -291,7 +297,7 @@ export default function RolePreferencesScreen() {
                           }
                         >
                           <Text
-                            className={`text-[13px] font-semibold ${
+                            className={`font-semibold text-[13px] ${
                               isSelected ? "text-[#0B2D23]" : "text-[#4A4540]"
                             }`}
                           >
@@ -306,7 +312,7 @@ export default function RolePreferencesScreen() {
             )}
 
             <View className="mt-5 rounded-xl bg-[#FAF8F5] px-4 py-3">
-              <Text className="text-[12px] leading-[18px] text-[#8A8480]">
+              <Text className="text-[#8A8480] text-[12px] leading-[18px]">
                 {isFinder
                   ? "These preferences prefill finder search context, but they never lock you into one area or budget."
                   : "This does not limit your listings. Listers can still create unlimited listings under the current product rules."}
@@ -331,7 +337,9 @@ export default function RolePreferencesScreen() {
               {isSubmitting ? (
                 <ActivityIndicator color="#ffffff" size="small" />
               ) : (
-                <Text className={`text-[15px] font-bold ${canContinue ? "text-white" : "text-[#A09A90]"}`}>
+                <Text
+                  className={`font-bold text-[15px] ${canContinue ? "text-white" : "text-[#A09A90]"}`}
+                >
                   Continue
                 </Text>
               )}

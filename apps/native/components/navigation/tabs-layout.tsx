@@ -1,8 +1,8 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useQueryClient } from "@tanstack/react-query";
 import { Tabs } from "expo-router";
-import { memo, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { Platform, View } from "react-native";
 import Animated, {
   Easing,
@@ -44,8 +44,8 @@ function BounceIcon({
 
     scale.set(
       withSequence(
-      withTiming(1.2, { duration: 120, easing: Easing.out(Easing.quad) }),
-      withSpring(1.0, { damping: 6, stiffness: 80 }),
+        withTiming(1.2, { duration: 120, easing: Easing.out(Easing.quad) }),
+        withSpring(1.0, { damping: 6, stiffness: 80 }),
       ),
     );
   }, [pressKey, scale]);
@@ -96,10 +96,7 @@ function ListerTabIcon({
   pressKey,
 }: {
   color: string;
-  name:
-    | "apps-outline"
-    | "business-outline"
-    | "chatbubble-ellipses-outline";
+  name: "apps-outline" | "business-outline" | "chatbubble-ellipses-outline";
   pressKey: number;
 }) {
   return (
@@ -111,8 +108,7 @@ function ListerTabIcon({
 
 function useTabPressKeys<T extends string>(keys: readonly T[]) {
   const [pressKeys, setPressKeys] = useState<Record<T, number>>(
-    () =>
-      Object.fromEntries(keys.map((key) => [key, 0])) as Record<T, number>,
+    () => Object.fromEntries(keys.map((key) => [key, 0])) as Record<T, number>,
   );
 
   const press = (key: T) => {

@@ -70,12 +70,22 @@ export const postsRouter = router({
         orderBy: [desc(posts.createdAt)],
         limit: input.limit + 1,
         with: {
-          author: { columns: { id: true, avatarUrl: true, firstName: true, lastName: true } },
+          author: {
+            columns: {
+              id: true,
+              avatarUrl: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
           listing: { columns: { id: true, title: true } },
         },
       });
 
-      const normalized = postList.map((p) => ({ ...p, author: normalizePostAuthor(p.author) }));
+      const normalized = postList.map((p) => ({
+        ...p,
+        author: normalizePostAuthor(p.author),
+      }));
       const hasNextPage = normalized.length > input.limit;
       const items = hasNextPage ? normalized.slice(0, input.limit) : normalized;
 
@@ -100,17 +110,29 @@ export const postsRouter = router({
           cursorDate ? lt(posts.createdAt, cursorDate) : undefined,
         ),
         orderBy: [
-          desc(sql`${posts.likeCount} + (${posts.commentCount} * 2) + (${posts.shareCount} * 3)`),
+          desc(
+            sql`${posts.likeCount} + (${posts.commentCount} * 2) + (${posts.shareCount} * 3)`,
+          ),
           desc(posts.createdAt),
         ],
         limit: input.limit + 1,
         with: {
-          author: { columns: { id: true, avatarUrl: true, firstName: true, lastName: true } },
+          author: {
+            columns: {
+              id: true,
+              avatarUrl: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
           listing: { columns: { id: true, title: true } },
         },
       });
 
-      const normalized = postList.map((p) => ({ ...p, author: normalizePostAuthor(p.author) }));
+      const normalized = postList.map((p) => ({
+        ...p,
+        author: normalizePostAuthor(p.author),
+      }));
       const hasNextPage = normalized.length > input.limit;
       const items = hasNextPage ? normalized.slice(0, input.limit) : normalized;
 
@@ -128,7 +150,14 @@ export const postsRouter = router({
       const post = await db.query.posts.findFirst({
         where: and(eq(posts.id, input.postId), eq(posts.isRemoved, false)),
         with: {
-          author: { columns: { id: true, avatarUrl: true, firstName: true, lastName: true } },
+          author: {
+            columns: {
+              id: true,
+              avatarUrl: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
           listing: { columns: { id: true, title: true } },
         },
       });
@@ -154,11 +183,21 @@ export const postsRouter = router({
         ),
         orderBy: [asc(postComments.createdAt)],
         with: {
-          author: { columns: { id: true, avatarUrl: true, firstName: true, lastName: true } },
+          author: {
+            columns: {
+              id: true,
+              avatarUrl: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
         },
       });
 
-      return comments.map((c) => ({ ...c, author: normalizePostAuthor(c.author) }));
+      return comments.map((c) => ({
+        ...c,
+        author: normalizePostAuthor(c.author),
+      }));
     }),
 
   react: protectedProcedure
@@ -256,7 +295,14 @@ export const postsRouter = router({
       with: {
         post: {
           with: {
-            author: { columns: { id: true, avatarUrl: true, firstName: true, lastName: true } },
+            author: {
+              columns: {
+                id: true,
+                avatarUrl: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
           },
         },
       },
@@ -268,18 +314,29 @@ export const postsRouter = router({
     .mutation(async ({ ctx, input }) => {
       const [updatedReport] = await db
         .update(postReports)
-        .set({ reviewedAt: new Date(), reviewedBy: ctx.userId, status: input.status })
+        .set({
+          reviewedAt: new Date(),
+          reviewedBy: ctx.userId,
+          status: input.status,
+        })
         .where(eq(postReports.id, input.reportId))
         .returning();
 
       if (!updatedReport) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Post report not found." });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Post report not found.",
+        });
       }
 
       if (input.removePost) {
         await db
           .update(posts)
-          .set({ isRemoved: true, removedAt: new Date(), removedBy: ctx.userId })
+          .set({
+            isRemoved: true,
+            removedAt: new Date(),
+            removedBy: ctx.userId,
+          })
           .where(eq(posts.id, updatedReport.postId));
       }
 

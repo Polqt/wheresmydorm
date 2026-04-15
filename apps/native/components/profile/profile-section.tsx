@@ -13,7 +13,7 @@ export const ProfileSection = memo(function ProfileSection({
   return (
     <View className="mt-4">
       {title ? (
-        <Text className="mb-2 text-[11px] font-bold uppercase tracking-[1.4px] text-[#A8A29E]">
+        <Text className="mb-2 font-bold text-[#A8A29E] text-[11px] uppercase tracking-[1.4px]">
           {title}
         </Text>
       ) : null}

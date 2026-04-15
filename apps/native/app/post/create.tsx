@@ -5,9 +5,8 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-import { refreshPostQueries } from "@/lib/post-query";
 import { ScreenHeader } from "@/components/ui/screen-header";
+import { refreshPostQueries } from "@/lib/post-query";
 import { useAuth } from "@/providers/auth-provider";
 import { getDiscoveryQueryInput } from "@/services/listings";
 import {
@@ -16,8 +15,8 @@ import {
   parseHashtagInput,
 } from "@/services/posts";
 import { uploadPickedAsset } from "@/services/storage";
-import { roleFeedRoute } from "@/utils/routes";
 import { trpc } from "@/utils/api-client";
+import { roleFeedRoute } from "@/utils/routes";
 
 export default function CreatePostScreen() {
   const { role } = useAuth();
@@ -105,7 +104,7 @@ export default function CreatePostScreen() {
       });
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to publish post.",
+        "Something went wrong. Your post couldn't be published. Please try again.",
       );
     }
   };
@@ -128,11 +127,11 @@ export default function CreatePostScreen() {
         </Text>
 
         <View className="mt-5 rounded-[32px] border border-[#E8DFD2] bg-white px-5 py-5 shadow-sm">
-          <Text className="font-semibold text-[13px] text-[#8C8478]">
+          <Text className="font-semibold text-[#8C8478] text-[13px]">
             What do you want to share?
           </Text>
           <TextInput
-            className="mt-3 min-h-[180px] text-[18px] leading-7 text-slate-900"
+            className="mt-3 min-h-[180px] text-[18px] text-slate-900 leading-7"
             multiline
             onChangeText={setBody}
             placeholder="A room opened up near campus, the street is quieter at night, or the commute is better than expected..."
@@ -144,10 +143,10 @@ export default function CreatePostScreen() {
 
         <View className="mt-4 flex-row items-center justify-between rounded-[26px] border border-[#E8DFD2] bg-[#FFFDF9] px-4 py-4">
           <View className="flex-1 pr-4">
-            <Text className="font-bold text-[14px] text-[#111827]">
+            <Text className="font-bold text-[#111827] text-[14px]">
               Add photos or video
             </Text>
-            <Text className="mt-1 text-[13px] leading-5 text-[#706A5F]">
+            <Text className="mt-1 text-[#706A5F] text-[13px] leading-5">
               Give the feed a real sense of place with up to four attachments.
             </Text>
           </View>
@@ -193,7 +192,7 @@ export default function CreatePostScreen() {
           <Text className="font-extrabold text-brand-teal text-xs uppercase tracking-[1.2px]">
             Discovery tags
           </Text>
-          <Text className="mt-2 text-[13px] leading-5 text-[#706A5F]">
+          <Text className="mt-2 text-[#706A5F] text-[13px] leading-5">
             Add tags like `#BacolodDorms`, `#Under5000`, or `#NearUSLS` to help
             people find your post.
           </Text>
@@ -207,17 +206,14 @@ export default function CreatePostScreen() {
           <View className="mt-3 flex-row flex-wrap gap-2">
             {hashtags.length > 0 ? (
               hashtags.map((tag) => (
-                <View
-                  key={tag}
-                  className="rounded-full bg-[#EEF5F1] px-3 py-2"
-                >
-                  <Text className="text-[12px] font-bold text-[#0B2D23]">
+                <View key={tag} className="rounded-full bg-[#EEF5F1] px-3 py-2">
+                  <Text className="font-bold text-[#0B2D23] text-[12px]">
                     #{tag}
                   </Text>
                 </View>
               ))
             ) : (
-              <Text className="text-[13px] text-[#8C8478]">
+              <Text className="text-[#8C8478] text-[13px]">
                 Tags from your post text and this field will be combined.
               </Text>
             )}
@@ -228,7 +224,7 @@ export default function CreatePostScreen() {
           <Text className="font-extrabold text-brand-teal text-xs uppercase tracking-[1.2px]">
             Link a listing
           </Text>
-          <Text className="mt-2 text-[13px] leading-5 text-[#706A5F]">
+          <Text className="mt-2 text-[#706A5F] text-[13px] leading-5">
             Optional, but helpful if your update is about a specific place.
           </Text>
           <View className="mt-4 gap-3">

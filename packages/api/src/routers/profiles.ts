@@ -2,9 +2,8 @@ import { TRPCError } from "@trpc/server";
 import { db, follows, profiles } from "@wheresmydorm/db";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-
-import { getProfileNamePartsFromUser } from "../lib/profile";
 import { protectedProcedure, router } from "../index";
+import { getProfileNamePartsFromUser } from "../lib/profile";
 
 const roleInputSchema = z.object({
   role: z.enum(["finder", "lister"]),
@@ -101,16 +100,24 @@ export const profilesRouter = router({
 
       if (input.avatarUrl !== undefined) updates.avatarUrl = input.avatarUrl;
       if (input.bio !== undefined) updates.bio = input.bio;
-      if (input.contactEmail !== undefined) updates.contactEmail = input.contactEmail;
-      if (input.contactPhone !== undefined) updates.contactPhone = input.contactPhone;
-      if (input.finderBudgetMax !== undefined) updates.finderBudgetMax = input.finderBudgetMax;
-      if (input.finderBudgetMin !== undefined) updates.finderBudgetMin = input.finderBudgetMin;
-      if (input.finderPropertyTypes !== undefined) updates.finderPropertyTypes = input.finderPropertyTypes;
+      if (input.contactEmail !== undefined)
+        updates.contactEmail = input.contactEmail;
+      if (input.contactPhone !== undefined)
+        updates.contactPhone = input.contactPhone;
+      if (input.finderBudgetMax !== undefined)
+        updates.finderBudgetMax = input.finderBudgetMax;
+      if (input.finderBudgetMin !== undefined)
+        updates.finderBudgetMin = input.finderBudgetMin;
+      if (input.finderPropertyTypes !== undefined)
+        updates.finderPropertyTypes = input.finderPropertyTypes;
       if (input.firstName !== undefined) updates.firstName = input.firstName;
       if (input.lastName !== undefined) updates.lastName = input.lastName;
-      if (input.listerPropertyCount !== undefined) updates.listerPropertyCount = input.listerPropertyCount;
-      if (input.preferredArea !== undefined) updates.preferredArea = input.preferredArea;
-      if (input.propertyTypes !== undefined) updates.propertyTypes = input.propertyTypes;
+      if (input.listerPropertyCount !== undefined)
+        updates.listerPropertyCount = input.listerPropertyCount;
+      if (input.preferredArea !== undefined)
+        updates.preferredArea = input.preferredArea;
+      if (input.propertyTypes !== undefined)
+        updates.propertyTypes = input.propertyTypes;
 
       const [profile] = await db
         .update(profiles)
@@ -150,7 +157,9 @@ export const profilesRouter = router({
   deleteAccount: protectedProcedure
     .input(deleteAccountInputSchema)
     .mutation(async ({ ctx }) => {
-      const { error } = await ctx.supabaseAdmin.auth.admin.deleteUser(ctx.userId);
+      const { error } = await ctx.supabaseAdmin.auth.admin.deleteUser(
+        ctx.userId,
+      );
 
       if (error) {
         throw new TRPCError({

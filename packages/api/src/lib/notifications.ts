@@ -33,4 +33,3 @@ export async function createNotification(input: CreateNotificationInput) {
 
   return notification;
 }
-

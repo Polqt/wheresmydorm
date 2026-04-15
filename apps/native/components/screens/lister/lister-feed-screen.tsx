@@ -10,8 +10,8 @@ import { ErrorRetry } from "@/components/ui/error-retry";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { useFeed } from "@/hooks/use-feed";
 import type { FeedItem } from "@/types/posts";
-import { listerInboxTabRoute, listerListingsTabRoute } from "@/utils/routes";
 import { trpc } from "@/utils/api-client";
+import { listerInboxTabRoute, listerListingsTabRoute } from "@/utils/routes";
 
 function FeedSeparator() {
   return <View className="h-px bg-[#EEE6DB]" />;
@@ -52,13 +52,13 @@ export function ListerFeedScreen() {
             onPress={() => onCreatePost()}
           >
             <Ionicons color="#ffffff" name="megaphone-outline" size={16} />
-            <Text className="text-[13px] font-bold text-white">Announce</Text>
+            <Text className="font-bold text-[13px] text-white">Announce</Text>
           </Pressable>
         }
       />
 
       {isError ? (
-        <ErrorRetry message="Failed to load feed." onRetry={onRefetch} />
+        <ErrorRetry context="feed" onRetry={onRefetch} />
       ) : isLoading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator color="#0B2D23" size="large" />
@@ -72,10 +72,10 @@ export function ListerFeedScreen() {
           ListHeaderComponent={
             <>
               <View className="mb-5 rounded-[30px] bg-[#FFFDFC] px-5 py-5">
-                <Text className="text-[24px] font-extrabold tracking-[-0.7px] text-[#111827]">
+                <Text className="font-extrabold text-[#111827] text-[24px] tracking-[-0.7px]">
                   Announce vacancies with context
                 </Text>
-                <Text className="mt-2 text-[14px] leading-6 text-[#706A5F]">
+                <Text className="mt-2 text-[#706A5F] text-[14px] leading-6">
                   Link one of your listings when you post availability, price
                   updates, or move-in notes so inquiries stay tied to a place.
                 </Text>
@@ -85,10 +85,10 @@ export function ListerFeedScreen() {
                     className="flex-1 rounded-[22px] bg-[#F4EFE6] px-4 py-4"
                     onPress={() => router.push(listerListingsTabRoute())}
                   >
-                    <Text className="text-[13px] font-bold text-[#111827]">
+                    <Text className="font-bold text-[#111827] text-[13px]">
                       {listingsQuery.data?.length ?? 0} listings
                     </Text>
-                    <Text className="mt-1 text-[12px] leading-5 text-[#706A5F]">
+                    <Text className="mt-1 text-[#706A5F] text-[12px] leading-5">
                       Open listing management
                     </Text>
                   </Pressable>
@@ -96,10 +96,10 @@ export function ListerFeedScreen() {
                     className="flex-1 rounded-[22px] bg-[#F4EFE6] px-4 py-4"
                     onPress={() => router.push(listerInboxTabRoute())}
                   >
-                    <Text className="text-[13px] font-bold text-[#111827]">
+                    <Text className="font-bold text-[#111827] text-[13px]">
                       {unreadThreads} unread
                     </Text>
-                    <Text className="mt-1 text-[12px] leading-5 text-[#706A5F]">
+                    <Text className="mt-1 text-[#706A5F] text-[12px] leading-5">
                       Review inquiry inbox
                     </Text>
                   </Pressable>
@@ -107,7 +107,7 @@ export function ListerFeedScreen() {
 
                 {recentListings.length > 0 ? (
                   <View className="mt-4">
-                    <Text className="text-[12px] font-extrabold uppercase tracking-[1px] text-[#0B4A30]">
+                    <Text className="font-extrabold text-[#0B4A30] text-[12px] uppercase tracking-[1px]">
                       Quick announce
                     </Text>
                     <View className="mt-3 flex-row flex-wrap gap-2">
@@ -117,7 +117,7 @@ export function ListerFeedScreen() {
                           className="rounded-full bg-[#EEF5F1] px-3.5 py-2"
                           onPress={() => onCreatePost(listing.id)}
                         >
-                          <Text className="text-[12px] font-bold text-[#0B2D23]">
+                          <Text className="font-bold text-[#0B2D23] text-[12px]">
                             {listing.title}
                           </Text>
                         </Pressable>
@@ -128,10 +128,10 @@ export function ListerFeedScreen() {
               </View>
 
               <View className="mb-2 flex-row items-center justify-between">
-                <Text className="text-[18px] font-extrabold text-[#111827]">
+                <Text className="font-extrabold text-[#111827] text-[18px]">
                   Community updates
                 </Text>
-                <Text className="text-[12px] font-semibold text-[#6F685E]">
+                <Text className="font-semibold text-[#6F685E] text-[12px]">
                   Latest first
                 </Text>
               </View>
@@ -139,10 +139,10 @@ export function ListerFeedScreen() {
           }
           ListEmptyComponent={
             <View className="items-center rounded-[28px] bg-[#FFFDFC] px-8 py-9">
-              <Text className="text-[18px] font-extrabold text-[#1A1A1A]">
+              <Text className="font-extrabold text-[#1A1A1A] text-[18px]">
                 Start with a lister announcement
               </Text>
-              <Text className="mt-2 text-center text-[14px] leading-[22px] text-[#706A5F]">
+              <Text className="mt-2 text-center text-[#706A5F] text-[14px] leading-[22px]">
                 Post a vacancy update, property reminder, or neighborhood note
                 so followers see activity from your listings.
               </Text>
@@ -150,7 +150,7 @@ export function ListerFeedScreen() {
                 className="mt-5 rounded-full bg-[#111827] px-5 py-3"
                 onPress={() => onCreatePost(recentListings[0]?.id)}
               >
-                <Text className="text-[13px] font-bold text-white">
+                <Text className="font-bold text-[13px] text-white">
                   Create announcement
                 </Text>
               </Pressable>
@@ -158,7 +158,10 @@ export function ListerFeedScreen() {
           }
           ListFooterComponent={
             isFetchingNextPage ? (
-              <ActivityIndicator color="#0B2D23" style={{ paddingVertical: 20 }} />
+              <ActivityIndicator
+                color="#0B2D23"
+                style={{ paddingVertical: 20 }}
+              />
             ) : null
           }
           onEndReached={onEndReached}

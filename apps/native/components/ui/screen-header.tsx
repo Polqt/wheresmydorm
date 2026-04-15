@@ -17,7 +17,7 @@ export function ScreenHeader({
   withBackButton = false,
 }: ScreenHeaderProps) {
   return (
-    <View className="px-[18px] pb-3.5 pt-3">
+    <View className="px-[18px] pt-3 pb-3.5">
       <View className="flex-row items-start gap-3">
         {withBackButton ? (
           <Pressable
@@ -30,12 +30,12 @@ export function ScreenHeader({
         ) : null}
 
         <View className="flex-1">
-          <Text className="text-[32px] font-extrabold tracking-[-0.8px] text-[#111827]">
+          <Text className="font-extrabold text-[#111827] text-[32px] tracking-[-0.8px]">
             {title}
           </Text>
           {subtitle ? (
             <Text
-              className="mt-1 text-[14px] leading-5 text-[#6F685E]"
+              className="mt-1 text-[#6F685E] text-[14px] leading-5"
               numberOfLines={2}
             >
               {subtitle}

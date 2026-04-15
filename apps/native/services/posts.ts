@@ -30,7 +30,9 @@ export function buildPostShareMessage(input: {
 }) {
   const trimmedBody = input.body.trim();
   const preview =
-    trimmedBody.length > 140 ? `${trimmedBody.slice(0, 137).trimEnd()}...` : trimmedBody;
+    trimmedBody.length > 140
+      ? `${trimmedBody.slice(0, 137).trimEnd()}...`
+      : trimmedBody;
 
   return [
     `${input.authorName} shared a post on WheresMyDorm.`,

@@ -52,7 +52,9 @@ export default function ContactInfoScreen() {
       queryClient.setQueryData([PROFILE_QUERY_KEY, user.id], profile);
       router.replace("/auth/role-preferences");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save. Try again.");
+      setError(
+        err instanceof Error ? err.message : "Failed to save. Try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -81,15 +83,17 @@ export default function ContactInfoScreen() {
               <Ionicons color="#1A1A1A" name="chevron-back" size={20} />
             </Pressable>
             <Pressable hitSlop={12} onPress={handleSkip}>
-              <Text className="text-[14px] font-medium text-[#8A8480]">Skip</Text>
+              <Text className="font-medium text-[#8A8480] text-[14px]">
+                Skip
+              </Text>
             </Pressable>
           </View>
 
           <View className="flex-1 px-6 pt-8">
-            <Text className="text-[28px] font-bold leading-[34px] text-[#1A1A1A]">
+            <Text className="font-bold text-[#1A1A1A] text-[28px] leading-[34px]">
               How can people{"\n"}reach you?
             </Text>
-            <Text className="mt-2 text-[14px] leading-5 text-[#8A8480]">
+            <Text className="mt-2 text-[#8A8480] text-[14px] leading-5">
               {role === "lister"
                 ? "Optional. This helps serious Finders reach you faster once they inquire about a property."
                 : "Optional. We only surface this when you choose to connect with a Lister."}
@@ -97,17 +101,20 @@ export default function ContactInfoScreen() {
 
             <View className="mt-8 gap-5">
               <View>
-                <Text className="mb-2 text-[13px] font-semibold text-[#4A4540]">
+                <Text className="mb-2 font-semibold text-[#4A4540] text-[13px]">
                   Contact email
                 </Text>
-                <View className="flex-row items-center h-[52px] rounded-xl border border-[#D8D2CA] bg-white px-4 gap-3">
+                <View className="h-[52px] flex-row items-center gap-3 rounded-xl border border-[#D8D2CA] bg-white px-4">
                   <Ionicons color="#C0B8B0" name="mail-outline" size={18} />
                   <TextInput
                     autoCapitalize="none"
                     autoCorrect={false}
-                    className="flex-1 text-[15px] text-[#1A1A1A]"
+                    className="flex-1 text-[#1A1A1A] text-[15px]"
                     keyboardType="email-address"
-                    onChangeText={(v) => { setContactEmail(v); setError(null); }}
+                    onChangeText={(v) => {
+                      setContactEmail(v);
+                      setError(null);
+                    }}
                     placeholder="you@example.com"
                     placeholderTextColor="#C0B8B0"
                     returnKeyType="next"
@@ -117,13 +124,13 @@ export default function ContactInfoScreen() {
               </View>
 
               <View>
-                <Text className="mb-2 text-[13px] font-semibold text-[#4A4540]">
+                <Text className="mb-2 font-semibold text-[#4A4540] text-[13px]">
                   Phone number
                 </Text>
-                <View className="flex-row items-center h-[52px] rounded-xl border border-[#D8D2CA] bg-white px-4 gap-3">
+                <View className="h-[52px] flex-row items-center gap-3 rounded-xl border border-[#D8D2CA] bg-white px-4">
                   <Ionicons color="#C0B8B0" name="call-outline" size={18} />
                   <TextInput
-                    className="flex-1 text-[15px] text-[#1A1A1A]"
+                    className="flex-1 text-[#1A1A1A] text-[15px]"
                     keyboardType="phone-pad"
                     onChangeText={(v) => setContactPhone(v)}
                     onSubmitEditing={handleContinue}
@@ -137,8 +144,13 @@ export default function ContactInfoScreen() {
             </View>
 
             <View className="mt-5 flex-row items-start gap-2 rounded-xl bg-[#FAF8F5] px-4 py-3">
-              <Ionicons color="#8A8480" name="shield-checkmark-outline" size={15} style={{ marginTop: 1 }} />
-              <Text className="flex-1 text-[12px] leading-[18px] text-[#8A8480]">
+              <Ionicons
+                color="#8A8480"
+                name="shield-checkmark-outline"
+                size={15}
+                style={{ marginTop: 1 }}
+              />
+              <Text className="flex-1 text-[#8A8480] text-[12px] leading-[18px]">
                 We'll only show this to people you connect with on WheresMyDorm.
               </Text>
             </View>
@@ -159,7 +171,9 @@ export default function ContactInfoScreen() {
               {isSubmitting ? (
                 <ActivityIndicator color="#ffffff" size="small" />
               ) : (
-                <Text className="text-[15px] font-bold text-white">Continue</Text>
+                <Text className="font-bold text-[15px] text-white">
+                  Continue
+                </Text>
               )}
             </Pressable>
           </View>

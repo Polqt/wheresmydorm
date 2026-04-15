@@ -1,8 +1,19 @@
 const FEATURES = [
   {
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
       </svg>
     ),
     title: "Smart search & filters",
@@ -11,7 +22,17 @@ const FEATURES = [
   },
   {
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
       </svg>
     ),
@@ -21,8 +42,19 @@ const FEATURES = [
   },
   {
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+        <circle cx="12" cy="10" r="3" />
       </svg>
     ),
     title: "Campus proximity map",
@@ -31,8 +63,21 @@ const FEATURES = [
   },
   {
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
       </svg>
     ),
     title: "Roommate matching",
@@ -41,8 +86,21 @@ const FEATURES = [
   },
   {
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
       </svg>
     ),
     title: "In-app scheduling",
@@ -51,7 +109,17 @@ const FEATURES = [
   },
   {
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
       </svg>
     ),
@@ -93,7 +161,7 @@ const STEPS = [
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center rounded-full border border-[#C4622D]/30 bg-[#C4622D]/08 px-3.5 py-1 text-xs font-semibold text-[#C4622D] mb-4 tracking-wide uppercase">
+    <span className="mb-4 inline-flex items-center rounded-full border border-[#C4622D]/30 bg-[#C4622D]/08 px-3.5 py-1 font-semibold text-[#C4622D] text-xs uppercase tracking-wide">
       {children}
     </span>
   );
@@ -107,13 +175,13 @@ export function Product() {
       className="scroll-mt-24 bg-[#FDFBF7]"
     >
       {/* Features subsection */}
-      <div className="mx-auto max-w-[1200px] px-5 lg:px-10 py-20 lg:py-28">
+      <div className="mx-auto max-w-[1200px] px-5 py-20 lg:px-10 lg:py-28">
         <div className="mb-14">
           <SectionLabel>Features</SectionLabel>
-          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <h2
               id="product-heading"
-              className="text-[#1C1917] tracking-[-0.02em] leading-tight max-w-[18ch]"
+              className="max-w-[18ch] text-[#1C1917] leading-tight tracking-[-0.02em]"
               style={{
                 fontFamily: "var(--font-dm-serif)",
                 fontSize: "clamp(1.9rem, 4vw, 3rem)",
@@ -121,7 +189,7 @@ export function Product() {
             >
               Everything you need to find your home
             </h2>
-            <p className="text-[#78716C] text-base leading-relaxed max-w-[40ch] lg:text-right">
+            <p className="max-w-[40ch] text-[#78716C] text-base leading-relaxed lg:text-right">
               From first search to signed lease, Where&rsquo;s My Dorm handles
               every step of the housing journey.
             </p>
@@ -139,15 +207,15 @@ export function Product() {
               key={feat.title}
               className={
                 i === 0
-                  ? "sm:col-span-2 lg:col-span-1 flex flex-col gap-4 rounded-[20px] bg-white border border-[#E8E0D5] p-7 hover:shadow-[0_12px_32px_rgba(28,25,23,0.08)] hover:-translate-y-0.5 transition-all duration-[220ms]"
-                  : "flex flex-col gap-4 rounded-[20px] bg-white border border-[#E8E0D5] p-7 hover:shadow-[0_12px_32px_rgba(28,25,23,0.08)] hover:-translate-y-0.5 transition-all duration-[220ms]"
+                  ? "flex flex-col gap-4 rounded-[20px] border border-[#E8E0D5] bg-white p-7 transition-all duration-[220ms] hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(28,25,23,0.08)] sm:col-span-2 lg:col-span-1"
+                  : "flex flex-col gap-4 rounded-[20px] border border-[#E8E0D5] bg-white p-7 transition-all duration-[220ms] hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(28,25,23,0.08)]"
               }
             >
-              <div className="w-11 h-11 rounded-[12px] bg-[#FFF5EE] border border-[#F4A67A]/30 flex items-center justify-center text-[#C4622D] shrink-0">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] border border-[#F4A67A]/30 bg-[#FFF5EE] text-[#C4622D]">
                 {feat.icon}
               </div>
               <div>
-                <h3 className="text-[#1C1917] font-semibold text-base mb-1.5">
+                <h3 className="mb-1.5 font-semibold text-[#1C1917] text-base">
                   {feat.title}
                 </h3>
                 <p className="text-[#78716C] text-sm leading-relaxed">
@@ -160,11 +228,11 @@ export function Product() {
       </div>
 
       {/* How it works — dark strip */}
-      <div className="bg-[#1C1917] relative overflow-hidden">
+      <div className="relative overflow-hidden bg-[#1C1917]">
         {/* Diagonal top edge */}
         <div
           aria-hidden="true"
-          className="absolute top-0 left-0 right-0 h-16 bg-[#FDFBF7]"
+          className="absolute top-0 right-0 left-0 h-16 bg-[#FDFBF7]"
           style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }}
         />
         {/* Grain */}
@@ -178,14 +246,14 @@ export function Product() {
           }}
         />
 
-        <div className="relative z-10 mx-auto max-w-[1200px] px-5 lg:px-10 pt-24 pb-20 lg:pt-28 lg:pb-24">
-          <div className="mb-14 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+        <div className="relative z-10 mx-auto max-w-[1200px] px-5 pt-24 pb-20 lg:px-10 lg:pt-28 lg:pb-24">
+          <div className="mb-14 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <span className="inline-flex items-center rounded-full border border-[#C4622D]/40 bg-[#C4622D]/10 px-3.5 py-1 text-xs font-semibold text-[#F4A67A] mb-4 tracking-wide uppercase">
+              <span className="mb-4 inline-flex items-center rounded-full border border-[#C4622D]/40 bg-[#C4622D]/10 px-3.5 py-1 font-semibold text-[#F4A67A] text-xs uppercase tracking-wide">
                 How it works
               </span>
               <h2
-                className="text-[#FDFBF7] tracking-[-0.02em] leading-tight"
+                className="text-[#FDFBF7] leading-tight tracking-[-0.02em]"
                 style={{
                   fontFamily: "var(--font-dm-serif)",
                   fontSize: "clamp(1.9rem, 4vw, 3rem)",
@@ -194,7 +262,7 @@ export function Product() {
                 Signed lease in three steps
               </h2>
             </div>
-            <p className="text-[#78716C] text-base leading-relaxed max-w-[36ch] lg:text-right">
+            <p className="max-w-[36ch] text-[#78716C] text-base leading-relaxed lg:text-right">
               We cut out the confusion so you can go from browsing to moving in
               as quickly as possible.
             </p>
@@ -214,7 +282,7 @@ export function Product() {
                 }}
               >
                 <span
-                  className="text-5xl font-bold leading-none tabular-nums"
+                  className="font-bold text-5xl tabular-nums leading-none"
                   style={{
                     fontFamily: "var(--font-dm-serif)",
                     color: s.accent,
@@ -225,7 +293,7 @@ export function Product() {
                   {s.step}
                 </span>
                 <div>
-                  <h3 className="text-[#1C1917] font-semibold text-lg mb-2">
+                  <h3 className="mb-2 font-semibold text-[#1C1917] text-lg">
                     {s.title}
                   </h3>
                   <p className="text-[#44403C] text-sm leading-relaxed">

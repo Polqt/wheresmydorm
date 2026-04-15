@@ -1,6 +1,6 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { Image } from "expo-image";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import type { RefObject } from "react";
 import { useCallback } from "react";
 import { Pressable, Text, View } from "react-native";
@@ -37,21 +37,21 @@ function NearbyCard({
       />
       <View className="flex-1 justify-center">
         <Text
-          className="text-[15px] font-bold leading-5 text-[#0F172A]"
+          className="font-bold text-[#0F172A] text-[15px] leading-5"
           numberOfLines={2}
         >
           {item.title}
         </Text>
-        <Text className="mt-1 text-[12px] text-[#706A5F]" numberOfLines={1}>
+        <Text className="mt-1 text-[#706A5F] text-[12px]" numberOfLines={1}>
           {[item.barangay, item.city].filter(Boolean).join(", ")}
         </Text>
         <View className="mt-1.5 flex-row items-center gap-2">
-          <Text className="text-[14px] font-extrabold text-[#0B2D23]">
+          <Text className="font-extrabold text-[#0B2D23] text-[14px]">
             {formatCurrency(item.pricePerMonth)}
           </Text>
           <View className="flex-row items-center gap-1">
             <Ionicons color="#F59E0B" name="star" size={11} />
-            <Text className="text-[12px] font-bold text-slate-700">
+            <Text className="font-bold text-[12px] text-slate-700">
               {item.ratingOverall ? item.ratingOverall.toFixed(1) : "New"}
             </Text>
           </View>
@@ -62,7 +62,7 @@ function NearbyCard({
         hitSlop={8}
         onPress={handleDetail}
       >
-        <Text className="text-[11px] font-bold text-[#0B4A30]">Details</Text>
+        <Text className="font-bold text-[#0B4A30] text-[11px]">Details</Text>
       </Pressable>
     </Pressable>
   );
@@ -104,8 +104,8 @@ export function NearbyListingsSheet({
       onClose={onClose}
       snapPoints={SNAP_POINTS}
     >
-      <View className="flex-row items-center justify-between px-4 pb-2 pt-1">
-        <Text className="text-[16px] font-extrabold text-[#0F172A]">
+      <View className="flex-row items-center justify-between px-4 pt-1 pb-2">
+        <Text className="font-extrabold text-[#0F172A] text-[16px]">
           {items.length} nearby place{items.length !== 1 ? "s" : ""}
         </Text>
         <Pressable hitSlop={12} onPress={onClose}>
@@ -124,7 +124,7 @@ export function NearbyListingsSheet({
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View className="items-center py-10">
-            <Text className="text-[14px] font-semibold text-[#9E9890]">
+            <Text className="font-semibold text-[#9E9890] text-[14px]">
               No listings in this area yet.
             </Text>
           </View>

@@ -1,4 +1,28 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(psql postgresql://postgres.zxzpbipgydebthlwdaps:stalzkiedorm@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres -c 'INSERT INTO listing_photos \\(listing_id,url,order_index,alt_text\\) VALUES:*)",
+      "Bash(psql postgresql://postgres.zxzpbipgydebthlwdaps:stalzkiedorm@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres -c 'INSERT INTO listings \\(lister_id,title,description,property_type,price_per_month,size_sqm,max_occupants,lat,lng,address,city,barangay,amenities,status,rating_overall,rating_value,rating_safety,rating_cleanliness,rating_location,rating_landlord,review_count\\) VALUES \\('\\\\''26cdb4ff-8f5e-4886-9b9c-0a11cd8c0cb2'\\\\'','\\\\''JP227 Dorm - 2 min to USLS Main Gate'\\\\'','\\\\''JP227 is a well-known student dorm address right on the strip near USLS Bacolod main entrance. Tight-knit community of La Salle students. Offers single occupancy and shared rooms. All rooms have study desk, individual cabinet, and electric fan. Communal bathroom maintained 3x daily. Free WiFi on all floors. Carenderia and convenience store within the building compound.'\\\\'','\\\\''dorm'\\\\'',3200.00,11.0,2,10.6760,122.9540,'\\\\''JP227 La Salle Avenue, Mandalagan'\\\\'','\\\\''Bacolod City'\\\\'','\\\\''Mandalagan'\\\\'','\\\\''[\"wifi\",\"cctv\",\"desk\",\"shared_bathroom\",\"convenience_store\",\"laundry\"]'\\\\'','\\\\''active'\\\\'',4.4,4.7,4.5,4.3,4.9,4.3,41\\) RETURNING id;')",
+      "Bash(psql postgresql://postgres.zxzpbipgydebthlwdaps:stalzkiedorm@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres -c 'INSERT INTO listings \\(lister_id,title,description,property_type,price_per_month,size_sqm,max_occupants,lat,lng,address,city,barangay,amenities,status,rating_overall,rating_value,rating_safety,rating_cleanliness,rating_location,rating_landlord,review_count\\) VALUES \\('\\\\''26cdb4ff-8f5e-4886-9b9c-0a11cd8c0cb2'\\\\'','\\\\''La Salle Ave Studio - Female Preferred'\\\\'','\\\\''Self-contained studio unit on La Salle Avenue, across from the USLS chapel side entrance. Female preferred but open to all. Private CR with hot and cold shower, window-type aircon, study nook with built-in shelves, mini ref, and induction cooker. 150 Mbps fiber WiFi. Landlord on ground floor. Very safe street, well-lit at night. 6-min walk to USLS Science and Tech building.'\\\\'','\\\\''studio'\\\\'',5800.00,18.0,1,10.6753,122.9536,'\\\\''La Salle Avenue opp. Chapel Gate'\\\\'','\\\\''Bacolod City'\\\\'','\\\\''Mandalagan'\\\\'','\\\\''[\"wifi\",\"aircon\",\"private_bathroom\",\"ref\",\"hot_water\",\"desk\",\"induction_cooker\",\"female_preferred\"]'\\\\'','\\\\''active'\\\\'',4.9,4.8,4.9,4.9,4.8,4.9,15\\) RETURNING id;')",
+      "Bash(psql postgresql://postgres.zxzpbipgydebthlwdaps:stalzkiedorm@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres -c 'INSERT INTO listings \\(lister_id,title,description,property_type,price_per_month,size_sqm,max_occupants,lat,lng,address,city,barangay,amenities,status,rating_overall,rating_value,rating_safety,rating_cleanliness,rating_location,rating_landlord,review_count\\) VALUES \\('\\\\''26cdb4ff-8f5e-4886-9b9c-0a11cd8c0cb2'\\\\'','\\\\''Mandalagan 1-BR Apartment - Near USLS and SM City'\\\\'','\\\\''1-bedroom apartment in Mandalagan, 5 minutes walk to USLS and 10 minutes to SM City Bacolod. Perfect for two students splitting rent. Separate bedroom with two single beds, living area, private CR, full kitchen with LPG stove, ref, and dining set. Aircon in bedroom. Generator for brownouts. Free parking one motorcycle. Nearby jeepney terminal for North Bus Terminal routes.'\\\\'','\\\\''apartment'\\\\'',7500.00,26.0,2,10.6778,122.9575,'\\\\''Mandalagan Street near USLS'\\\\'','\\\\''Bacolod City'\\\\'','\\\\''Mandalagan'\\\\'','\\\\''[\"wifi\",\"aircon\",\"private_bathroom\",\"kitchen\",\"ref\",\"generator\",\"parking\",\"hot_water\",\"dining_area\"]'\\\\'','\\\\''active'\\\\'',4.6,4.5,4.7,4.6,4.7,4.6,22\\) RETURNING id;')",
+      "Bash(psql postgresql://postgres.zxzpbipgydebthlwdaps:stalzkiedorm@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres -c 'SELECT l.title, l.property_type, l.price_per_month, ROUND\\(l.lat::numeric,4\\) as lat, ROUND\\(l.lng::numeric,4\\) as lng, COUNT\\(p.id\\) as photos FROM listings l LEFT JOIN listing_photos p ON p.listing_id = l.id WHERE l.lister_id = '\\\\''26cdb4ff-8f5e-4886-9b9c-0a11cd8c0cb2'\\\\'' GROUP BY l.id ORDER BY l.created_at ASC;')",
+      "Bash(psql postgresql://postgres.zxzpbipgydebthlwdaps:stalzkiedorm@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres -c '\\\\df get_finder_find_quota')",
+      "Bash(psql postgresql://postgres.zxzpbipgydebthlwdaps:stalzkiedorm@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres -c 'SELECT prosrc FROM pg_proc WHERE proname = '\\\\''get_finder_find_quota'\\\\'';')",
+      "Bash(psql postgresql://postgres.zxzpbipgydebthlwdaps:stalzkiedorm@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres -c ':*)",
+      "Bash(find /c/Users/poyhi/wheresmydorm -name \"package.json\" -exec grep -l \"test\\\\|jest\\\\|vitest\" {} \\\\;)",
+      "Bash(pnpm turbo:*)",
+      "Bash(pnpm build:*)",
+      "Bash(turbo check-types:*)",
+      "Bash(pnpm --filter native exec tsc --noEmit)",
+      "Bash(pnpm --filter @wheresmydorm/api exec tsc --noEmit)",
+      "Bash(pnpm biome:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(pnpm check:*)",
+      "Bash(pnpm exec:*)",
+      "Bash(pnpm --filter native check-types)"
+    ]
+  },
   "enabledPlugins": {
     "expo@claude-plugins-official": true,
     "upgrading-react-native@callstack-agent-skills": true,

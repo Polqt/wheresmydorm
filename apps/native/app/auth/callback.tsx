@@ -54,7 +54,6 @@ export default function AutahCallbackScreen() {
         } else {
           throw new Error("Missing OAuth callback data.");
         }
-
       } catch (authError) {
         if (!isCancelled) {
           setErrorMessage(

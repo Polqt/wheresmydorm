@@ -20,7 +20,11 @@ import { PROFILE_QUERY_KEY } from "@/lib/auth";
 import { saveSessionForRestore } from "@/services/auth";
 import { getOrCreateCurrentProfile } from "@/services/profile";
 import { useAuthFlowStore } from "@/stores/auth";
-import { finderHomeRoute, listerHomeRoute, roleHomeRoute } from "@/utils/routes";
+import {
+  finderHomeRoute,
+  listerHomeRoute,
+  roleHomeRoute,
+} from "@/utils/routes";
 import { supabase } from "@/utils/supabase";
 
 type AuthContextValue = {
@@ -61,7 +65,9 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isAwaitingRoleSync = useAuthFlowStore((s) => s.isAwaitingRoleSync);
-  const clearAwaitingRoleSync = useAuthFlowStore((s) => s.clearAwaitingRoleSync);
+  const clearAwaitingRoleSync = useAuthFlowStore(
+    (s) => s.clearAwaitingRoleSync,
+  );
   const clearPendingEmail = useAuthFlowStore((s) => s.clearPendingEmail);
 
   const profileQuery = useQuery({
@@ -95,12 +101,12 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, nextSession) => {
-        setSession(nextSession);
-        queryClient.invalidateQueries({ queryKey: [PROFILE_QUERY_KEY] });
-      },
-    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      queryClient.invalidateQueries({ queryKey: [PROFILE_QUERY_KEY] });
+    });
 
     return () => {
       mounted = false;
@@ -111,7 +117,8 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const role = profileQuery.data?.role ?? null;
   const canNavigate = Boolean(navigationState?.key);
   const isReady =
-    isSessionReady && (!session || (!profileQuery.isLoading && !profileQuery.error));
+    isSessionReady &&
+    (!session || (!profileQuery.isLoading && !profileQuery.error));
   const isInAuth = firstSegment === "auth";
   const isIndexRoute = firstSegment === undefined;
   const isSetupRoute = isInAuth && SETUP_SCREENS.has(secondSegment ?? "");
@@ -187,7 +194,9 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     };
 
     void sync();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [
     clearAwaitingRoleSync,
     isAwaitingRoleSync,
@@ -245,12 +254,20 @@ function AuthGate({ children }: { children: React.ReactNode }) {
             ? "Having trouble loading your profile. You can retry or sign out."
             : "Checking your session..."
         }
-        title={loadingTooLong ? "Taking longer than expected" : "Preparing your account"}
+        title={
+          loadingTooLong
+            ? "Taking longer than expected"
+            : "Preparing your account"
+        }
         actions={
           loadingTooLong ? (
             <>
               <LaunchScreenButton label="Retry" onPress={handleRetry} />
-              <LaunchScreenButton label="Sign out" onPress={signOut} variant="ghost" />
+              <LaunchScreenButton
+                label="Sign out"
+                onPress={signOut}
+                variant="ghost"
+              />
             </>
           ) : undefined
         }

@@ -87,7 +87,7 @@ export const OnboardingSlide = React.memo(function OnboardingSlide({
           style={{ backgroundColor: config.badge }}
         >
           <Text
-            className="text-[11px] font-bold uppercase tracking-[2px]"
+            className="font-bold text-[11px] uppercase tracking-[2px]"
             style={{ color: config.badgeText }}
           >
             {overline}
@@ -117,7 +117,7 @@ export const OnboardingSlide = React.memo(function OnboardingSlide({
             style={{ backgroundColor: config.card }}
           >
             <Text
-              className="text-[11px] font-semibold uppercase tracking-[1.4px]"
+              className="font-semibold text-[11px] uppercase tracking-[1.4px]"
               style={{ color: config.body }}
             >
               {stat.label}

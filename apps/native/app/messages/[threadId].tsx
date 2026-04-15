@@ -4,19 +4,12 @@ import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import {
-  Alert,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
-
+import { Alert, Pressable, Text, TextInput, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/providers/auth-provider";
 import { uploadPickedAsset } from "@/services/storage";
-import { supabase } from "@/utils/supabase";
 import { trpc } from "@/utils/api-client";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { supabase } from "@/utils/supabase";
 
 function statusTone(status: "closed" | "pending" | "responded") {
   switch (status) {
@@ -62,10 +55,10 @@ export default function ThreadScreen() {
   const markRead = useMutation(trpc.messages.markRead.mutationOptions());
   const sendMessage = useMutation(
     trpc.messages.send.mutationOptions({
-      onError: (error) => {
+      onError: () => {
         setFeedback({
           tone: "error",
-          message: error.message || "Message could not be sent.",
+          message: "Your message couldn't be sent. Please try again.",
         });
       },
       onSuccess: async () => {
@@ -85,10 +78,10 @@ export default function ThreadScreen() {
   );
   const blockUser = useMutation(
     trpc.messages.blockUser.mutationOptions({
-      onError: (error) => {
+      onError: () => {
         setFeedback({
           tone: "error",
-          message: error.message || "User block failed.",
+          message: "Something went wrong. Please try again.",
         });
       },
       onSuccess: () => {
@@ -101,10 +94,10 @@ export default function ThreadScreen() {
   );
   const reportConversation = useMutation(
     trpc.messages.reportConversation.mutationOptions({
-      onError: (error) => {
+      onError: () => {
         setFeedback({
           tone: "error",
-          message: error.message || "Conversation report failed.",
+          message: "We couldn't submit your report. Please try again.",
         });
       },
       onSuccess: () => {
@@ -117,10 +110,10 @@ export default function ThreadScreen() {
   );
   const setInquiryStatus = useMutation(
     trpc.messages.setInquiryStatus.mutationOptions({
-      onError: (error) => {
+      onError: () => {
         setFeedback({
           tone: "error",
-          message: error.message || "Inquiry status update failed.",
+          message: "Couldn't update inquiry status. Please try again.",
         });
       },
       onSuccess: async (_, variables) => {
@@ -224,7 +217,7 @@ export default function ThreadScreen() {
             style={{ backgroundColor: currentStatus.bg }}
           >
             <Text
-              className="text-[11px] font-extrabold uppercase tracking-[0.8px]"
+              className="font-extrabold text-[11px] uppercase tracking-[0.8px]"
               style={{ color: currentStatus.text }}
             >
               Inquiry {currentStatus.label}
@@ -253,7 +246,7 @@ export default function ThreadScreen() {
                   }}
                 >
                   <Text
-                    className="text-[11px] font-extrabold uppercase tracking-[0.7px]"
+                    className="font-extrabold text-[11px] uppercase tracking-[0.7px]"
                     style={{ color: active ? tone.text : "#475569" }}
                   >
                     {tone.label}
@@ -278,7 +271,9 @@ export default function ThreadScreen() {
           </Pressable>
           <Pressable
             className="self-start rounded-full border border-amber-200 px-3 py-2"
-            disabled={!threadQuery.data?.threadId || reportConversation.isPending}
+            disabled={
+              !threadQuery.data?.threadId || reportConversation.isPending
+            }
             onPress={() =>
               threadQuery.data?.threadId
                 ? Alert.alert(
@@ -312,8 +307,10 @@ export default function ThreadScreen() {
             }`}
           >
             <Text
-              className={`text-[12px] font-bold ${
-                feedback.tone === "success" ? "text-[#166534]" : "text-[#B91C1C]"
+              className={`font-bold text-[12px] ${
+                feedback.tone === "success"
+                  ? "text-[#166534]"
+                  : "text-[#B91C1C]"
               }`}
             >
               {feedback.message}

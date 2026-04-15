@@ -11,9 +11,9 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorRetry } from "@/components/ui/error-retry";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import type { SavedListing } from "@/types/listings";
+import { trpc } from "@/utils/api-client";
 import { formatCurrency } from "@/utils/profile";
 import { finderHomeRoute, listingDetailRoute } from "@/utils/routes";
-import { trpc } from "@/utils/api-client";
 
 const COVER_FALLBACK =
   "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=400";
@@ -36,22 +36,25 @@ const SavedRow = memo(function SavedRow({
         transition={200}
       />
       <View className="flex-1 justify-center">
-        <Text className="text-[16px] font-bold leading-[21px] text-[#111827]" numberOfLines={2}>
+        <Text
+          className="font-bold text-[#111827] text-[16px] leading-[21px]"
+          numberOfLines={2}
+        >
           {item.title}
         </Text>
-        <Text className="mt-[5px] text-[13px] text-[#736C63]">
+        <Text className="mt-[5px] text-[#736C63] text-[13px]">
           {[item.city, item.barangay].filter(Boolean).join(" - ")}
         </Text>
-        <Text className="mt-2 text-[14px] font-extrabold text-[#0B2D23]">
+        <Text className="mt-2 font-extrabold text-[#0B2D23] text-[14px]">
           {formatCurrency(item.pricePerMonth)}/mo
         </Text>
         <View className="mt-2.5 flex-row items-center justify-between">
-          <Text className="text-[12px] capitalize text-[#8A8176]">
+          <Text className="text-[#8A8176] text-[12px] capitalize">
             {item.propertyType.replaceAll("_", " ")}
           </Text>
           <View className="flex-row items-center gap-1">
             <Ionicons color="#F59E0B" name="star" size={12} />
-            <Text className="text-[12px] font-bold text-slate-700">
+            <Text className="font-bold text-[12px] text-slate-700">
               {item.ratingOverall ? item.ratingOverall.toFixed(1) : "New"}
             </Text>
           </View>
@@ -81,19 +84,21 @@ export default function SavedTabScreen() {
   const avgPrice =
     savedItems.length > 0
       ? Math.round(
-          savedItems.reduce((sum, item) => sum + Number(item.pricePerMonth), 0) /
-            savedItems.length,
+          savedItems.reduce(
+            (sum, item) => sum + Number(item.pricePerMonth),
+            0,
+          ) / savedItems.length,
         )
       : null;
   const topCity =
     savedItems.length > 0
-      ? Object.entries(
+      ? (Object.entries(
           savedItems.reduce<Record<string, number>>((acc, item) => {
             const key = item.city.trim();
             acc[key] = (acc[key] ?? 0) + 1;
             return acc;
           }, {}),
-        ).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+        ).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null)
       : null;
 
   return (
@@ -104,10 +109,7 @@ export default function SavedTabScreen() {
       />
 
       {savedQuery.isError ? (
-        <ErrorRetry
-          message="Failed to load saved listings."
-          onRetry={() => savedQuery.refetch()}
-        />
+        <ErrorRetry context="saved" onRetry={() => savedQuery.refetch()} />
       ) : savedQuery.isLoading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator color="#0B2D23" size="large" />
@@ -116,47 +118,56 @@ export default function SavedTabScreen() {
         <FlashList
           contentContainerStyle={{ paddingBottom: 40, paddingHorizontal: 18 }}
           data={savedItems}
+          estimatedItemSize={128}
           keyExtractor={keyExtractor}
           ItemSeparatorComponent={() => <View className="h-px bg-[#E9E2D8]" />}
           ListHeaderComponent={
             savedItems.length > 0 ? (
               <View className="mb-4 rounded-[28px] bg-[#FFFDFC] p-5">
-                <Text className="text-[24px] font-extrabold tracking-[-0.6px] text-[#111827]">
+                <Text className="font-extrabold text-[#111827] text-[24px] tracking-[-0.6px]">
                   Your shortlist is ready
                 </Text>
-                <Text className="mt-1.5 text-[14px] leading-6 text-[#706A5F]">
-                  Compare saved places before you message a lister or revisit the
-                  map.
+                <Text className="mt-1.5 text-[#706A5F] text-[14px] leading-6">
+                  Compare saved places before you message a lister or revisit
+                  the map.
                 </Text>
 
                 <View className="mt-4 flex-row gap-2.5">
                   <View className="flex-1 rounded-[22px] bg-[#F5F0E8] px-4 py-3">
-                    <Text className="text-[20px] font-extrabold text-[#111827]">
+                    <Text className="font-extrabold text-[#111827] text-[20px]">
                       {savedItems.length}
                     </Text>
-                    <Text className="mt-1 text-[12px] text-[#706A5F]">
+                    <Text className="mt-1 text-[#706A5F] text-[12px]">
                       Saved places
                     </Text>
                   </View>
                   <View className="flex-1 rounded-[22px] bg-[#F5F0E8] px-4 py-3">
-                    <Text className="text-[20px] font-extrabold text-[#111827]">
+                    <Text className="font-extrabold text-[#111827] text-[20px]">
                       {avgPrice ? formatCurrency(avgPrice) : "-"}
                     </Text>
-                    <Text className="mt-1 text-[12px] text-[#706A5F]">
+                    <Text className="mt-1 text-[#706A5F] text-[12px]">
                       Avg monthly
+                    </Text>
+                  </View>
+                  <View className="flex-1 rounded-[22px] bg-[#F5F0E8] px-4 py-3">
+                    <Text className="font-extrabold text-[#111827] text-[20px]">
+                      {new Set(savedItems.map((i) => i.propertyType)).size}
+                    </Text>
+                    <Text className="mt-1 text-[#706A5F] text-[12px]">
+                      Types
                     </Text>
                   </View>
                 </View>
 
                 {topCity ? (
                   <View className="mt-4 rounded-[22px] bg-[#0B2D23] px-4 py-4">
-                    <Text className="text-[12px] font-bold uppercase tracking-[0.8px] text-[#D9E7E1]">
+                    <Text className="font-bold text-[#D9E7E1] text-[12px] uppercase tracking-[0.8px]">
                       Strongest cluster
                     </Text>
-                    <Text className="mt-1 text-[18px] font-extrabold text-white">
+                    <Text className="mt-1 font-extrabold text-[18px] text-white">
                       {topCity}
                     </Text>
-                    <Text className="mt-1 text-[13px] leading-5 text-[#D9E7E1]">
+                    <Text className="mt-1 text-[#D9E7E1] text-[13px] leading-5">
                       Most of your saved inventory is currently centered here.
                     </Text>
                   </View>
@@ -169,7 +180,10 @@ export default function SavedTabScreen() {
               illustration="🏠"
               title="No saved listings yet"
               description="Bookmark listings from the map or discover tab to build your shortlist."
-              action={{ label: "Browse map", onPress: () => router.replace(finderHomeRoute()) }}
+              action={{
+                label: "Browse map",
+                onPress: () => router.replace(finderHomeRoute()),
+              }}
             />
           }
           renderItem={renderItem}

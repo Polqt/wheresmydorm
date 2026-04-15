@@ -43,10 +43,12 @@ export async function uploadFileUri({
 }) {
   const file = new FileSystem.File(uri);
   const fileBytes = new Uint8Array(await file.arrayBuffer());
-  const { error } = await supabase.storage.from(bucket).upload(filePath, fileBytes, {
-    contentType,
-    upsert,
-  });
+  const { error } = await supabase.storage
+    .from(bucket)
+    .upload(filePath, fileBytes, {
+      contentType,
+      upsert,
+    });
 
   if (error) {
     throw error;

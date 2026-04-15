@@ -40,16 +40,13 @@ export function FinderFeedScreen() {
             onPress={() => onCreatePost()}
           >
             <Ionicons color="#ffffff" name="add" size={16} />
-            <Text className="text-[13px] font-bold text-white">Write</Text>
+            <Text className="font-bold text-[13px] text-white">Write</Text>
           </Pressable>
         }
       />
 
       {isError ? (
-        <ErrorRetry
-          message="Failed to load feed."
-          onRetry={onRefetch}
-        />
+        <ErrorRetry context="feed" onRetry={onRefetch} />
       ) : isLoading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator color="#0B2D23" size="large" />
@@ -64,6 +61,7 @@ export function FinderFeedScreen() {
             justifyContent: items.length === 0 ? "center" : undefined,
           }}
           data={items}
+          estimatedItemSize={180}
           ItemSeparatorComponent={FeedSeparator}
           keyExtractor={(item: FeedItem) => item.id}
           ListEmptyComponent={
@@ -76,7 +74,10 @@ export function FinderFeedScreen() {
           }
           ListFooterComponent={
             isFetchingNextPage ? (
-              <ActivityIndicator color="#0B2D23" style={{ paddingVertical: 20 }} />
+              <ActivityIndicator
+                color="#0B2D23"
+                style={{ paddingVertical: 20 }}
+              />
             ) : null
           }
           onEndReached={onEndReached}

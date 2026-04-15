@@ -1,10 +1,10 @@
 import { Alert, Pressable, Text, View } from "react-native";
 
 import {
+  type AppRole,
   formatAdminDate,
   getRoleTone,
   getUserDisplayName,
-  type AppRole,
 } from "@/services/admin";
 import type { AdminUserItem } from "@/types/platform";
 
@@ -60,7 +60,7 @@ export function UserCard({
           style={{ backgroundColor: tone.bg }}
         >
           <Text
-            className="text-[11px] font-extrabold capitalize"
+            className="font-extrabold text-[11px] capitalize"
             style={{ color: tone.text }}
           >
             {item.role}
@@ -69,17 +69,22 @@ export function UserCard({
 
         {item.isPaidFinder ? (
           <View className="rounded-full bg-[#FFF7ED] px-2 py-1">
-            <Text className="text-[10px] font-extrabold text-[#C2410C]">PAID</Text>
+            <Text className="font-extrabold text-[#C2410C] text-[10px]">
+              PAID
+            </Text>
           </View>
         ) : null}
 
-        <Text className="ml-auto text-[12px] font-semibold text-[#8B857C]">
+        <Text className="ml-auto font-semibold text-[#8B857C] text-[12px]">
           {formatAdminDate(item.createdAt)}
         </Text>
       </View>
 
       {/* User info */}
-      <Text className="mt-2.5 text-base font-extrabold text-slate-900" numberOfLines={1}>
+      <Text
+        className="mt-2.5 font-extrabold text-base text-slate-900"
+        numberOfLines={1}
+      >
         {getUserDisplayName(item)}
       </Text>
       <Text className="mt-0.5 text-[11px] text-slate-400" numberOfLines={1}>
@@ -95,7 +100,7 @@ export function UserCard({
           disabled={isBusy}
           onPress={handleBanPress}
         >
-          <Text className="text-[12px] font-extrabold text-red-700">
+          <Text className="font-extrabold text-[12px] text-red-700">
             {isBanActive ? "Updating..." : "Ban / Unban"}
           </Text>
         </Pressable>
@@ -108,7 +113,7 @@ export function UserCard({
             disabled={isBusy}
             onPress={() => onToggleFinderPaid(item.id, item.isPaidFinder)}
           >
-            <Text className="text-[12px] font-extrabold text-slate-900">
+            <Text className="font-extrabold text-[12px] text-slate-900">
               {isPaidActive
                 ? "Updating..."
                 : item.isPaidFinder

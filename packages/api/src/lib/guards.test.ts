@@ -1,4 +1,4 @@
-import { TRPCError } from "@trpc/server";
+import type { TRPCError } from "@trpc/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockListingsFindFirst, mockProfilesFindFirst } = vi.hoisted(() => ({
@@ -33,8 +33,8 @@ vi.mock("@wheresmydorm/db", () => ({
 import {
   ensureAdmin,
   ensureFinder,
-  ensureListingOwner,
   ensureLister,
+  ensureListingOwner,
   getCurrentUserRole,
 } from "./guards";
 

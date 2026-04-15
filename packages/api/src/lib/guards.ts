@@ -53,7 +53,8 @@ export async function assertListingOwner(input: {
   if (listing.listerId !== input.userId) {
     throw new TRPCError({
       code: "FORBIDDEN",
-      message: input.message ?? "Only the listing owner can perform this action.",
+      message:
+        input.message ?? "Only the listing owner can perform this action.",
     });
   }
 
@@ -94,7 +95,9 @@ export async function ensureLister(options: LegacyOptions): Promise<void> {
 export const ensureListingOwner = assertListingOwner;
 
 /** @deprecated Internal — use ctx.role from createContext */
-export async function getCurrentUserRole(userId: string): Promise<AppRole | null> {
+export async function getCurrentUserRole(
+  userId: string,
+): Promise<AppRole | null> {
   return _fetchRole(userId);
 }
 

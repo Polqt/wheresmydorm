@@ -40,8 +40,22 @@ export const messageThreadProcedures = {
       where: inArray(messages.id, ids),
       with: {
         listing: { columns: { id: true, title: true } },
-        sender: { columns: { id: true, avatarUrl: true, firstName: true, lastName: true } },
-        receiver: { columns: { id: true, avatarUrl: true, firstName: true, lastName: true } },
+        sender: {
+          columns: {
+            id: true,
+            avatarUrl: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        receiver: {
+          columns: {
+            id: true,
+            avatarUrl: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
       },
     });
 
@@ -121,7 +135,8 @@ export const messageThreadProcedures = {
         };
       })
       .sort(
-        (l, r) => r.lastMessage.createdAt.getTime() - l.lastMessage.createdAt.getTime(),
+        (l, r) =>
+          r.lastMessage.createdAt.getTime() - l.lastMessage.createdAt.getTime(),
       );
   }),
 
@@ -135,38 +150,73 @@ export const messageThreadProcedures = {
           eq(messages.listingId, listingId),
           eq(messages.isDeleted, false),
           or(
-            and(eq(messages.senderId, ctx.userId), eq(messages.receiverId, otherUserId)),
-            and(eq(messages.senderId, otherUserId), eq(messages.receiverId, ctx.userId)),
+            and(
+              eq(messages.senderId, ctx.userId),
+              eq(messages.receiverId, otherUserId),
+            ),
+            and(
+              eq(messages.senderId, otherUserId),
+              eq(messages.receiverId, ctx.userId),
+            ),
           ),
         ),
         orderBy: [asc(messages.createdAt)],
         with: {
           listing: { columns: { id: true, title: true } },
-          sender: { columns: { id: true, avatarUrl: true, firstName: true, lastName: true } },
-          receiver: { columns: { id: true, avatarUrl: true, firstName: true, lastName: true } },
+          sender: {
+            columns: {
+              id: true,
+              avatarUrl: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          receiver: {
+            columns: {
+              id: true,
+              avatarUrl: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
         },
       });
 
+      // Run fallback queries in parallel — only fire what's actually needed
+      const needsFallbackListing = threadMessages[0]?.listing == null;
+      const needsFallbackUser = threadMessages[0] == null;
+
+      const [fallbackListingResult, fallbackOtherUserResult, listingOwner] =
+        await Promise.all([
+          needsFallbackListing
+            ? db.query.listings.findFirst({
+                where: eq(listings.id, listingId),
+                columns: { id: true, title: true },
+              })
+            : Promise.resolve(undefined),
+          needsFallbackUser
+            ? db.query.profiles.findFirst({
+                where: eq(profiles.id, otherUserId),
+                columns: {
+                  id: true,
+                  avatarUrl: true,
+                  firstName: true,
+                  lastName: true,
+                },
+              })
+            : Promise.resolve(undefined),
+          db.query.listings.findFirst({
+            where: eq(listings.id, listingId),
+            columns: { listerId: true },
+          }),
+        ]);
+
       const fallbackListing =
-        threadMessages[0]?.listing ??
-        (await db.query.listings.findFirst({
-          where: eq(listings.id, listingId),
-          columns: { id: true, title: true },
-        })) ??
-        null;
+        threadMessages[0]?.listing ?? fallbackListingResult ?? null;
+      const fallbackOtherUser = needsFallbackUser
+        ? (fallbackOtherUserResult ?? null)
+        : null;
 
-      const fallbackOtherUser =
-        threadMessages[0] == null
-          ? await db.query.profiles.findFirst({
-              where: eq(profiles.id, otherUserId),
-              columns: { id: true, avatarUrl: true, firstName: true, lastName: true },
-            })
-          : null;
-
-      const listingOwner = await db.query.listings.findFirst({
-        where: eq(listings.id, listingId),
-        columns: { listerId: true },
-      });
       const inquiryStatus =
         listingOwner?.listerId === ctx.userId
           ? await db.query.inquiryStatuses.findFirst({

@@ -14,7 +14,8 @@ export const ROLE_CARDS: readonly RoleCard[] = [
   {
     emoji: "\u{1F50D}",
     role: "finder",
-    subtitle: "Search on the map, save places, use AI chat, and review rentals.",
+    subtitle:
+      "Search on the map, save places, use AI chat, and review rentals.",
     title: "I'm looking for a place",
   },
   {
@@ -64,8 +65,8 @@ export function getOAuthErrorMessage(
   }
 
   if (provider === "google" && msg.includes("callback")) {
-    return `${error.message}\n\nExpected mobile callback: ${getAuthRedirectUrl()}`;
+    return `Sign-in callback failed.\n\nExpected mobile callback: ${getAuthRedirectUrl()}`;
   }
 
-  return error.message;
+  return `${getProviderLabel(provider)} sign-in failed. Please try again.`;
 }

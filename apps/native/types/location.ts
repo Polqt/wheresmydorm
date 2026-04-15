@@ -1,4 +1,4 @@
-import { MapFilters } from "./map";
+import type { MapFilters } from "./map";
 
 export type MapStore = {
   filters: MapFilters;

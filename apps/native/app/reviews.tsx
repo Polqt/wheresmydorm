@@ -25,14 +25,14 @@ export default function ReviewsScreen() {
   return (
     <View className="flex-1 bg-[#f7f4ee]" style={{ paddingTop: insets.top }}>
       {/* Header */}
-      <View className="flex-row items-center border-b border-[#E7E0D5] bg-[#fffdf9] px-4 py-3.5">
+      <View className="flex-row items-center border-[#E7E0D5] border-b bg-[#fffdf9] px-4 py-3.5">
         <Pressable
           className="h-9 w-9 items-center justify-center rounded-full bg-[#F0EBE3]"
           onPress={() => router.back()}
         >
           <FontAwesome color="#0f172a" name="arrow-left" size={16} />
         </Pressable>
-        <Text className="flex-1 text-center text-base font-extrabold text-slate-900">
+        <Text className="flex-1 text-center font-extrabold text-base text-slate-900">
           My reviews
         </Text>
         <View className="w-9" />
@@ -40,10 +40,10 @@ export default function ReviewsScreen() {
 
       {/* Summary */}
       <View className="mx-4 mt-3.5 rounded-3xl bg-[#fffdf9] px-4 py-4">
-        <Text className="text-xl font-extrabold text-slate-900">
+        <Text className="font-extrabold text-slate-900 text-xl">
           {items.length} reviews written
         </Text>
-        <Text className="mt-1 text-[13px] leading-5 text-[#706A5F]">
+        <Text className="mt-1 text-[#706A5F] text-[13px] leading-5">
           Revisit your published feedback and any lister responses.
         </Text>
       </View>
@@ -51,14 +51,14 @@ export default function ReviewsScreen() {
       {/* Error state */}
       {reviewsQuery.isError ? (
         <View className="mx-4 mt-3 rounded-2xl bg-red-50 px-4 py-3">
-          <Text className="text-[13px] font-semibold text-red-700">
+          <Text className="font-semibold text-[13px] text-red-700">
             Failed to load reviews.
           </Text>
           <Pressable
             className="mt-2 self-start"
             onPress={() => reviewsQuery.refetch()}
           >
-            <Text className="text-[13px] font-bold text-red-700 underline">
+            <Text className="font-bold text-[13px] text-red-700 underline">
               Retry
             </Text>
           </Pressable>
@@ -72,7 +72,7 @@ export default function ReviewsScreen() {
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
           reviewsQuery.isLoading ? null : (
-            <Text className="py-8 text-center text-[13px] font-semibold text-[#9E9890]">
+            <Text className="py-8 text-center font-semibold text-[#9E9890] text-[13px]">
               You have not written any reviews yet
             </Text>
           )
@@ -85,18 +85,18 @@ export default function ReviewsScreen() {
             {/* Card header */}
             <View className="flex-row items-center justify-between gap-2">
               <Text
-                className="flex-1 text-[15px] font-extrabold text-slate-900"
+                className="flex-1 font-extrabold text-[15px] text-slate-900"
                 numberOfLines={1}
               >
                 {item.listing.title}
               </Text>
-              <Text className="text-[13px] font-extrabold text-[#0B4A30]">
+              <Text className="font-extrabold text-[#0B4A30] text-[13px]">
                 {item.ratingOverall.toFixed(1)}★
               </Text>
             </View>
 
             {/* Location */}
-            <Text className="mt-1 text-[12px] text-[#706A5F]">
+            <Text className="mt-1 text-[#706A5F] text-[12px]">
               {[item.listing.city, item.listing.barangay]
                 .filter(Boolean)
                 .join(" • ")}
@@ -104,7 +104,7 @@ export default function ReviewsScreen() {
 
             {/* Review body */}
             <Text
-              className="mt-2.5 text-[13px] leading-5 text-[#3f3a33]"
+              className="mt-2.5 text-[#3f3a33] text-[13px] leading-5"
               numberOfLines={4}
             >
               {item.body}
@@ -112,10 +112,10 @@ export default function ReviewsScreen() {
 
             {/* Footer */}
             <View className="mt-3 flex-row items-center justify-between">
-              <Text className="text-[12px] font-semibold text-[#8B857C]">
+              <Text className="font-semibold text-[#8B857C] text-[12px]">
                 {formatReviewDate(item.createdAt)}
               </Text>
-              <Text className="text-[12px] font-extrabold text-[#0B2D23]">
+              <Text className="font-extrabold text-[#0B2D23] text-[12px]">
                 {formatCurrency(item.listing.pricePerMonth ?? "0")}
               </Text>
             </View>
@@ -123,11 +123,11 @@ export default function ReviewsScreen() {
             {/* Lister response */}
             {item.listerResponse ? (
               <View className="mt-3.5 rounded-[18px] bg-[#F3F7F4] px-3 py-3">
-                <Text className="text-[11px] font-extrabold uppercase tracking-wide text-[#0B4A30]">
+                <Text className="font-extrabold text-[#0B4A30] text-[11px] uppercase tracking-wide">
                   Lister response
                 </Text>
                 <Text
-                  className="mt-1 text-[12px] leading-[18px] text-[#264136]"
+                  className="mt-1 text-[#264136] text-[12px] leading-[18px]"
                   numberOfLines={3}
                 >
                   {item.listerResponse}

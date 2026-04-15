@@ -146,7 +146,10 @@ export type ProfileUpdateData = {
   propertyTypes?: string[];
 };
 
-export async function uploadAvatar(userId: string, uri: string): Promise<string> {
+export async function uploadAvatar(
+  userId: string,
+  uri: string,
+): Promise<string> {
   const ext = uri.split(".").pop()?.toLowerCase() ?? "jpg";
   const mime = ext === "png" ? "image/png" : "image/jpeg";
   const path = `${userId}/avatar.${ext}`;
@@ -165,18 +168,26 @@ export async function updateCurrentProfile(
   updates: ProfileUpdateData,
 ): Promise<NativeProfile> {
   const row: Record<string, unknown> = {};
-  if (updates.firstName !== undefined)    row.first_name     = updates.firstName;
-  if (updates.lastName !== undefined)     row.last_name      = updates.lastName;
-  if (updates.avatarUrl !== undefined)    row.avatar_url     = updates.avatarUrl;
-  if (updates.bio !== undefined)          row.bio            = updates.bio;
-  if (updates.contactEmail !== undefined) row.contact_email  = updates.contactEmail;
-  if (updates.contactPhone !== undefined) row.contact_phone  = updates.contactPhone;
-  if (updates.finderBudgetMax !== undefined) row.finder_budget_max = updates.finderBudgetMax;
-  if (updates.finderBudgetMin !== undefined) row.finder_budget_min = updates.finderBudgetMin;
-  if (updates.finderPropertyTypes !== undefined) row.finder_property_types = updates.finderPropertyTypes;
-  if (updates.listerPropertyCount !== undefined) row.lister_property_count = updates.listerPropertyCount;
-  if (updates.preferredArea !== undefined) row.preferred_area = updates.preferredArea;
-  if (updates.propertyTypes !== undefined) row.property_types = updates.propertyTypes;
+  if (updates.firstName !== undefined) row.first_name = updates.firstName;
+  if (updates.lastName !== undefined) row.last_name = updates.lastName;
+  if (updates.avatarUrl !== undefined) row.avatar_url = updates.avatarUrl;
+  if (updates.bio !== undefined) row.bio = updates.bio;
+  if (updates.contactEmail !== undefined)
+    row.contact_email = updates.contactEmail;
+  if (updates.contactPhone !== undefined)
+    row.contact_phone = updates.contactPhone;
+  if (updates.finderBudgetMax !== undefined)
+    row.finder_budget_max = updates.finderBudgetMax;
+  if (updates.finderBudgetMin !== undefined)
+    row.finder_budget_min = updates.finderBudgetMin;
+  if (updates.finderPropertyTypes !== undefined)
+    row.finder_property_types = updates.finderPropertyTypes;
+  if (updates.listerPropertyCount !== undefined)
+    row.lister_property_count = updates.listerPropertyCount;
+  if (updates.preferredArea !== undefined)
+    row.preferred_area = updates.preferredArea;
+  if (updates.propertyTypes !== undefined)
+    row.property_types = updates.propertyTypes;
 
   const { data, error } = await supabase
     .from("profiles")

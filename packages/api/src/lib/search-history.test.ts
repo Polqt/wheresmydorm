@@ -9,7 +9,16 @@ vi.mock("./listings", () => ({
     maxPrice: z.number().optional(),
     minPrice: z.number().optional(),
     minRating: z.number().optional(),
-    propertyTypes: z.array(z.enum(["dorm", "apartment", "bedspace", "condo", "boarding_house", "studio"])),
+    propertyTypes: z.array(
+      z.enum([
+        "dorm",
+        "apartment",
+        "bedspace",
+        "condo",
+        "boarding_house",
+        "studio",
+      ]),
+    ),
     query: z.string().optional(),
     sortBy: z.enum([
       "best_match",

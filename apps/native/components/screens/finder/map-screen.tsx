@@ -1,95 +1,80 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import type BottomSheet from "@gorhom/bottom-sheet";
-import type MapView from "react-native-maps";
-
-import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useQuery } from "@tanstack/react-query";
 import * as Location from "expo-location";
 import { router } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
+import type MapView from "react-native-maps";
+import MapViewComponent, { Callout, Marker } from "react-native-maps";
 import Animated, {
-  Easing,
   useAnimatedStyle,
   useSharedValue,
-  withSequence,
+  withDelay,
   withSpring,
   withTiming,
 } from "react-native-reanimated";
-import MapViewComponent, {
-  Callout,
-  Marker,
-} from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import LocationIcon from "@/assets/icons/location.svg";
 import PinIcon from "@/assets/icons/pin.svg";
 import SearchIcon from "@/assets/icons/search.svg";
 import { FilterBar } from "@/components/map/FilterBar";
 import { ListingSheet } from "@/components/map/ListingSheet";
 import { NearbyListingsSheet } from "@/components/map/NearbyListingsSheet";
 import { PropertyPin } from "@/components/map/PropertyPin";
+import { QuotaUpgradeBanner } from "@/components/ui/quota-upgrade-banner";
 import { useDiscoveryListings } from "@/hooks/use-discovery-listings";
 import { getFinderQuotaCopy } from "@/services/finder-search";
 import { useMapStore } from "@/stores/map";
-import { listingDetailRoute } from "@/utils/routes";
 import { trpc } from "@/utils/api-client";
+import { listingDetailRoute } from "@/utils/routes";
 
-function SlidersIcon() {
-  return (
-    <View className="h-[18px] w-[22px] justify-center gap-1">
-      <View className="h-[3px] flex-row items-center gap-[3px]">
-        <View className="h-[7px] w-[7px] rounded-full border-[1.5px] border-white bg-[#0B2D23]" />
-        <View className="h-[2px] flex-1 rounded-full bg-white" />
-      </View>
-      <View className="h-[3px] flex-row items-center gap-[3px]">
-        <View className="h-[2px] flex-1 rounded-full bg-white" />
-        <View className="h-[7px] w-[7px] rounded-full border-[1.5px] border-white bg-[#0B2D23]" />
-      </View>
-      <View className="h-[3px] flex-row items-center gap-[3px]">
-        <View
-          className="h-[2px] rounded-full bg-white"
-          style={{ flex: 0.45 }}
-        />
-        <View className="h-[7px] w-[7px] rounded-full border-[1.5px] border-white bg-[#0B2D23]" />
-        <View
-          className="h-[2px] rounded-full bg-white"
-          style={{ flex: 0.45 }}
-        />
-      </View>
-    </View>
-  );
-}
+function DialButton({
+  delayMs,
+  icon,
+  label,
+  loading,
+  onPress,
+}: {
+  delayMs: number;
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  loading?: boolean;
+  onPress: () => void;
+}) {
+  const translateY = useSharedValue(40);
+  const opacity = useSharedValue(0);
 
-function LocationButton({ onPress }: { onPress: () => void }) {
-  const scale = useSharedValue(1);
-  const [active, setActive] = useState(false);
-
-  const handlePress = useCallback(() => {
-    scale.set(
-      withSequence(
-      withTiming(1.2, { duration: 120, easing: Easing.out(Easing.quad) }),
-      withSpring(1.0, { damping: 6, stiffness: 80 }),
-      ),
+  useEffect(() => {
+    translateY.set(
+      withDelay(delayMs, withSpring(0, { damping: 14, stiffness: 160 })),
     );
-    setActive(true);
-    setTimeout(() => setActive(false), 1000);
-    onPress();
-  }, [onPress, scale]);
+    opacity.set(withDelay(delayMs, withTiming(1, { duration: 120 })));
+    return () => {
+      translateY.set(withTiming(40, { duration: 100 }));
+      opacity.set(withTiming(0, { duration: 80 }));
+    };
+  }, [delayMs, opacity, translateY]);
 
   const animStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.get() }],
+    transform: [{ translateY: translateY.get() }],
+    opacity: opacity.get(),
   }));
 
   return (
-    <Pressable onPress={handlePress} className={FLOATING_BUTTON_CLASS_NAME}>
-      <Animated.View style={animStyle}>
-        <LocationIcon
-          width={22}
-          height={22}
-          color={active ? "#EA580C" : "#0B2D23"}
-        />
-      </Animated.View>
-    </Pressable>
+    <Animated.View style={[animStyle, { alignItems: "center", gap: 4 }]}>
+      <Pressable
+        className="h-11 w-11 items-center justify-center rounded-full border border-[#DDD8CF] bg-[rgba(255,253,249,0.96)]"
+        onPress={onPress}
+      >
+        {loading ? (
+          <Ionicons color="#0B2D23" name="sync-outline" size={18} />
+        ) : (
+          <Ionicons color="#0B2D23" name={icon} size={18} />
+        )}
+      </Pressable>
+      <Text className="font-bold text-[#0B2D23] text-[10px]">{label}</Text>
+    </Animated.View>
   );
 }
 
@@ -104,12 +89,15 @@ export default function MapTabScreen() {
     canUseAdvancedFilters,
     coords,
     error,
+    isPaid,
     isSearching,
     items,
     label,
     quota,
+    remainingFinds,
     runSearch,
   } = useDiscoveryListings();
+
   const filters = useMapStore((s) => s.filters);
   const selectedListingId = useMapStore((s) => s.selectedListingId);
   const isFilterOpen = useMapStore((s) => s.isFilterOpen);
@@ -121,29 +109,24 @@ export default function MapTabScreen() {
   const [userCoords, setUserCoords] = useState<typeof coords | null>(null);
   const [calloutVisible, setCalloutVisible] = useState(false);
   const [is3D, setIs3D] = useState(true);
+  const [isDialOpen, setIsDialOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
-
     async function loadLocation() {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") return;
-
       const pos = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
-
       if (!isMounted) return;
-
       setUserCoords({
         ...coords,
         latitude: pos.coords.latitude,
         longitude: pos.coords.longitude,
       });
     }
-
     loadLocation().catch(() => {});
-
     return () => {
       isMounted = false;
     };
@@ -152,13 +135,10 @@ export default function MapTabScreen() {
   const centerOnLocation = useCallback(() => {
     const target = userCoords ?? coords;
     mapRef.current?.animateToRegion(
-      {
-        ...target,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      },
+      { ...target, latitudeDelta: 0.01, longitudeDelta: 0.01 },
       400,
     );
+    setIsDialOpen(false);
   }, [userCoords, coords]);
 
   const toggle3D = useCallback(() => {
@@ -172,7 +152,11 @@ export default function MapTabScreen() {
 
   const handleMapReady = useCallback(() => {
     mapRef.current?.animateCamera(
-      { center: { latitude: coords.latitude, longitude: coords.longitude }, pitch: 45, zoom: 16 },
+      {
+        center: { latitude: coords.latitude, longitude: coords.longitude },
+        pitch: 45,
+        zoom: 16,
+      },
       { duration: 600 },
     );
   }, [coords.latitude, coords.longitude]);
@@ -186,6 +170,12 @@ export default function MapTabScreen() {
       setCalloutVisible(true);
     }
   }, [calloutVisible]);
+
+  const handleFindNearby = useCallback(async () => {
+    setIsDialOpen(false);
+    await runSearch();
+    nearbySheetRef.current?.snapToIndex(0);
+  }, [runSearch]);
 
   const selectedListingQuery = useQuery({
     ...trpc.listings.getById.queryOptions(
@@ -204,10 +194,10 @@ export default function MapTabScreen() {
   if (process.env.EXPO_OS === "web") {
     return (
       <View className="flex-1 items-center justify-center bg-[#F7F4EE] px-7">
-        <Text className="text-center text-[22px] font-extrabold text-[#0F172A]">
+        <Text className="text-center font-extrabold text-[#0F172A] text-[22px]">
           Map view is optimized for the Expo native app.
         </Text>
-        <Text className="mt-[10px] text-center text-[14px] leading-[22px] text-slate-600">
+        <Text className="mt-[10px] text-center text-[14px] text-slate-600 leading-[22px]">
           Open this screen on Android or iOS to see GPS centering, property
           clustering, and the bottom sheet listing preview.
         </Text>
@@ -250,7 +240,7 @@ export default function MapTabScreen() {
             <PinIcon width={34} height={38} />
             <Callout tooltip>
               <View className="h-9 min-w-[120px] items-center justify-center rounded border border-[rgba(221,216,207,0.85)] bg-[rgba(255,253,249,0.97)] px-[14px]">
-                <Text className="text-[13px] font-bold text-[#3D3830]">
+                <Text className="font-bold text-[#3D3830] text-[13px]">
                   You are here
                 </Text>
               </View>
@@ -259,59 +249,48 @@ export default function MapTabScreen() {
         )}
       </MapViewComponent>
 
+      {/* Top controls */}
       <View
-        className="absolute left-3 right-3 gap-2"
+        className="absolute right-3 left-3 gap-2"
         style={{ top: insets.top + 10 }}
       >
-        <View className="flex-row items-start gap-2.5">
+        {/* Search bar row */}
+        <View className="flex-row items-center gap-2.5">
           <Pressable
-            className="flex-1 rounded-[26px] border border-[#DDD8CF] bg-[rgba(255,253,249,0.94)] px-4 py-4"
+            className="flex-1 rounded-[26px] border border-[#DDD8CF] bg-[rgba(255,253,249,0.94)] px-4 py-3.5"
             onPress={() => setFilterOpen(true)}
           >
             <View className="flex-row items-center gap-2">
               <SearchIcon width={17} height={17} color="#706A5F" />
-              <Text className="flex-1 text-[14px] font-semibold text-[#0F172A]">
+              <Text className="flex-1 font-semibold text-[#0F172A] text-[14px]">
                 Search areas, schools, or landmarks
               </Text>
-            </View>
-            <Text className="mt-2 text-[12px] leading-[18px] text-[#8C8478]">
-              Dorm name lookup is coming next. For now, use Find nearby and the
-              bottom sheet filters.
-            </Text>
-          </Pressable>
-
-          <View className="gap-2">
-            <Pressable
-              onPress={toggle3D}
-              className={`${FLOATING_BUTTON_CLASS_NAME} ${
-                is3D ? "border-[#0B2D23] bg-[#0B2D23]" : ""
-              }`}
-            >
-              <Text
-                className={`text-[13px] font-extrabold tracking-[0.5px] ${
-                  is3D ? "text-white" : "text-[#0B2D23]"
-                }`}
+              <Pressable
+                onPress={toggle3D}
+                className={`rounded-full px-2.5 py-1 ${is3D ? "bg-[#0B2D23]" : "bg-[#EEF5F1]"}`}
               >
-                3D
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setFilterOpen(true)}
-              className="h-[46px] w-[46px] items-center justify-center rounded-[14px] bg-[#0B2D23]"
-            >
-              <SlidersIcon />
-            </Pressable>
-          </View>
+                <Text
+                  className={`font-bold text-[11px] ${is3D ? "text-white" : "text-[#0B2D23]"}`}
+                >
+                  3D
+                </Text>
+              </Pressable>
+            </View>
+          </Pressable>
         </View>
 
+        {/* Quota upgrade banner */}
+        <QuotaUpgradeBanner isPaid={isPaid} remainingFinds={remainingFinds} />
+
+        {/* Map/List chips */}
         <View className="flex-row gap-2">
           <View className="rounded-full bg-[rgba(255,253,249,0.92)] px-3.5 py-2">
-            <Text className="text-[12px] font-bold text-[#0B2D23]">
+            <Text className="font-bold text-[#0B2D23] text-[12px]">
               Map view
             </Text>
           </View>
           <View className="rounded-full bg-[rgba(17,24,39,0.82)] px-3.5 py-2">
-            <Text className="text-[12px] font-bold text-white">
+            <Text className="font-bold text-[12px] text-white">
               List view soon
             </Text>
           </View>
@@ -325,11 +304,16 @@ export default function MapTabScreen() {
         onChange={(nextFilters) => setFilters(() => nextFilters)}
         onOpenChange={setFilterOpen}
         onReset={resetFilters}
+        remainingFinds={remainingFinds}
         resultCount={items.length}
       />
 
       <ListingSheet
-        errorMessage={selectedListingQuery.error?.message ?? null}
+        errorMessage={
+          selectedListingQuery.isError
+            ? "This listing couldn't be loaded. Please try again."
+            : null
+        }
         isLoading={selectedListingQuery.isLoading}
         isOpen={Boolean(selectedListingId)}
         listing={selectedListingQuery.data ?? null}
@@ -355,56 +339,80 @@ export default function MapTabScreen() {
         sheetRef={nearbySheetRef}
       />
 
+      {/* Status bar bottom-left — slimmed */}
       <View
-        className="absolute left-3 rounded-[18px] border border-[#DDD8CF] bg-[rgba(255,253,249,0.95)] px-[14px] py-[12px]"
+        className="absolute left-3 rounded-[18px] border border-[#DDD8CF] bg-[rgba(255,253,249,0.95)] px-[14px] py-[10px]"
         style={{ bottom: insets.bottom + 16 }}
       >
-        <Text className="text-[11px] font-bold uppercase tracking-[0.7px] text-[#0B2D23]">
-          Finder status
-        </Text>
-        <Text className="mt-1 text-[12px] font-semibold tracking-[0.3px] text-[#111827]">
+        <Text className="font-semibold text-[#111827] text-[12px] tracking-[0.3px]">
           {label}
         </Text>
-        <Text className="mt-1 max-w-[240px] text-[11px] leading-[16px] text-[#706A5F]">
+        <Text className="mt-0.5 max-w-[240px] text-[#706A5F] text-[11px] leading-[16px]">
           {getFinderQuotaCopy(quota)}
         </Text>
-        <Text className="mt-2 text-[11px] font-semibold text-[#6F685E]">
-          {items.length} places • Sorted by{" "}
-          {filters.sortBy.replaceAll("_", " ")}
+        <Text className="mt-1 font-semibold text-[#6F685E] text-[11px]">
+          {items.length} places · {filters.sortBy.replaceAll("_", " ")}
         </Text>
         {error ? (
-          <Text className="mt-1 max-w-[240px] text-[11px] leading-4 text-red-600">
-            {error.message}
+          <Text className="mt-1 max-w-[240px] text-[11px] text-red-600 leading-4">
+            Search failed. Please try again.
           </Text>
         ) : null}
       </View>
 
+      {/* Speed-dial backdrop */}
+      {isDialOpen ? (
+        <Pressable
+          className="absolute inset-0 bg-black/[0.15]"
+          onPress={() => setIsDialOpen(false)}
+        />
+      ) : null}
+
+      {/* Speed-dial FAB bottom-right */}
       <View
-        className="absolute right-3 items-center gap-[10px]"
+        className="absolute right-3 items-center gap-3"
         style={{ bottom: insets.bottom + 16 }}
       >
+        {isDialOpen ? (
+          <>
+            <DialButton
+              delayMs={0}
+              icon="location-outline"
+              label="Location"
+              onPress={centerOnLocation}
+            />
+            <DialButton
+              delayMs={50}
+              icon="options-outline"
+              label="Filter"
+              onPress={() => {
+                setFilterOpen(true);
+                setIsDialOpen(false);
+              }}
+            />
+            <DialButton
+              delayMs={100}
+              icon="search-outline"
+              label="Find"
+              loading={isSearching}
+              onPress={handleFindNearby}
+            />
+          </>
+        ) : null}
+
         <Pressable
-          disabled={isSearching}
-          onPress={async () => {
-            await runSearch();
-            nearbySheetRef.current?.snapToIndex(0);
-          }}
-          className={`h-[56px] w-[56px] items-center justify-center rounded-full bg-[#0B2D23] ${
-            isSearching ? "opacity-60" : ""
+          className={`h-14 w-14 items-center justify-center rounded-full bg-[#0B2D23] ${
+            isSearching ? "opacity-70" : ""
           }`}
+          disabled={isSearching}
+          onPress={() => setIsDialOpen((prev) => !prev)}
         >
-          {isSearching ? (
-            <ActivityIndicator color="#FFFFFF" size="small" />
-          ) : (
-            <FontAwesome color="#FFFFFF" name="search" size={18} />
-          )}
+          <Ionicons
+            color="#FFFFFF"
+            name={isDialOpen ? "close" : "add"}
+            size={26}
+          />
         </Pressable>
-        <View className="-mt-1 rounded-full bg-[rgba(255,253,249,0.94)] px-3 py-1.5">
-          <Text className="text-[11px] font-bold text-[#0B2D23]">
-            Find nearby
-          </Text>
-        </View>
-        <LocationButton onPress={centerOnLocation} />
       </View>
     </View>
   );
@@ -417,6 +425,3 @@ const MAP_FILL_STYLE = {
   bottom: 0,
   left: 0,
 } as const;
-
-const FLOATING_BUTTON_CLASS_NAME =
-  "h-11 w-11 items-center justify-center rounded border border-[#DDD8CF] bg-[rgba(255,253,249,0.92)]";

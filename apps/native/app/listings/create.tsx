@@ -5,8 +5,8 @@ import { Alert } from "react-native";
 import { ListingForm } from "@/components/listings/listing-form";
 import { parseAmenities } from "@/services/listings";
 import { uploadPickedAsset } from "@/services/storage";
-import { myListingsRoute } from "@/utils/routes";
 import { trpc } from "@/utils/api-client";
+import { myListingsRoute } from "@/utils/routes";
 
 export default function CreateListingScreen() {
   const queryClient = useQueryClient();
@@ -41,7 +41,11 @@ export default function CreateListingScreen() {
 
   return (
     <ListingForm
-      errorMessage={createMutation.error?.message ?? null}
+      errorMessage={
+        createMutation.isError
+          ? "Something went wrong while saving. Please try again."
+          : null
+      }
       isSubmitting={createMutation.isPending}
       mode="create"
       onCancel={() => router.back()}

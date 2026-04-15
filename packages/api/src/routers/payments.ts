@@ -2,13 +2,12 @@ import { TRPCError } from "@trpc/server";
 import { db, listings, payments } from "@wheresmydorm/db";
 import { and, desc, eq, lt } from "drizzle-orm";
 import { z } from "zod";
-
+import { protectedProcedure, router } from "../index";
+import { assertFinder, assertLister, assertListingOwner } from "../lib/guards";
 import {
   createPaymongoPaymentIntent,
   markPaymentAsPaid,
 } from "../lib/paymongo";
-import { assertFinder, assertLister, assertListingOwner } from "../lib/guards";
-import { protectedProcedure, router } from "../index";
 
 const listPaymentsSchema = z.object({
   cursor: z.string().datetime().optional(),
@@ -19,7 +18,13 @@ const createPaymentIntentSchema = z.object({
   amount: z.number().positive(),
   listingId: z.string().uuid().optional(),
   paymentMethod: z.string().trim().max(100).optional(),
-  type: z.enum(["finder_upgrade", "listing_fee", "listing_boost", "verified_badge", "lister_analytics"]),
+  type: z.enum([
+    "finder_upgrade",
+    "listing_fee",
+    "listing_boost",
+    "verified_badge",
+    "lister_analytics",
+  ]),
 });
 
 const paymentIdSchema = z.object({

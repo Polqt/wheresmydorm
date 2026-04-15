@@ -10,8 +10,8 @@ import {
 } from "@/services/finder-search";
 import { useFinderSearchStore } from "@/stores/finder-search";
 import { useMapStore } from "@/stores/map";
-import { areMapFiltersEqual } from "@/utils/map-filters";
 import { trpc } from "@/utils/api-client";
+import { areMapFiltersEqual } from "@/utils/map-filters";
 
 import { useLocation } from "./use-location";
 
@@ -24,13 +24,17 @@ export function useDiscoveryListings() {
   const clearSearch = useFinderSearchStore((state) => state.clearSearch);
   const items = useFinderSearchStore((state) => state.items);
   const lastSearchAt = useFinderSearchStore((state) => state.lastSearchAt);
-  const lastSearchCenter = useFinderSearchStore((state) => state.lastSearchCenter);
+  const lastSearchCenter = useFinderSearchStore(
+    (state) => state.lastSearchCenter,
+  );
   const lastSearchRadiusMeters = useFinderSearchStore(
     (state) => state.lastSearchRadiusMeters,
   );
   const quota = useFinderSearchStore((state) => state.quota);
   const setQuota = useFinderSearchStore((state) => state.setQuota);
-  const setSearchResult = useFinderSearchStore((state) => state.setSearchResult);
+  const setSearchResult = useFinderSearchStore(
+    (state) => state.setSearchResult,
+  );
   const appliedProfileDefaultsForUserId = useRef<string | null>(null);
 
   const quotaQuery = useQuery({
@@ -155,11 +159,13 @@ export function useDiscoveryListings() {
     coords,
     error: findMutation.error ?? quotaQuery.error ?? null,
     hasSearched: Boolean(lastSearchAt),
+    isPaid: activeQuota?.isPaid ?? false,
     isReady,
     isSearching: findMutation.isPending,
     items,
     label: activeLabel,
     quota: activeQuota,
+    remainingFinds: activeQuota?.remainingFinds ?? 0,
     runSearch,
   };
 }

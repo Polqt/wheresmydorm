@@ -1,28 +1,46 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { FlashList } from "@shopify/flash-list";
-import { Image } from "expo-image";
 import { useQuery } from "@tanstack/react-query";
+import { Image } from "expo-image";
 import { router } from "expo-router";
-import { memo, useCallback } from "react";
+import { memo, useCallback, useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorRetry } from "@/components/ui/error-retry";
+import { QuotaUpgradeBanner } from "@/components/ui/quota-upgrade-banner";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { useFinderDiscovery } from "@/hooks/use-finder-discovery";
 import type { DiscoverySearchPreset } from "@/types/discovery";
 import type { ListingListItem } from "@/types/listings";
 import { trpc } from "@/utils/api-client";
 import { formatCurrency } from "@/utils/profile";
-import {
-  finderHomeRoute,
-  listingDetailRoute,
-  savedListingsRoute,
-} from "@/utils/routes";
+import { finderHomeRoute, listingDetailRoute } from "@/utils/routes";
 
 const COVER_FALLBACK =
   "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=800";
+
+const PROPERTY_TYPES = [
+  { value: "dorm", label: "Dorm", icon: "bed-outline" as const },
+  { value: "apartment", label: "Apartment", icon: "business-outline" as const },
+  { value: "bedspace", label: "Bedspace", icon: "person-outline" as const },
+  { value: "condo", label: "Condo", icon: "home-outline" as const },
+  {
+    value: "boarding_house",
+    label: "Boarding",
+    icon: "storefront-outline" as const,
+  },
+  { value: "studio", label: "Studio", icon: "cube-outline" as const },
+];
+
+function filterByTypes(
+  items: ListingListItem[],
+  types: string[],
+): ListingListItem[] {
+  if (types.length === 0) return items;
+  return items.filter((item) => types.includes(item.propertyType));
+}
 
 const DiscoveryListingCard = memo(function DiscoveryListingCard({
   item,
@@ -40,27 +58,27 @@ const DiscoveryListingCard = memo(function DiscoveryListingCard({
       />
       <View className="px-1 pt-3">
         <View className="flex-row items-center justify-between">
-          <Text className="flex-1 text-[12px] text-[#7B7468]" numberOfLines={1}>
+          <Text className="flex-1 text-[#7B7468] text-[12px]" numberOfLines={1}>
             {[item.city, item.barangay].filter(Boolean).join(" • ")}
           </Text>
           <View className="ml-2 flex-row items-center gap-1">
             <Ionicons color="#F59E0B" name="star" size={12} />
-            <Text className="text-[12px] font-bold text-[#111827]">
+            <Text className="font-bold text-[#111827] text-[12px]">
               {item.ratingOverall ? item.ratingOverall.toFixed(1) : "New"}
             </Text>
           </View>
         </View>
         <Text
-          className="mt-1 text-[18px] font-bold tracking-[-0.4px] text-[#111827]"
+          className="mt-1 font-bold text-[#111827] text-[18px] tracking-[-0.4px]"
           numberOfLines={1}
         >
           {item.title}
         </Text>
         <View className="mt-1 flex-row items-center justify-between">
-          <Text className="text-[13px] capitalize text-[#8A8176]">
+          <Text className="text-[#8A8176] text-[13px] capitalize">
             {item.propertyType.replaceAll("_", " ")}
           </Text>
-          <Text className="text-[15px] font-extrabold text-[#0B2D23]">
+          <Text className="font-extrabold text-[#0B2D23] text-[15px]">
             {formatCurrency(item.pricePerMonth)}
           </Text>
         </View>
@@ -86,7 +104,7 @@ function PresetChip({
       onPress={onPress}
     >
       <Text
-        className={`text-[12px] font-bold ${
+        className={`font-bold text-[12px] ${
           highlighted ? "text-white" : "text-[#111827]"
         }`}
       >
@@ -96,44 +114,46 @@ function PresetChip({
   );
 }
 
-function FinderMetric({
+function CategoryChip({
+  icon,
   label,
-  value,
+  onPress,
+  selected,
 }: {
+  icon: keyof typeof Ionicons.glyphMap;
   label: string;
-  value: string;
+  onPress: () => void;
+  selected: boolean;
 }) {
   return (
-    <View className="flex-1 rounded-[22px] bg-[#F5F0E8] px-4 py-3">
-      <Text className="text-[20px] font-extrabold text-[#111827]">{value}</Text>
-      <Text className="mt-1 text-[12px] text-[#706A5F]">{label}</Text>
-    </View>
+    <Pressable
+      className={`mr-2 flex-row items-center gap-1.5 rounded-full px-3.5 py-2 ${
+        selected ? "bg-[#111827]" : "bg-[#FFFDFC]"
+      }`}
+      onPress={onPress}
+    >
+      <Ionicons
+        color={selected ? "#ffffff" : "#706A5F"}
+        name={icon}
+        size={14}
+      />
+      <Text
+        className={`font-bold text-[12px] ${
+          selected ? "text-white" : "text-[#111827]"
+        }`}
+      >
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 
-function QuickActionCard({
-  description,
-  icon,
-  onPress,
-  title,
-}: {
-  description: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  onPress: () => void;
-  title: string;
-}) {
+function FinderMetric({ label, value }: { label: string; value: string }) {
   return (
-    <Pressable className="flex-1 rounded-[24px] bg-[#FFFDFC] p-4" onPress={onPress}>
-      <View className="h-10 w-10 items-center justify-center rounded-full bg-[#F5F0E8]">
-        <Ionicons color="#111827" name={icon} size={18} />
-      </View>
-      <Text className="mt-3 text-[16px] font-extrabold text-[#111827]">
-        {title}
-      </Text>
-      <Text className="mt-1.5 text-[13px] leading-5 text-[#706A5F]">
-        {description}
-      </Text>
-    </Pressable>
+    <View className="flex-1 rounded-[22px] bg-[#F5F0E8] px-4 py-3">
+      <Text className="font-extrabold text-[#111827] text-[20px]">{value}</Text>
+      <Text className="mt-1 text-[#706A5F] text-[12px]">{label}</Text>
+    </View>
   );
 }
 
@@ -152,32 +172,29 @@ function DiscoverySection({
   title: string;
   items: ListingListItem[];
 }) {
-  if (items.length === 0) {
-    return null;
-  }
+  if (items.length === 0) return null;
 
   return (
     <View className="mt-8">
       <View className="mb-3 flex-row items-end justify-between">
         <View className="flex-1 pr-4">
-          <Text className="text-[20px] font-extrabold tracking-[-0.5px] text-[#111827]">
+          <Text className="font-extrabold text-[#111827] text-[20px] tracking-[-0.5px]">
             {title}
           </Text>
           {subtitle ? (
-            <Text className="mt-1 text-[13px] leading-5 text-[#706A5F]">
+            <Text className="mt-1 text-[#706A5F] text-[13px] leading-5">
               {subtitle}
             </Text>
           ) : null}
         </View>
         {actionLabel && onActionPress ? (
           <Pressable onPress={onActionPress}>
-            <Text className="text-[13px] font-bold text-[#0B4A30]">
+            <Text className="font-bold text-[#0B4A30] text-[13px]">
               {actionLabel}
             </Text>
           </Pressable>
         ) : null}
       </View>
-
       <FlashList
         data={items}
         horizontal
@@ -192,7 +209,11 @@ function DiscoverySection({
 }
 
 export function FinderDiscoverScreen() {
-  const finderQuotaQuery = useQuery(trpc.listings.findQuotaStatus.queryOptions());
+  const finderQuotaQuery = useQuery(
+    trpc.listings.findQuotaStatus.queryOptions(),
+  );
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+
   const {
     applyPreset,
     currentPreset,
@@ -215,19 +236,27 @@ export function FinderDiscoverScreen() {
   }, []);
 
   const handlePresetPress = useCallback(
-    (preset: DiscoverySearchPreset) => {
-      applyPreset(preset);
-    },
+    (preset: DiscoverySearchPreset) => applyPreset(preset),
     [applyPreset],
   );
 
-  const activeSearchCount = searchText.trim().length > 0 ? searchResults.length : 0;
+  const toggleType = useCallback((value: string) => {
+    setSelectedTypes((prev) =>
+      prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value],
+    );
+  }, []);
+
+  const activeSearchCount =
+    searchText.trim().length > 0 ? searchResults.length : 0;
+
+  const isPaid = finderQuotaQuery.data?.isPaid ?? false;
+  const remainingFinds = finderQuotaQuery.data?.remainingFinds ?? 0;
 
   if (finderQuotaQuery.isError) {
     return (
       <SafeAreaView className="flex-1 bg-[#F7F4EE]" edges={["top"]}>
         <ErrorRetry
-          message="Failed to load finder data."
+          context="discover"
           onRetry={() => finderQuotaQuery.refetch()}
         />
       </SafeAreaView>
@@ -246,11 +275,12 @@ export function FinderDiscoverScreen() {
         contentContainerStyle={{ paddingBottom: 112, paddingHorizontal: 18 }}
         showsVerticalScrollIndicator={false}
       >
+        {/* Hero card */}
         <View className="rounded-[32px] bg-[#FFFDFC] px-5 py-5">
-          <Text className="text-[28px] font-extrabold tracking-[-0.8px] text-[#111827]">
+          <Text className="font-extrabold text-[#111827] text-[28px] tracking-[-0.8px]">
             Explore homes with less noise
           </Text>
-          <Text className="mt-2 text-[14px] leading-6 text-[#706A5F]">
+          <Text className="mt-2 text-[#706A5F] text-[14px] leading-6">
             Search titles and areas, revisit recent finds, or browse curated
             picks like top rated and budget-friendly places.
           </Text>
@@ -258,7 +288,7 @@ export function FinderDiscoverScreen() {
           <View className="mt-4 flex-row items-center gap-3 rounded-[24px] bg-[#F5F0E8] px-4 py-3">
             <Ionicons color="#6F685E" name="search" size={18} />
             <TextInput
-              className="flex-1 py-0 text-[15px] text-[#111827]"
+              className="flex-1 py-0 text-[#111827] text-[15px]"
               onChangeText={setSearchText}
               onSubmitEditing={submitSearch}
               placeholder="Search titles, barangays, or landmarks"
@@ -270,7 +300,7 @@ export function FinderDiscoverScreen() {
               className="rounded-full bg-[#111827] px-3.5 py-2"
               onPress={submitSearch}
             >
-              <Text className="text-[12px] font-bold text-white">Search</Text>
+              <Text className="font-bold text-[12px] text-white">Search</Text>
             </Pressable>
           </View>
 
@@ -292,44 +322,47 @@ export function FinderDiscoverScreen() {
             ) : null}
           </View>
 
-          <View className="mt-5 flex-row gap-2.5">
-            <FinderMetric
-              label={finderQuotaQuery.data?.isPaid ? "Finder plan" : "Finds left"}
-              value={
-                finderQuotaQuery.data?.isPaid
-                  ? "Unlimited"
-                  : String(finderQuotaQuery.data?.remainingFinds ?? 0)
-              }
-            />
-            <FinderMetric
-              label="Saved searches"
-              value={String(savedSearches.length)}
-            />
-            <FinderMetric
-              label="Nearby picks"
-              value={String(lastNearbyItems.length || activeSearchCount)}
-            />
-          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="mt-3"
+          >
+            {PROPERTY_TYPES.map((type) => (
+              <CategoryChip
+                key={type.value}
+                icon={type.icon}
+                label={type.label}
+                selected={selectedTypes.includes(type.value)}
+                onPress={() => toggleType(type.value)}
+              />
+            ))}
+          </ScrollView>
         </View>
 
-        <View className="mt-5 flex-row gap-3">
-          <QuickActionCard
-            description="Jump back into the full map with your nearby inventory."
-            icon="map-outline"
-            onPress={() => router.push(finderHomeRoute())}
-            title="Map search"
+        {/* Metrics row */}
+        <View className="mt-4 flex-row gap-2.5">
+          <FinderMetric
+            label={isPaid ? "Finder plan" : "Finds left"}
+            value={isPaid ? "Unlimited" : String(remainingFinds)}
           />
-          <QuickActionCard
-            description="Review the shortlist you bookmarked while comparing options."
-            icon="bookmark-outline"
-            onPress={() => router.push(savedListingsRoute())}
-            title="Saved list"
+          <FinderMetric
+            label="Saved searches"
+            value={String(savedSearches.length)}
           />
+          <FinderMetric
+            label="Nearby picks"
+            value={String(lastNearbyItems.length || activeSearchCount)}
+          />
+        </View>
+
+        {/* Quota upgrade banner */}
+        <View className="mt-3">
+          <QuotaUpgradeBanner isPaid={isPaid} remainingFinds={remainingFinds} />
         </View>
 
         {savedSearches.length > 0 ? (
           <View className="mt-7">
-            <Text className="mb-3 text-[12px] font-extrabold uppercase tracking-[1px] text-[#0B4A30]">
+            <Text className="mb-3 font-extrabold text-[#0B4A30] text-[12px] uppercase tracking-[1px]">
               Saved searches
             </Text>
             <View className="flex-row flex-wrap">
@@ -346,7 +379,7 @@ export function FinderDiscoverScreen() {
 
         {recentSearches.length > 0 ? (
           <View className="mt-5">
-            <Text className="mb-3 text-[12px] font-extrabold uppercase tracking-[1px] text-[#0B4A30]">
+            <Text className="mb-3 font-extrabold text-[#0B4A30] text-[12px] uppercase tracking-[1px]">
               Recent searches
             </Text>
             <View className="flex-row flex-wrap">
@@ -364,9 +397,9 @@ export function FinderDiscoverScreen() {
         {searchText.trim().length > 0 ? (
           searchResults.length > 0 ? (
             <DiscoverySection
-              items={searchResults}
+              items={filterByTypes(searchResults, selectedTypes)}
               onPressItem={handleListingPress}
-              subtitle={`${searchResults.length} matches across titles, descriptions, and location fields.`}
+              subtitle={`${filterByTypes(searchResults, selectedTypes).length} matches across titles, descriptions, and location fields.`}
               title="Search results"
             />
           ) : (
@@ -374,14 +407,17 @@ export function FinderDiscoverScreen() {
               illustration="🔍"
               title="No results found"
               description={`No listings matched "${searchText}". Try a different area, barangay, or landmark.`}
-              action={{ label: "Clear search", onPress: () => setSearchText("") }}
+              action={{
+                label: "Clear search",
+                onPress: () => setSearchText(""),
+              }}
             />
           )
         ) : null}
 
         <DiscoverySection
           actionLabel="Use map"
-          items={lastNearbyItems}
+          items={filterByTypes(lastNearbyItems, selectedTypes)}
           onActionPress={() => router.push(finderHomeRoute())}
           onPressItem={handleListingPress}
           subtitle="Your last nearby find from the map is kept here for quick review."
@@ -389,21 +425,21 @@ export function FinderDiscoverScreen() {
         />
 
         <DiscoverySection
-          items={topRated}
+          items={filterByTypes(topRated, selectedTypes)}
           onPressItem={handleListingPress}
           subtitle="Places with stronger community ratings and better review depth."
           title="Top rated"
         />
 
         <DiscoverySection
-          items={newArrivals}
+          items={filterByTypes(newArrivals, selectedTypes)}
           onPressItem={handleListingPress}
           subtitle="Freshly added listings worth checking before they get crowded."
           title="New arrivals"
         />
 
         <DiscoverySection
-          items={underBudget}
+          items={filterByTypes(underBudget, selectedTypes)}
           onPressItem={handleListingPress}
           subtitle="Budget-friendly picks curated for the P3,000-and-below range."
           title="Under P3,000"

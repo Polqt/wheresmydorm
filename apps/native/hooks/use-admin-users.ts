@@ -30,7 +30,10 @@ export function useAdminUsers() {
   const banUser = useMutation(
     trpc.admin.banUser.mutationOptions({
       onError: (error) => {
-        setFeedback({ tone: "error", message: error.message || "Ban action failed." });
+        setFeedback({
+          tone: "error",
+          message: error.message || "Ban action failed.",
+        });
         setActiveUserId(null);
       },
       onSuccess: async (data) => {
@@ -47,14 +50,19 @@ export function useAdminUsers() {
   const setFinderPaid = useMutation(
     trpc.admin.setFinderPaid.mutationOptions({
       onError: (error) => {
-        setFeedback({ tone: "error", message: error.message || "Update failed." });
+        setFeedback({
+          tone: "error",
+          message: error.message || "Update failed.",
+        });
         setActiveUserId(null);
       },
       onSuccess: async (data) => {
         await queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEY });
         setFeedback({
           tone: "success",
-          message: data.isPaidFinder ? "Finder upgraded to paid." : "Finder downgraded to free.",
+          message: data.isPaidFinder
+            ? "Finder upgraded to paid."
+            : "Finder downgraded to free.",
         });
         setActiveUserId(null);
       },

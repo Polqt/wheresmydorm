@@ -61,18 +61,7 @@ export const listingDiscoveryProcedures = {
     }),
 
   findQuotaStatus: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.role !== "finder" && ctx.role !== "admin") {
-      return {
-        advancedFiltersEnabled: false,
-        canFind: false,
-        lifetimeLimit: FREE_FINDER_LIFETIME_FIND_LIMIT,
-        hasUnlimitedFinds: false,
-        isPaid: false,
-        remainingFinds: 0,
-        usedTotal: 0,
-      };
-    }
-
+    assertFinder(ctx, "Only finders can check quota status.");
     const quota = await getFinderQuotaRow(ctx.userId);
     return toFinderQuotaStatus(quota);
   }),

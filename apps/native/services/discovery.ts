@@ -1,7 +1,7 @@
+import type { inferRouterOutputs } from "@trpc/server";
+import type { AppRouter } from "@wheresmydorm/api/routers/index";
 import type { DiscoverySearchPreset } from "@/types/discovery";
 import type { MapSortOption, PropertyTypeFilter } from "@/types/map";
-import type { AppRouter } from "@wheresmydorm/api/routers/index";
-import type { inferRouterOutputs } from "@trpc/server";
 
 export const DISCOVERY_STORAGE_KEY = "wmd.discovery.presets";
 export const MAX_DISCOVERY_PRESETS = 10;
@@ -88,18 +88,20 @@ export function dedupeDiscoveryPresets(presets: DiscoverySearchPreset[]) {
 
 function normalizePropertyTypes(values: unknown): PropertyTypeFilter[] {
   return Array.isArray(values)
-    ? values.filter((value): value is PropertyTypeFilter => typeof value === "string")
+    ? values.filter(
+        (value): value is PropertyTypeFilter => typeof value === "string",
+      )
     : [];
 }
 
-export function mapRecentSearchToPreset(item: RecentSearchItem): DiscoverySearchPreset {
-  const filters = item.filters as
-    | {
-        maxPrice?: number | null;
-        propertyTypes?: PropertyTypeFilter[];
-        sortBy?: MapSortOption | null;
-      }
-    | null;
+export function mapRecentSearchToPreset(
+  item: RecentSearchItem,
+): DiscoverySearchPreset {
+  const filters = item.filters as {
+    maxPrice?: number | null;
+    propertyTypes?: PropertyTypeFilter[];
+    sortBy?: MapSortOption | null;
+  } | null;
 
   return buildDiscoveryPreset({
     createdAt: String(item.createdAt),
@@ -112,15 +114,15 @@ export function mapRecentSearchToPreset(item: RecentSearchItem): DiscoverySearch
   });
 }
 
-export function mapSavedSearchToPreset(item: SavedSearchItem): DiscoverySearchPreset {
-  const filters = item.filters as
-    | {
-        maxPrice?: number | null;
-        propertyTypes?: PropertyTypeFilter[];
-        query?: string | null;
-        sortBy?: MapSortOption | null;
-      }
-    | null;
+export function mapSavedSearchToPreset(
+  item: SavedSearchItem,
+): DiscoverySearchPreset {
+  const filters = item.filters as {
+    maxPrice?: number | null;
+    propertyTypes?: PropertyTypeFilter[];
+    query?: string | null;
+    sortBy?: MapSortOption | null;
+  } | null;
 
   return buildDiscoveryPreset({
     createdAt: String(item.createdAt),

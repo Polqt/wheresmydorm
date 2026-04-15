@@ -1,10 +1,9 @@
-import Constants from "expo-constants";
-
 import { QueryClient } from "@tanstack/react-query";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import type { AppRouter } from "@wheresmydorm/api/routers/index";
 import { env } from "@wheresmydorm/env/native";
+import Constants from "expo-constants";
 
 import { getCachedAccessToken } from "./supabase";
 
@@ -14,7 +13,7 @@ function getExpoDebugHost() {
     | undefined;
 
   const debuggerHost = expoGoConfig?.debuggerHost;
-  return debuggerHost ? debuggerHost.split(":")[0] ?? null : null;
+  return debuggerHost ? (debuggerHost.split(":")[0] ?? null) : null;
 }
 
 function getNativeServerUrl() {

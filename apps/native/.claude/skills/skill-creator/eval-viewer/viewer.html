@@ -649,9 +649,9 @@
     /*__EMBEDDED_DATA__*/
 
     // ---- State ----
-    let feedbackMap = {};  // run_id -> feedback text
+    const feedbackMap = {};  // run_id -> feedback text
     let currentIndex = 0;
-    let visitedRuns = new Set();
+    const visitedRuns = new Set();
 
     // ---- Init ----
     async function init() {
@@ -1147,7 +1147,7 @@
 
       function deltaClass(val) {
         if (!val) return "";
-        const n = parseFloat(val);
+        const n = Number.parseFloat(val);
         if (n > 0) return "benchmark-delta-positive";
         if (n < 0) return "benchmark-delta-negative";
         return "";

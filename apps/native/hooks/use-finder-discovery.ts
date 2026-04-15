@@ -1,4 +1,9 @@
-import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useCurrentProfile } from "@/hooks/use-current-profile";
@@ -24,9 +29,8 @@ const VALID_PROPERTY_TYPES = new Set<PropertyTypeFilter>([
 ]);
 
 function normalizePropertyTypes(values: string[] | undefined) {
-  return (values ?? []).filter(
-    (value): value is PropertyTypeFilter =>
-      VALID_PROPERTY_TYPES.has(value as PropertyTypeFilter),
+  return (values ?? []).filter((value): value is PropertyTypeFilter =>
+    VALID_PROPERTY_TYPES.has(value as PropertyTypeFilter),
   );
 }
 
@@ -49,8 +53,12 @@ export function useFinderDiscovery() {
   const query = submittedSearchText.trim();
 
   const discoverQuery = useQuery(trpc.listings.discover.queryOptions());
-  const recentSearchesQuery = useQuery(trpc.listings.recentSearches.queryOptions());
-  const savedSearchesQuery = useQuery(trpc.listings.savedSearches.queryOptions());
+  const recentSearchesQuery = useQuery(
+    trpc.listings.recentSearches.queryOptions(),
+  );
+  const savedSearchesQuery = useQuery(
+    trpc.listings.savedSearches.queryOptions(),
+  );
 
   const saveSearchMutation = useMutation(
     trpc.listings.saveSearch.mutationOptions({
@@ -93,9 +101,7 @@ export function useFinderDiscovery() {
     [savedSearchesQuery.data],
   );
 
-  const [
-    searchResultsQuery,
-  ] = useQueries({
+  const [searchResultsQuery] = useQueries({
     queries: [
       {
         ...trpc.listings.list.queryOptions(
@@ -127,13 +133,10 @@ export function useFinderDiscovery() {
     setSubmittedSearchText(searchText.trim());
   }, [searchText]);
 
-  const applyPreset = useCallback(
-    (preset: DiscoverySearchPreset) => {
-      setSearchText(preset.query);
-      setSubmittedSearchText(preset.query);
-    },
-    [],
-  );
+  const applyPreset = useCallback((preset: DiscoverySearchPreset) => {
+    setSearchText(preset.query);
+    setSubmittedSearchText(preset.query);
+  }, []);
 
   const toggleSaveCurrentSearch = useCallback(() => {
     const existingPreset = savedSearches.find(

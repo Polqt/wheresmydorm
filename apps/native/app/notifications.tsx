@@ -72,7 +72,9 @@ export default function NotificationsScreen() {
   const notificationsQuery = useQuery(
     trpc.notifications.list.queryOptions({ limit: 50 }),
   );
-  const unreadCountQuery = useQuery(trpc.notifications.unreadCount.queryOptions());
+  const unreadCountQuery = useQuery(
+    trpc.notifications.unreadCount.queryOptions(),
+  );
 
   const markRead = useMutation(
     trpc.notifications.markRead.mutationOptions({
@@ -110,14 +112,14 @@ export default function NotificationsScreen() {
   return (
     <View className="flex-1 bg-[#f7f4ee]" style={{ paddingTop: insets.top }}>
       {/* Header */}
-      <View className="flex-row items-center border-b border-[#E7E0D5] bg-[#fffdf9] px-4 py-3.5">
+      <View className="flex-row items-center border-[#E7E0D5] border-b bg-[#fffdf9] px-4 py-3.5">
         <Pressable
           className="h-9 w-9 items-center justify-center rounded-full bg-[#F0EBE3]"
           onPress={() => router.back()}
         >
           <FontAwesome color="#0f172a" name="arrow-left" size={16} />
         </Pressable>
-        <Text className="flex-1 text-center text-base font-extrabold text-slate-900">
+        <Text className="flex-1 text-center font-extrabold text-base text-slate-900">
           Notifications
         </Text>
         <Pressable
@@ -125,33 +127,34 @@ export default function NotificationsScreen() {
           disabled={unreadCount === 0 || markAllRead.isPending}
           onPress={() => markAllRead.mutate()}
         >
-          <Text className="text-[12px] font-bold text-[#0B4A30]">Read all</Text>
+          <Text className="font-bold text-[#0B4A30] text-[12px]">Read all</Text>
         </Pressable>
       </View>
 
       {/* Summary */}
       <View className="mx-4 mt-3.5 rounded-3xl bg-[#fffdf9] px-4 py-4">
-        <Text className="text-xl font-extrabold text-slate-900">
+        <Text className="font-extrabold text-slate-900 text-xl">
           {unreadCount} unread
         </Text>
-        <Text className="mt-1 text-[13px] leading-5 text-[#706A5F]">
+        <Text className="mt-1 text-[#706A5F] text-[13px] leading-5">
           Updates for messages, reviews, and payments land here.
         </Text>
       </View>
 
       {/* Error state */}
       {notificationsQuery.isError ? (
-        <View className="mx-4 mt-3 rounded-2xl bg-red-50 px-4 py-3">
-          <Text className="text-[13px] font-semibold text-red-700">
-            Failed to load notifications.
+        <View className="mx-4 mt-3 rounded-2xl bg-[#FFF5F5] px-4 py-3.5">
+          <Text className="font-semibold text-[#991B1B] text-[13px]">
+            We couldn't load your notifications right now.
+          </Text>
+          <Text className="mt-0.5 text-[#B91C1C] text-[12px]">
+            Please check your connection and try again.
           </Text>
           <Pressable
-            className="mt-2 self-start"
+            className="mt-2.5 self-start rounded-xl bg-[#991B1B] px-4 py-1.5"
             onPress={() => notificationsQuery.refetch()}
           >
-            <Text className="text-[13px] font-bold text-red-700 underline">
-              Retry
-            </Text>
+            <Text className="font-bold text-[12px] text-white">Try again</Text>
           </Pressable>
         </View>
       ) : null}
@@ -163,7 +166,7 @@ export default function NotificationsScreen() {
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
           notificationsQuery.isLoading ? null : (
-            <Text className="py-7 text-center text-[13px] font-semibold text-[#9E9890]">
+            <Text className="py-7 text-center font-semibold text-[#9E9890] text-[13px]">
               No notifications yet
             </Text>
           )
@@ -174,7 +177,7 @@ export default function NotificationsScreen() {
 
           return (
             <Pressable
-              className={`flex-row items-start gap-3 border-b border-[#EDE8DF] px-4 py-3.5 ${
+              className={`flex-row items-start gap-3 border-[#EDE8DF] border-b px-4 py-3.5 ${
                 unread ? "bg-[#F5F0E8]" : "bg-[#fffdf9]"
               }`}
               onPress={async () => {
@@ -200,17 +203,17 @@ export default function NotificationsScreen() {
               <View className="flex-1 gap-1">
                 <View className="flex-row items-center justify-between gap-2">
                   <Text
-                    className={`flex-1 text-[14px] font-bold ${
+                    className={`flex-1 font-bold text-[14px] ${
                       unread ? "text-slate-900" : "text-slate-500"
                     }`}
                   >
                     {item.title}
                   </Text>
-                  <Text className="text-[11px] font-semibold text-[#9E9890]">
+                  <Text className="font-semibold text-[#9E9890] text-[11px]">
                     {formatNotificationTime(String(item.createdAt))}
                   </Text>
                 </View>
-                <Text className="text-[13px] leading-5 text-[#706A5F]">
+                <Text className="text-[#706A5F] text-[13px] leading-5">
                   {item.body}
                 </Text>
               </View>

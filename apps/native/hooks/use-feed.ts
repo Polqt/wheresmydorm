@@ -12,8 +12,8 @@ import { refreshPostQueries } from "@/lib/post-query";
 import { useAuth } from "@/providers/auth-provider";
 import { buildPostShareMessage } from "@/services/posts";
 import type { FeedItem, PostReaction } from "@/types/posts";
-import { postCreateRoute, postDetailRoute } from "@/utils/routes";
 import { trpc } from "@/utils/api-client";
+import { postCreateRoute, postDetailRoute } from "@/utils/routes";
 
 export function useFeed() {
   const { user } = useAuth();

@@ -69,15 +69,22 @@ export async function signInWithOAuth(provider: OAuthProvider) {
     if (await waitForSession()) return true;
     throw new Error(
       "Sign-in finished in the browser but the app didn't receive the callback. " +
-      `Make sure ${redirectTo} is in your Supabase Auth redirect URLs.`,
+        `Make sure ${redirectTo} is in your Supabase Auth redirect URLs.`,
     );
   }
 
-  const { accessToken, code, error: oauthError, errorDescription, refreshToken } =
-    parseOAuthResponse(result.url);
+  const {
+    accessToken,
+    code,
+    error: oauthError,
+    errorDescription,
+    refreshToken,
+  } = parseOAuthResponse(result.url);
 
   if (oauthError || errorDescription) {
-    throw new Error(errorDescription ?? oauthError ?? "OAuth sign-in was denied.");
+    throw new Error(
+      errorDescription ?? oauthError ?? "OAuth sign-in was denied.",
+    );
   }
 
   if (accessToken && refreshToken) {
@@ -106,7 +113,9 @@ export async function signInWithOAuth(provider: OAuthProvider) {
  * skip OTP on quick re-login with the same email.
  */
 export async function saveSessionForRestore(): Promise<void> {
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   if (!session?.refresh_token || !session.user.email) return;
 
   await asyncStorageAdapter.setItem(
@@ -164,8 +173,8 @@ export async function sendEmailOtp(email: string) {
     if (error.message.toLowerCase().includes("rate limit")) {
       throw new Error(
         "Too many sign-in attempts. Please wait 60 seconds and try again.\n\n" +
-        "Tip: Go to Supabase Dashboard → Authentication → SMTP Settings " +
-        "and add a custom SMTP provider (e.g. Resend) to remove this limit.",
+          "Tip: Go to Supabase Dashboard → Authentication → SMTP Settings " +
+          "and add a custom SMTP provider (e.g. Resend) to remove this limit.",
       );
     }
     throw error;

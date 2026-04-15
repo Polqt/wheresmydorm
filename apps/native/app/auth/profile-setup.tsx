@@ -55,7 +55,9 @@ export default function ProfileSetupScreen() {
       queryClient.setQueryData([PROFILE_QUERY_KEY, user.id], profile);
       router.replace("/auth/avatar-setup");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save. Try again.");
+      setError(
+        err instanceof Error ? err.message : "Failed to save. Try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -82,10 +84,10 @@ export default function ProfileSetupScreen() {
           </View>
 
           <View className="flex-1 px-6 pt-8">
-            <Text className="text-[28px] font-bold leading-[34px] text-[#1A1A1A]">
+            <Text className="font-bold text-[#1A1A1A] text-[28px] leading-[34px]">
               What's your name?
             </Text>
-            <Text className="mt-2 text-[14px] leading-5 text-[#8A8480]">
+            <Text className="mt-2 text-[#8A8480] text-[14px] leading-5">
               {role === "lister"
                 ? "This is how Finders will recognize you in your listings, inbox, and public posts."
                 : "This is how Listers and other Finders will recognize you across messages and the community feed."}
@@ -93,15 +95,18 @@ export default function ProfileSetupScreen() {
 
             <View className="mt-8 gap-4">
               <View>
-                <Text className="mb-2 text-[13px] font-semibold text-[#4A4540]">
+                <Text className="mb-2 font-semibold text-[#4A4540] text-[13px]">
                   First name <Text className="font-normal text-red-400">*</Text>
                 </Text>
                 <TextInput
                   autoCapitalize="words"
                   autoCorrect={false}
                   autoFocus
-                  className="h-[52px] w-full rounded-xl border border-[#D8D2CA] bg-white px-4 text-[15px] text-[#1A1A1A]"
-                  onChangeText={(v) => { setFirstName(v); setError(null); }}
+                  className="h-[52px] w-full rounded-xl border border-[#D8D2CA] bg-white px-4 text-[#1A1A1A] text-[15px]"
+                  onChangeText={(v) => {
+                    setFirstName(v);
+                    setError(null);
+                  }}
                   onSubmitEditing={() => lastNameRef.current?.focus()}
                   placeholder="Alex"
                   placeholderTextColor="#C0B8B0"
@@ -111,14 +116,14 @@ export default function ProfileSetupScreen() {
               </View>
 
               <View>
-                <Text className="mb-2 text-[13px] font-semibold text-[#4A4540]">
+                <Text className="mb-2 font-semibold text-[#4A4540] text-[13px]">
                   Last name{" "}
                 </Text>
                 <TextInput
                   ref={lastNameRef}
                   autoCapitalize="words"
                   autoCorrect={false}
-                  className="h-[52px] w-full rounded-xl border border-[#D8D2CA] bg-white px-4 text-[15px] text-[#1A1A1A]"
+                  className="h-[52px] w-full rounded-xl border border-[#D8D2CA] bg-white px-4 text-[#1A1A1A] text-[15px]"
                   onChangeText={(v) => setLastName(v)}
                   onSubmitEditing={handleContinue}
                   placeholder="Smith"
@@ -130,7 +135,9 @@ export default function ProfileSetupScreen() {
             </View>
 
             {error ? (
-              <Text className="mt-3 text-[13px] leading-5 text-red-500">{error}</Text>
+              <Text className="mt-3 text-[13px] text-red-500 leading-5">
+                {error}
+              </Text>
             ) : null}
 
             <View className="flex-1" />
@@ -148,7 +155,7 @@ export default function ProfileSetupScreen() {
                 <ActivityIndicator color="#ffffff" size="small" />
               ) : (
                 <Text
-                  className={`text-[15px] font-bold ${
+                  className={`font-bold text-[15px] ${
                     canContinue ? "text-white" : "text-[#A09A90]"
                   }`}
                 >

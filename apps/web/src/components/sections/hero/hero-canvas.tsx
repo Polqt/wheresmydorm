@@ -5,7 +5,7 @@ import * as THREE from "three";
 
 // Palette matches hero: terracotta, amber, cream
 const COLORS = ["#C4622D", "#F0A500", "#FDFBF7", "#C4622D", "#A8A29E"];
-const OPACITIES = [0.55, 0.42, 0.18, 0.38, 0.20];
+const OPACITIES = [0.55, 0.42, 0.18, 0.38, 0.2];
 const PARTICLE_COUNT = 28;
 const CONNECTION_DIST = 2.8;
 
@@ -42,8 +42,8 @@ export function HeroCanvas() {
       baseX: number;
       baseY: number;
       baseZ: number;
-      phase: number;      // unique offset for sin/cos
-      speed: number;      // oscillation speed
+      phase: number; // unique offset for sin/cos
+      speed: number; // oscillation speed
     };
 
     const particles: Particle[] = [];
@@ -192,7 +192,7 @@ export function HeroCanvas() {
     <div
       ref={containerRef}
       aria-hidden="true"
-      className="absolute inset-0 pointer-events-none"
+      className="pointer-events-none absolute inset-0"
       style={{
         zIndex: 0,
         maskImage:

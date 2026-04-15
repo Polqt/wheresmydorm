@@ -25,7 +25,7 @@ export const ProfileRow = memo(function ProfileRow({
 
   return (
     <Pressable
-      className={`flex-row items-center py-3.5 ${last ? "" : "border-b border-[#F5F0EA]"}`}
+      className={`flex-row items-center py-3.5 ${last ? "" : "border-[#F5F0EA] border-b"}`}
       onPress={onPress}
       style={({ pressed }) => ({ opacity: pressed && onPress ? 0.6 : 1 })}
     >
@@ -35,11 +35,17 @@ export const ProfileRow = memo(function ProfileRow({
       >
         <Ionicons color={iconColor} name={icon} size={17} />
       </View>
-      <Text className="flex-1 text-[15px] font-medium tracking-[-0.1px]" style={{ color: labelColor }}>
+      <Text
+        className="flex-1 font-medium text-[15px] tracking-[-0.1px]"
+        style={{ color: labelColor }}
+      >
         {label}
       </Text>
       {value != null ? (
-        <Text className="mr-2 max-w-[44%] text-right text-[13px] text-[#A8A29E]" numberOfLines={1}>
+        <Text
+          className="mr-2 max-w-[44%] text-right text-[#A8A29E] text-[13px]"
+          numberOfLines={1}
+        >
           {value || "Not set"}
         </Text>
       ) : null}

@@ -10,7 +10,6 @@ import {
 import { and, eq, or, sql } from "drizzle-orm";
 
 import { protectedProcedure } from "../index";
-import { createNotification } from "../lib/notifications";
 import {
   blockUserSchema,
   decodeThreadId,
@@ -19,6 +18,7 @@ import {
   sendMessageSchema,
   setInquiryStatusSchema,
 } from "../lib/messages";
+import { createNotification } from "../lib/notifications";
 
 export const messageActionProcedures = {
   send: protectedProcedure
@@ -44,7 +44,10 @@ export const messageActionProcedures = {
       });
 
       if (!listing) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Listing not found." });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Listing not found.",
+        });
       }
 
       const senderIsLister = listing.listerId === ctx.userId;
@@ -55,7 +58,10 @@ export const messageActionProcedures = {
         columns: { role: true },
       });
 
-      if (senderProfile?.role !== "admin" && (!receiverIsLister || senderIsLister)) {
+      if (
+        senderProfile?.role !== "admin" &&
+        (!receiverIsLister || senderIsLister)
+      ) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Messaging is only for finder-to-lister listing inquiries.",
@@ -66,8 +72,14 @@ export const messageActionProcedures = {
         where: and(
           eq(messages.listingId, input.listingId),
           or(
-            and(eq(messages.senderId, ctx.userId), eq(messages.receiverId, input.receiverId)),
-            and(eq(messages.senderId, input.receiverId), eq(messages.receiverId, ctx.userId)),
+            and(
+              eq(messages.senderId, ctx.userId),
+              eq(messages.receiverId, input.receiverId),
+            ),
+            and(
+              eq(messages.senderId, input.receiverId),
+              eq(messages.receiverId, ctx.userId),
+            ),
           ),
         ),
         columns: { id: true },
@@ -106,7 +118,8 @@ export const messageActionProcedures = {
       }
 
       await createNotification({
-        body: input.body.length > 0 ? input.body : "You received a new attachment.",
+        body:
+          input.body.length > 0 ? input.body : "You received a new attachment.",
         referenceId: encodeThreadId(input.listingId, ctx.userId),
         referenceType: "thread",
         title: "New message",

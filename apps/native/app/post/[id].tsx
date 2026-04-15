@@ -2,7 +2,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, Share, Text, TextInput, View } from "react-native";
+import {
+  Pressable,
+  ScrollView,
+  Share,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
 import { usePostRealtime } from "@/hooks/use-post-realtime";
 import { refreshPostQueries } from "@/lib/post-query";

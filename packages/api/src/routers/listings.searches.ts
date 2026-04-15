@@ -1,5 +1,10 @@
 import { TRPCError } from "@trpc/server";
-import { db, savedListings, savedSearches, searchEvents } from "@wheresmydorm/db";
+import {
+  db,
+  savedListings,
+  savedSearches,
+  searchEvents,
+} from "@wheresmydorm/db";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 

@@ -39,7 +39,7 @@ function FilterChip({
       onPress={onPress}
     >
       <Text
-        className={`text-[12px] font-bold ${
+        className={`font-bold text-[12px] ${
           active ? "text-white" : "text-slate-700"
         }`}
       >
@@ -64,9 +64,13 @@ export default function MessagesIndexScreen() {
   const listerCounts = useMemo(
     () => ({
       all: threads.length,
-      closed: threads.filter((thread) => thread.inquiryStatus === "closed").length,
-      pending: threads.filter((thread) => thread.inquiryStatus === "pending").length,
-      responded: threads.filter((thread) => thread.inquiryStatus === "responded").length,
+      closed: threads.filter((thread) => thread.inquiryStatus === "closed")
+        .length,
+      pending: threads.filter((thread) => thread.inquiryStatus === "pending")
+        .length,
+      responded: threads.filter(
+        (thread) => thread.inquiryStatus === "responded",
+      ).length,
     }),
     [threads],
   );
@@ -86,24 +90,26 @@ export default function MessagesIndexScreen() {
       {role === "lister" ? (
         <>
           <View className="mt-5 rounded-[28px] border border-stone-200 bg-white px-4 py-4">
-            <Text className="font-extrabold text-xs uppercase tracking-[1.1px] text-[#0B4A30]">
+            <Text className="font-extrabold text-[#0B4A30] text-xs uppercase tracking-[1.1px]">
               Inquiry flow
             </Text>
             <View className="mt-3 flex-row gap-2">
               <View className="flex-1 rounded-[18px] bg-[#F5F0E8] px-3 py-3">
-                <Text className="text-[20px] font-black text-slate-900">
+                <Text className="font-black text-[20px] text-slate-900">
                   {listerCounts.pending}
                 </Text>
                 <Text className="mt-1 text-[12px] text-slate-500">Pending</Text>
               </View>
               <View className="flex-1 rounded-[18px] bg-[#F5F0E8] px-3 py-3">
-                <Text className="text-[20px] font-black text-slate-900">
+                <Text className="font-black text-[20px] text-slate-900">
                   {listerCounts.responded}
                 </Text>
-                <Text className="mt-1 text-[12px] text-slate-500">Responded</Text>
+                <Text className="mt-1 text-[12px] text-slate-500">
+                  Responded
+                </Text>
               </View>
               <View className="flex-1 rounded-[18px] bg-[#F5F0E8] px-3 py-3">
-                <Text className="text-[20px] font-black text-slate-900">
+                <Text className="font-black text-[20px] text-slate-900">
                   {listerCounts.closed}
                 </Text>
                 <Text className="mt-1 text-[12px] text-slate-500">Closed</Text>
@@ -158,7 +164,7 @@ export default function MessagesIndexScreen() {
                 </Text>
                 {role === "lister" ? (
                   <View className="mt-3 self-start rounded-full bg-[#EEF5F1] px-3 py-1.5">
-                    <Text className="text-[11px] font-bold uppercase tracking-[0.6px] text-[#0B4A30]">
+                    <Text className="font-bold text-[#0B4A30] text-[11px] uppercase tracking-[0.6px]">
                       {formatInquiryStatus(item.inquiryStatus)}
                     </Text>
                   </View>

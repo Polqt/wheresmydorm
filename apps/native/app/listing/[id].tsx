@@ -16,9 +16,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "@/providers/auth-provider";
 import { encodeMessageThreadId } from "@/services/messages";
+import { trpc } from "@/utils/api-client";
 import { formatCurrency } from "@/utils/profile";
 import { listingEditRoute, messageThreadRoute } from "@/utils/routes";
-import { trpc } from "@/utils/api-client";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const COVER_FALLBACK =
@@ -100,7 +100,7 @@ export default function ListingDetailScreen() {
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.loading}>
           <Text style={styles.errorText}>
-            {detailQuery.error?.message ?? "Listing not found."}
+            This listing couldn't be loaded. It may have been removed.
           </Text>
           <Pressable onPress={() => router.back()} style={styles.backLink}>
             <Text style={styles.backLinkText}>Go back</Text>

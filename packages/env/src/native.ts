@@ -4,11 +4,11 @@ import { z } from "zod";
 export const env = createEnv({
   clientPrefix: "EXPO_PUBLIC_",
   client: {
-    EXPO_PUBLIC_SERVER_URL:   z.url(),
+    EXPO_PUBLIC_SERVER_URL: z.url(),
     EXPO_PUBLIC_SUPABASE_URL: z.url(),
     EXPO_PUBLIC_SUPABASE_KEY: z.string().min(1),
     EXPO_PUBLIC_GOOGLE_MAPS_KEY: z.string().min(1).optional(),
-    EXPO_PUBLIC_PAYMONGO_PUBLIC_KEY: z.string().min(1).optional(),
+    EXPO_PUBLIC_PAYMONGO_PUBLIC_KEY: z.string().min(1),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

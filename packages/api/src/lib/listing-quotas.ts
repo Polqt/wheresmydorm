@@ -39,7 +39,9 @@ function normalizeFinderQuotaRow(row: Record<string, unknown>): FinderQuotaRow {
   };
 }
 
-export async function getFinderQuotaRow(userId: string): Promise<FinderQuotaRow> {
+export async function getFinderQuotaRow(
+  userId: string,
+): Promise<FinderQuotaRow> {
   const result = await db.execute(sql<FinderQuotaRow>`
     select *
     from public.get_finder_find_quota(${userId})
@@ -135,7 +137,10 @@ export async function getLatestListingPaymentStatusMap(listingIds: string[]) {
       current.listingFeeStatus = payment.status;
     }
 
-    if (payment.type === "listing_boost" && current.boostPaymentStatus == null) {
+    if (
+      payment.type === "listing_boost" &&
+      current.boostPaymentStatus == null
+    ) {
       current.boostPaymentStatus = payment.status;
     }
 

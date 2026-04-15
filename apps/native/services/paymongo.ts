@@ -1,7 +1,6 @@
+import { env } from "@wheresmydorm/env/native";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
-
-import { env } from "@wheresmydorm/env/native";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -175,8 +174,7 @@ export async function attachPaymentMethodToIntent(input: {
   );
 
   return {
-    redirectUrl:
-      payload.data?.attributes?.next_action?.redirect?.url ?? null,
+    redirectUrl: payload.data?.attributes?.next_action?.redirect?.url ?? null,
     status: payload.data?.attributes?.status ?? null,
   };
 }
@@ -197,8 +195,7 @@ export async function retrievePaymentIntent(input: {
       payload.data?.attributes?.last_payment_error?.message ??
       payload.data?.attributes?.last_payment_error?.detail ??
       null,
-    redirectUrl:
-      payload.data?.attributes?.next_action?.redirect?.url ?? null,
+    redirectUrl: payload.data?.attributes?.next_action?.redirect?.url ?? null,
     status: payload.data?.attributes?.status ?? null,
   };
 }

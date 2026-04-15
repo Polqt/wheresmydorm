@@ -7,11 +7,12 @@ import { memo, useCallback } from "react";
 import { Alert, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { ErrorRetry } from "@/components/ui/error-retry";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import type { MyListing } from "@/types/listings";
+import { trpc } from "@/utils/api-client";
 import { formatCurrency } from "@/utils/profile";
 import { createListingRoute, listingEditRoute } from "@/utils/routes";
-import { trpc } from "@/utils/api-client";
 
 const STATUS_COLORS: Record<MyListing["status"], { bg: string; text: string }> =
   {
@@ -47,15 +48,15 @@ const ListingRow = memo(function ListingRow({
       />
       <View className="flex-1 py-3">
         <Text
-          className="pr-2 text-[14px] font-bold leading-[19px] text-[#111827]"
+          className="pr-2 font-bold text-[#111827] text-[14px] leading-[19px]"
           numberOfLines={2}
         >
           {item.title}
         </Text>
-        <Text className="mt-0.5 text-[12px] text-[#706A5F]">
+        <Text className="mt-0.5 text-[#706A5F] text-[12px]">
           {[item.city, item.barangay].filter(Boolean).join(" - ")}
         </Text>
-        <Text className="mt-1 text-[13px] font-extrabold text-[#0B2D23]">
+        <Text className="mt-1 font-extrabold text-[#0B2D23] text-[13px]">
           {formatCurrency(item.pricePerMonth)}/mo
         </Text>
         <View className="mt-2 flex-row items-center justify-between pr-2">
@@ -64,19 +65,19 @@ const ListingRow = memo(function ListingRow({
             style={{ backgroundColor: statusStyle.bg }}
           >
             <Text
-              className="text-[11px] font-bold uppercase tracking-[0.3px]"
+              className="font-bold text-[11px] uppercase tracking-[0.3px]"
               style={{ color: statusStyle.text }}
             >
               {item.status}
             </Text>
           </View>
           <View className="items-end">
-            <Text className="text-[12px] font-semibold text-[#7B7468]">
+            <Text className="font-semibold text-[#7B7468] text-[12px]">
               {item.inquiryCount} inquiries
             </Text>
             {item.requiresListingFee ? (
               <Text
-                className={`mt-1 text-[11px] font-bold ${
+                className={`mt-1 font-bold text-[11px] ${
                   item.listingFeeStatus === "paid"
                     ? "text-[#0B4A30]"
                     : "text-[#C05A18]"
@@ -89,7 +90,7 @@ const ListingRow = memo(function ListingRow({
                     : "Fee required"}
               </Text>
             ) : (
-              <Text className="mt-1 text-[11px] font-bold text-[#0B4A30]">
+              <Text className="mt-1 font-bold text-[#0B4A30] text-[11px]">
                 Free slot
               </Text>
             )}
@@ -180,36 +181,46 @@ export default function ListerListingsTabScreen() {
             onPress={() => router.push(createListingRoute())}
           >
             <Ionicons color="#ffffff" name="add" size={18} />
-            <Text className="text-[13px] font-bold text-white">New</Text>
+            <Text className="font-bold text-[13px] text-white">New</Text>
           </Pressable>
         }
       />
 
-      <FlashList
-        contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 100 }}
-        data={listingsQuery.data ?? []}
-        keyExtractor={(item) => item.id}
-        ListEmptyComponent={
-          <View className="mt-2.5 items-center rounded-[28px] bg-[#FFFDFC] px-7 py-9">
-            <Text className="text-[18px] font-extrabold text-[#111827]">
-              No listings yet
-            </Text>
-            <Text className="mt-2 text-center text-[14px] leading-[22px] text-[#706A5F]">
-              Publish your first property to start appearing in finder searches.
-            </Text>
-            <Pressable
-              className="mt-[18px] rounded-full bg-[#111827] px-[22px] py-[13px]"
-              onPress={() => router.push(createListingRoute())}
-            >
-              <Text className="text-[14px] font-bold text-white">
-                Create listing
+      {listingsQuery.isError ? (
+        <ErrorRetry
+          context="listings"
+          onRetry={() => listingsQuery.refetch()}
+        />
+      ) : null}
+
+      {listingsQuery.isError ? null : (
+        <FlashList
+          contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 100 }}
+          data={listingsQuery.data ?? []}
+          keyExtractor={(item) => item.id}
+          ListEmptyComponent={
+            <View className="mt-2.5 items-center rounded-[28px] bg-[#FFFDFC] px-7 py-9">
+              <Text className="font-extrabold text-[#111827] text-[18px]">
+                No listings yet
               </Text>
-            </Pressable>
-          </View>
-        }
-        renderItem={renderItem}
-        showsVerticalScrollIndicator={false}
-      />
+              <Text className="mt-2 text-center text-[#706A5F] text-[14px] leading-[22px]">
+                Publish your first property to start appearing in finder
+                searches.
+              </Text>
+              <Pressable
+                className="mt-[18px] rounded-full bg-[#111827] px-[22px] py-[13px]"
+                onPress={() => router.push(createListingRoute())}
+              >
+                <Text className="font-bold text-[14px] text-white">
+                  Create listing
+                </Text>
+              </Pressable>
+            </View>
+          }
+          renderItem={renderItem}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </SafeAreaView>
   );
 }

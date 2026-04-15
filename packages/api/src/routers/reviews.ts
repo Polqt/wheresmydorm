@@ -9,9 +9,8 @@ import {
 } from "@wheresmydorm/db";
 import { and, desc, eq, inArray, lt } from "drizzle-orm";
 import { z } from "zod";
-
-import { assertFinder, assertListingOwner } from "../lib/guards";
 import { adminProcedure, protectedProcedure, router } from "../index";
+import { assertFinder, assertListingOwner } from "../lib/guards";
 import { moderationStatusValues, reportReasonValues } from "../lib/moderation";
 import { createNotification } from "../lib/notifications";
 import { formatProfileName } from "../lib/profile";
@@ -167,7 +166,10 @@ export const reviewsRouter = router({
     .mutation(async ({ ctx, input }) => {
       assertFinder(ctx, "Only finders can create reviews.");
 
-      const eligibility = await getReviewEligibility(ctx.userId, input.listingId);
+      const eligibility = await getReviewEligibility(
+        ctx.userId,
+        input.listingId,
+      );
 
       if (!eligibility.canCreate) {
         throw new TRPCError({
@@ -251,7 +253,10 @@ export const reviewsRouter = router({
       });
 
       if (!review) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Review not found." });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Review not found.",
+        });
       }
 
       const listing = await db.query.listings.findFirst({
@@ -260,7 +265,10 @@ export const reviewsRouter = router({
       });
 
       if (!listing) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Listing not found." });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Listing not found.",
+        });
       }
 
       await assertListingOwner({

@@ -33,7 +33,7 @@ export default function AdminUsersScreen() {
         className="flex-1 items-center justify-center bg-[#f7f4ee]"
         style={{ paddingTop: insets.top }}
       >
-        <Text className="text-[13px] font-semibold text-[#9E9890]">
+        <Text className="font-semibold text-[#9E9890] text-[13px]">
           Admin access is required.
         </Text>
       </View>
@@ -43,14 +43,14 @@ export default function AdminUsersScreen() {
   return (
     <View className="flex-1 bg-[#f7f4ee]" style={{ paddingTop: insets.top }}>
       {/* Header */}
-      <View className="flex-row items-center border-b border-[#E7E0D5] bg-[#fffdf9] px-4 py-3.5">
+      <View className="flex-row items-center border-[#E7E0D5] border-b bg-[#fffdf9] px-4 py-3.5">
         <Pressable
           className="h-9 w-9 items-center justify-center rounded-full bg-[#F0EBE3]"
           onPress={() => router.back()}
         >
           <FontAwesome color="#0f172a" name="arrow-left" size={16} />
         </Pressable>
-        <Text className="flex-1 text-center text-base font-extrabold text-slate-900">
+        <Text className="flex-1 text-center font-extrabold text-base text-slate-900">
           Users
         </Text>
         <View className="w-9" />
@@ -58,10 +58,10 @@ export default function AdminUsersScreen() {
 
       {/* Summary */}
       <View className="mx-4 mt-3.5 rounded-3xl bg-[#fffdf9] px-4 py-4">
-        <Text className="text-xl font-extrabold text-slate-900">
+        <Text className="font-extrabold text-slate-900 text-xl">
           {items.length} users loaded
         </Text>
-        <Text className="mt-1 text-[13px] leading-5 text-[#706A5F]">
+        <Text className="mt-1 text-[#706A5F] text-[13px] leading-5">
           Ban, unban, or adjust finder plan status for any account.
         </Text>
       </View>
@@ -77,11 +77,13 @@ export default function AdminUsersScreen() {
             onPress={() => setRoleFilter(filter)}
           >
             <Text
-              className={`text-[12px] font-bold ${
+              className={`font-bold text-[12px] ${
                 roleFilter === filter ? "text-white" : "text-slate-700"
               }`}
             >
-              {filter === "all" ? "All" : filter.charAt(0).toUpperCase() + filter.slice(1)}
+              {filter === "all"
+                ? "All"
+                : filter.charAt(0).toUpperCase() + filter.slice(1)}
             </Text>
           </Pressable>
         ))}
@@ -95,7 +97,7 @@ export default function AdminUsersScreen() {
           }`}
         >
           <Text
-            className={`text-[13px] font-bold ${
+            className={`font-bold text-[13px] ${
               feedback.tone === "success" ? "text-[#166534]" : "text-red-700"
             }`}
           >
@@ -106,11 +108,15 @@ export default function AdminUsersScreen() {
 
       {/* List */}
       <FlashList
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, paddingTop: 12 }}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingBottom: 24,
+          paddingTop: 12,
+        }}
         data={items}
         keyExtractor={(item: AdminUserItem) => item.id}
         ListEmptyComponent={
-          <Text className="py-8 text-center text-[13px] font-semibold text-[#9E9890]">
+          <Text className="py-8 text-center font-semibold text-[#9E9890] text-[13px]">
             {isLoading ? "Loading users..." : "No users found"}
           </Text>
         }

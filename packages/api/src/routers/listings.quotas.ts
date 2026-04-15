@@ -24,10 +24,12 @@ export const listingQuotaProcedures = {
       (listingId) => !freeListingIds.has(listingId),
     );
     const pendingListingFeesCount = listingsRequiringPayment.filter(
-      (listingId) => paymentStatusMap.get(listingId)?.listingFeeStatus === "pending",
+      (listingId) =>
+        paymentStatusMap.get(listingId)?.listingFeeStatus === "pending",
     ).length;
     const paidListingFeesCount = listingsRequiringPayment.filter(
-      (listingId) => paymentStatusMap.get(listingId)?.listingFeeStatus === "paid",
+      (listingId) =>
+        paymentStatusMap.get(listingId)?.listingFeeStatus === "paid",
     ).length;
 
     return {

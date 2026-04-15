@@ -129,24 +129,24 @@ function ReviewCard({
   avatarColor: string;
 }) {
   return (
-    <article className="flex flex-col gap-4 rounded-[20px] bg-white border border-[#E8E0D5] shadow-[0_4px_16px_rgba(28,25,23,0.06)] p-6 min-w-[300px] max-w-sm">
+    <article className="flex min-w-[300px] max-w-sm flex-col gap-4 rounded-[20px] border border-[#E8E0D5] bg-white p-6 shadow-[0_4px_16px_rgba(28,25,23,0.06)]">
       <StarRating rating={rating} />
-      <blockquote className="text-sm text-[#1C1917] leading-relaxed grow">
+      <blockquote className="grow text-[#1C1917] text-sm leading-relaxed">
         &ldquo;{quote}&rdquo;
       </blockquote>
-      <footer className="flex items-center gap-3 pt-3 border-t border-[#E8E0D5]">
+      <footer className="flex items-center gap-3 border-[#E8E0D5] border-t pt-3">
         <div
-          className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-semibold text-white text-xs"
           style={{ backgroundColor: avatarColor }}
           aria-hidden="true"
         >
           {initials}
         </div>
         <div>
-          <p className="text-sm font-semibold text-[#1C1917] leading-tight">
+          <p className="font-semibold text-[#1C1917] text-sm leading-tight">
             {name}
           </p>
-          <p className="text-xs text-[#78716C]">{role}</p>
+          <p className="text-[#78716C] text-xs">{role}</p>
         </div>
       </footer>
     </article>
@@ -158,18 +158,18 @@ export function Community() {
     <section
       id="community"
       aria-labelledby="community-heading"
-      className="scroll-mt-24 bg-[#FDFBF7] border-t border-[#E8E0D5] overflow-hidden"
+      className="scroll-mt-24 overflow-hidden border-[#E8E0D5] border-t bg-[#FDFBF7]"
     >
       {/* Reviews */}
-      <div className="mx-auto max-w-[1200px] px-5 lg:px-10 pt-20 lg:pt-28 pb-14">
+      <div className="mx-auto max-w-[1200px] px-5 pt-20 pb-14 lg:px-10 lg:pt-28">
         <div className="mb-14">
-          <span className="inline-flex items-center rounded-full border border-[#C4622D]/30 bg-[#C4622D]/08 px-3.5 py-1 text-xs font-semibold text-[#C4622D] mb-4 tracking-wide uppercase">
+          <span className="mb-4 inline-flex items-center rounded-full border border-[#C4622D]/30 bg-[#C4622D]/08 px-3.5 py-1 font-semibold text-[#C4622D] text-xs uppercase tracking-wide">
             Reviews
           </span>
-          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <h2
               id="community-heading"
-              className="text-[#1C1917] tracking-[-0.02em] leading-tight"
+              className="text-[#1C1917] leading-tight tracking-[-0.02em]"
               style={{
                 fontFamily: "var(--font-dm-serif)",
                 fontSize: "clamp(1.9rem, 4vw, 3rem)",
@@ -177,7 +177,7 @@ export function Community() {
             >
               Loved by students everywhere
             </h2>
-            <p className="text-[#78716C] text-base leading-relaxed max-w-[36ch] lg:text-right">
+            <p className="max-w-[36ch] text-[#78716C] text-base leading-relaxed lg:text-right">
               Thousands of students have already found their home through
               Where&rsquo;s My Dorm.
             </p>
@@ -186,14 +186,14 @@ export function Community() {
 
         {/* Row 1 */}
         <div
-          className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-none -mx-5 px-5 lg:mx-0 lg:px-0 lg:grid lg:grid-cols-3"
+          className="scrollbar-none -mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-4 lg:mx-0 lg:grid lg:grid-cols-3 lg:px-0"
           role="list"
           aria-label="Student reviews row 1"
         >
           {REVIEWS_ROW_1.map((r) => (
             <div
               key={r.name}
-              className="snap-start shrink-0 lg:shrink lg:min-w-0"
+              className="shrink-0 snap-start lg:min-w-0 lg:shrink"
               role="listitem"
             >
               <ReviewCard {...r} />
@@ -203,14 +203,14 @@ export function Community() {
 
         {/* Row 2 */}
         <div
-          className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-none mt-4 -mx-5 px-5 lg:mx-0 lg:px-0 lg:grid lg:grid-cols-3"
+          className="scrollbar-none -mx-5 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-4 lg:mx-0 lg:grid lg:grid-cols-3 lg:px-0"
           role="list"
           aria-label="Student reviews row 2"
         >
           {REVIEWS_ROW_2.map((r) => (
             <div
               key={r.name}
-              className="snap-start shrink-0 lg:shrink lg:min-w-0"
+              className="shrink-0 snap-start lg:min-w-0 lg:shrink"
               role="listitem"
             >
               <ReviewCard {...r} />
@@ -220,15 +220,15 @@ export function Community() {
       </div>
 
       {/* Blogs */}
-      <div className="border-t border-[#E8E0D5] bg-white">
-        <div className="mx-auto max-w-[1200px] px-5 lg:px-10 py-20 lg:py-28">
-          <div className="mb-14 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+      <div className="border-[#E8E0D5] border-t bg-white">
+        <div className="mx-auto max-w-[1200px] px-5 py-20 lg:px-10 lg:py-28">
+          <div className="mb-14 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <span className="inline-flex items-center rounded-full border border-[#C4622D]/30 bg-[#C4622D]/08 px-3.5 py-1 text-xs font-semibold text-[#C4622D] mb-4 tracking-wide uppercase">
+              <span className="mb-4 inline-flex items-center rounded-full border border-[#C4622D]/30 bg-[#C4622D]/08 px-3.5 py-1 font-semibold text-[#C4622D] text-xs uppercase tracking-wide">
                 Blog
               </span>
               <h2
-                className="text-[#1C1917] tracking-[-0.02em] leading-tight"
+                className="text-[#1C1917] leading-tight tracking-[-0.02em]"
                 style={{
                   fontFamily: "var(--font-dm-serif)",
                   fontSize: "clamp(1.6rem, 3vw, 2.4rem)",
@@ -239,7 +239,7 @@ export function Community() {
             </div>
             <a
               href="#"
-              className="shrink-0 inline-flex items-center gap-1.5 text-sm font-medium text-[#C4622D] hover:text-[#A84E23] transition-colors duration-[180ms] focus-visible:outline-2 focus-visible:outline-[#C4622D] focus-visible:outline-offset-2 rounded"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded font-medium text-[#C4622D] text-sm transition-colors duration-[180ms] hover:text-[#A84E23] focus-visible:outline-2 focus-visible:outline-[#C4622D] focus-visible:outline-offset-2"
             >
               View all posts
               <svg
@@ -268,7 +268,7 @@ export function Community() {
               <article
                 key={post.title}
                 role="listitem"
-                className="flex flex-col rounded-[20px] bg-[#FDFBF7] border border-[#E8E0D5] overflow-hidden group hover:shadow-[0_12px_32px_rgba(28,25,23,0.10)] hover:-translate-y-0.5 transition-all duration-[220ms]"
+                className="group flex flex-col overflow-hidden rounded-[20px] border border-[#E8E0D5] bg-[#FDFBF7] transition-all duration-[220ms] hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(28,25,23,0.10)]"
               >
                 {/* Colored accent bar */}
                 <div
@@ -276,9 +276,9 @@ export function Community() {
                   style={{ backgroundColor: post.tagColor }}
                 />
 
-                <div className="flex flex-col gap-3 p-6 grow">
+                <div className="flex grow flex-col gap-3 p-6">
                   <span
-                    className="self-start text-[11px] font-semibold rounded-full px-2.5 py-1 tracking-wide"
+                    className="self-start rounded-full px-2.5 py-1 font-semibold text-[11px] tracking-wide"
                     style={{
                       color: post.tagColor,
                       backgroundColor: post.tagBg,
@@ -287,21 +287,21 @@ export function Community() {
                     {post.tag}
                   </span>
                   <h3
-                    className="text-[#1C1917] font-semibold text-base leading-snug"
+                    className="font-semibold text-[#1C1917] text-base leading-snug"
                     style={{ transition: "color 180ms" }}
                   >
                     {post.title}
                   </h3>
-                  <p className="text-[#78716C] text-sm leading-relaxed grow">
+                  <p className="grow text-[#78716C] text-sm leading-relaxed">
                     {post.description}
                   </p>
-                  <div className="flex items-center justify-between pt-3 border-t border-[#E8E0D5]">
-                    <span className="text-xs text-[#A8A29E]">
+                  <div className="flex items-center justify-between border-[#E8E0D5] border-t pt-3">
+                    <span className="text-[#A8A29E] text-xs">
                       {post.readTime}
                     </span>
                     <a
                       href="#"
-                      className="text-sm font-medium transition-colors duration-[180ms] focus-visible:outline-2 focus-visible:outline-offset-2 rounded"
+                      className="rounded font-medium text-sm transition-colors duration-[180ms] focus-visible:outline-2 focus-visible:outline-offset-2"
                       style={{ color: post.tagColor }}
                       aria-label={`Read more: ${post.title}`}
                     >

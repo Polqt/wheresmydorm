@@ -1,12 +1,13 @@
+import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
 import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { QuotaUpgradeBanner } from "@/components/ui/quota-upgrade-banner";
 import type {
   MapFilters,
   MapSortOption,
@@ -44,8 +45,14 @@ const sortOptions: Array<{ label: string; value: MapSortOption }> = [
 const availabilityOptions = [
   { label: "Any time", value: undefined },
   { label: "Now", value: new Date().toISOString() },
-  { label: "Within 7 days", value: new Date(Date.now() + 7 * 86400000).toISOString() },
-  { label: "Within 30 days", value: new Date(Date.now() + 30 * 86400000).toISOString() },
+  {
+    label: "Within 7 days",
+    value: new Date(Date.now() + 7 * 86400000).toISOString(),
+  },
+  {
+    label: "Within 30 days",
+    value: new Date(Date.now() + 30 * 86400000).toISOString(),
+  },
 ] as const;
 const SNAP_POINTS = ["22%", "54%", "88%"];
 
@@ -62,6 +69,7 @@ function formatDistance(distanceMeters: number) {
 export function FilterBar({
   advancedFiltersEnabled,
   filters,
+  remainingFinds,
   resultCount,
   isOpen,
   onOpenChange,
@@ -70,6 +78,7 @@ export function FilterBar({
 }: {
   advancedFiltersEnabled: boolean;
   filters: MapFilters;
+  remainingFinds: number;
   resultCount: number;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
@@ -123,10 +132,10 @@ export function FilterBar({
       <BottomSheetScrollView contentContainerStyle={SHEET_CONTENT_STYLE}>
         <View className="flex-row items-start justify-between">
           <View className="flex-1 pr-3">
-            <Text className="text-[22px] font-extrabold text-[#0F172A]">
+            <Text className="font-extrabold text-[#0F172A] text-[22px]">
               Filter & sort
             </Text>
-            <Text className="mt-1 text-[13px] leading-5 text-slate-600">
+            <Text className="mt-1 text-[13px] text-slate-600 leading-5">
               {resultCount} properties match your last search.
             </Text>
           </View>
@@ -134,11 +143,11 @@ export function FilterBar({
             className="mt-0.5 h-8 w-8 items-center justify-center rounded bg-[#F0EBE3]"
             onPress={() => onOpenChange(false)}
           >
-            <Text className="text-[13px] font-bold text-slate-600">X</Text>
+            <Text className="font-bold text-[13px] text-slate-600">X</Text>
           </Pressable>
         </View>
 
-        <Text className="mb-[10px] mt-6 text-[13px] font-extrabold uppercase tracking-[0.8px] text-[#0F172A]">
+        <Text className="mt-6 mb-[10px] font-extrabold text-[#0F172A] text-[13px] uppercase tracking-[0.8px]">
           Sort
         </Text>
         <View className="flex-row flex-wrap gap-2">
@@ -157,14 +166,13 @@ export function FilterBar({
           ))}
         </View>
 
-        <Text className="mb-[10px] mt-6 text-[13px] font-extrabold uppercase tracking-[0.8px] text-[#0F172A]">
+        <Text className="mt-6 mb-[10px] font-extrabold text-[#0F172A] text-[13px] uppercase tracking-[0.8px]">
           Price range
         </Text>
-        {!advancedFiltersEnabled ? (
-          <Text className="-mt-1 text-[12px] leading-[18px] text-[#8B5E3C]">
-            Upgrade Finder to unlock price, type, amenity, and rating filters.
-          </Text>
-        ) : null}
+        <QuotaUpgradeBanner
+          isPaid={advancedFiltersEnabled}
+          remainingFinds={remainingFinds}
+        />
         <View className="gap-[10px]">
           <Stepper
             disabled={!advancedFiltersEnabled}
@@ -202,7 +210,7 @@ export function FilterBar({
           />
         </View>
 
-        <Text className="mb-[10px] mt-6 text-[13px] font-extrabold uppercase tracking-[0.8px] text-[#0F172A]">
+        <Text className="mt-6 mb-[10px] font-extrabold text-[#0F172A] text-[13px] uppercase tracking-[0.8px]">
           Property type
         </Text>
         <View className="flex-row flex-wrap gap-2">
@@ -217,7 +225,9 @@ export function FilterBar({
                   onChange({
                     ...filters,
                     propertyTypes: isSelected
-                      ? filters.propertyTypes.filter((item) => item !== propertyType)
+                      ? filters.propertyTypes.filter(
+                          (item) => item !== propertyType,
+                        )
                       : [...filters.propertyTypes, propertyType],
                   })
                 }
@@ -227,7 +237,7 @@ export function FilterBar({
           })}
         </View>
 
-        <Text className="mb-[10px] mt-6 text-[13px] font-extrabold uppercase tracking-[0.8px] text-[#0F172A]">
+        <Text className="mt-6 mb-[10px] font-extrabold text-[#0F172A] text-[13px] uppercase tracking-[0.8px]">
           Amenities
         </Text>
         <View className="flex-row flex-wrap gap-2">
@@ -252,7 +262,7 @@ export function FilterBar({
           })}
         </View>
 
-        <Text className="mb-[10px] mt-6 text-[13px] font-extrabold uppercase tracking-[0.8px] text-[#0F172A]">
+        <Text className="mt-6 mb-[10px] font-extrabold text-[#0F172A] text-[13px] uppercase tracking-[0.8px]">
           Minimum rating
         </Text>
         <View className="flex-row flex-wrap gap-2">
@@ -272,7 +282,7 @@ export function FilterBar({
           ))}
         </View>
 
-        <Text className="mb-[10px] mt-6 text-[13px] font-extrabold uppercase tracking-[0.8px] text-[#0F172A]">
+        <Text className="mt-6 mb-[10px] font-extrabold text-[#0F172A] text-[13px] uppercase tracking-[0.8px]">
           Distance
         </Text>
         <View className="flex-row flex-wrap gap-2">
@@ -286,7 +296,7 @@ export function FilterBar({
           ))}
         </View>
 
-        <Text className="mb-[10px] mt-6 text-[13px] font-extrabold uppercase tracking-[0.8px] text-[#0F172A]">
+        <Text className="mt-6 mb-[10px] font-extrabold text-[#0F172A] text-[13px] uppercase tracking-[0.8px]">
           Availability
         </Text>
         <View className="flex-row flex-wrap gap-2">
@@ -310,13 +320,13 @@ export function FilterBar({
             className="items-center justify-center rounded border border-[#DDD8CF] px-[18px]"
             onPress={onReset}
           >
-            <Text className="text-[14px] font-bold text-[#706A5F]">Reset</Text>
+            <Text className="font-bold text-[#706A5F] text-[14px]">Reset</Text>
           </Pressable>
           <Pressable
             className="flex-1 items-center rounded bg-[#0B2D23] py-[14px]"
             onPress={() => onOpenChange(false)}
           >
-            <Text className="text-[14px] font-extrabold text-white">
+            <Text className="font-extrabold text-[14px] text-white">
               Apply filters
             </Text>
           </Pressable>
@@ -341,7 +351,7 @@ function Stepper({
 }) {
   return (
     <View className="rounded border border-slate-200 bg-white p-[14px]">
-      <Text className="text-[11px] font-bold uppercase tracking-[0.8px] text-[#706A5F]">
+      <Text className="font-bold text-[#706A5F] text-[11px] uppercase tracking-[0.8px]">
         {label}
       </Text>
       <View className="mt-[10px] flex-row items-center justify-between">
@@ -352,10 +362,10 @@ function Stepper({
           disabled={disabled}
           onPress={onDecrease}
         >
-          <Text className="text-[18px] font-bold text-[#0B2D23]">-</Text>
+          <Text className="font-bold text-[#0B2D23] text-[18px]">-</Text>
         </Pressable>
         <Text
-          className={`text-[15px] font-bold ${
+          className={`font-bold text-[15px] ${
             disabled ? "text-[#9E9890]" : "text-[#0F172A]"
           }`}
         >
@@ -368,7 +378,7 @@ function Stepper({
           disabled={disabled}
           onPress={onIncrease}
         >
-          <Text className="text-[18px] font-bold text-[#0B2D23]">+</Text>
+          <Text className="font-bold text-[#0B2D23] text-[18px]">+</Text>
         </Pressable>
       </View>
     </View>
@@ -389,15 +399,13 @@ function Chip({
   return (
     <Pressable
       className={`rounded border px-3 py-2 ${
-        selected
-          ? "border-[#0B2D23] bg-[#EEF5F1]"
-          : "border-[#DDD8CF] bg-white"
+        selected ? "border-[#0B2D23] bg-[#EEF5F1]" : "border-[#DDD8CF] bg-white"
       } ${disabled ? "opacity-45" : ""}`}
       disabled={disabled}
       onPress={onPress}
     >
       <Text
-        className={`text-[12px] font-bold capitalize ${
+        className={`font-bold text-[12px] capitalize ${
           disabled
             ? "text-[#9E9890]"
             : selected

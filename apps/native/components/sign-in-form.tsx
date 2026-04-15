@@ -1,12 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { StatusBar } from "expo-status-bar";
 import React, { useMemo } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -56,7 +51,7 @@ const SocialButton = React.memo(function SocialButton({
             {icon}
           </View>
           <View className="flex-1 items-center pr-9">
-            <Text className="text-[15px] font-semibold tracking-[-0.2px] text-[#1C1917]">
+            <Text className="font-semibold text-[#1C1917] text-[15px] tracking-[-0.2px]">
               {label}
             </Text>
           </View>
@@ -97,11 +92,12 @@ export function SignInForm({
             <AppLogo size={60} />
           </View>
 
-          <Text className="text-center text-[32px] font-bold leading-[38px] tracking-[-0.8px] text-[#1C1917]">
+          <Text className="text-center font-bold text-[#1C1917] text-[32px] leading-[38px] tracking-[-0.8px]">
             Find a place that{"\n"}feels right.
           </Text>
-          <Text className="mt-3 text-center text-[15px] leading-[22px] text-[#78716C]">
-            Browse listings, message listers,{"\n"}and keep your search organized.
+          <Text className="mt-3 text-center text-[#78716C] text-[15px] leading-[22px]">
+            Browse listings, message listers,{"\n"}and keep your search
+            organized.
           </Text>
         </View>
 
@@ -124,7 +120,7 @@ export function SignInForm({
 
           <View className="my-1 flex-row items-center gap-3">
             <View className="h-px flex-1 bg-[#D6CFC4]" />
-            <Text className="text-[11px] font-semibold uppercase tracking-[1.5px] text-[#A8A29E]">
+            <Text className="font-semibold text-[#A8A29E] text-[11px] uppercase tracking-[1.5px]">
               or
             </Text>
             <View className="h-px flex-1 bg-[#D6CFC4]" />
@@ -140,7 +136,7 @@ export function SignInForm({
               boxShadow: "0 4px 12px rgba(11, 45, 35, 0.25)",
             })}
           >
-            <Text className="text-[15px] font-semibold tracking-[-0.2px] text-white">
+            <Text className="font-semibold text-[15px] text-white tracking-[-0.2px]">
               Continue with email
             </Text>
           </Pressable>
@@ -148,18 +144,22 @@ export function SignInForm({
           {errorMessage ? (
             <View className="mt-1 rounded-2xl border border-[#FCA5A5] bg-[#FEF2F2] px-4 py-3.5">
               <View className="flex-row items-start gap-2.5">
-                <Ionicons color="#DC2626" name="alert-circle-outline" size={16} style={{ marginTop: 1 }} />
-                <Text className="flex-1 text-[13px] leading-5 text-[#DC2626]">
+                <Ionicons
+                  color="#DC2626"
+                  name="alert-circle-outline"
+                  size={16}
+                  style={{ marginTop: 1 }}
+                />
+                <Text className="flex-1 text-[#DC2626] text-[13px] leading-5">
                   {errorMessage}
                 </Text>
               </View>
             </View>
           ) : null}
 
-          <Text className="mt-2 text-center text-[11px] leading-4 text-[#A8A29E]">
+          <Text className="mt-2 text-center text-[#A8A29E] text-[11px] leading-4">
             By continuing you agree to our{" "}
-            <Text className="text-[#57534E] underline">Terms</Text>
-            {" "}and{" "}
+            <Text className="text-[#57534E] underline">Terms</Text> and{" "}
             <Text className="text-[#57534E] underline">Privacy Policy</Text>
           </Text>
         </View>

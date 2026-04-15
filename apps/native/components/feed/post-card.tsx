@@ -1,7 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Image } from "expo-image";
-import { memo, useCallback } from "react";
 import type { ComponentProps } from "react";
+import { memo, useCallback } from "react";
 import type { GestureResponderEvent } from "react-native";
 import { Pressable, Text, View } from "react-native";
 
@@ -47,10 +47,10 @@ export const FeedPostCard = memo(function FeedPostCard({
           size={40}
         />
         <View className="flex-1">
-          <Text className="text-[15px] font-bold text-[#111827]">
+          <Text className="font-bold text-[#111827] text-[15px]">
             {item.author.displayName}
           </Text>
-          <Text className="mt-px text-[12px] text-[#9B9387]">
+          <Text className="mt-px text-[#9B9387] text-[12px]">
             {formatMemberSince(String(item.createdAt))}
           </Text>
         </View>
@@ -63,7 +63,7 @@ export const FeedPostCard = memo(function FeedPostCard({
             }}
           >
             <Text
-              className="text-[12px] font-bold"
+              className="font-bold text-[12px]"
               style={{ color: item.author.isFollowing ? "#0B2D23" : "#111827" }}
             >
               {item.author.isFollowing ? "Following" : "Follow"}
@@ -72,7 +72,7 @@ export const FeedPostCard = memo(function FeedPostCard({
         )}
       </View>
 
-      <Text className="mt-3 text-[15px] leading-[23px] text-slate-700">
+      <Text className="mt-3 text-[15px] text-slate-700 leading-[23px]">
         {item.body}
       </Text>
 
@@ -93,7 +93,7 @@ export const FeedPostCard = memo(function FeedPostCard({
         <View className="mt-3 flex-row items-center gap-1.5">
           <Ionicons color="#0B2D23" name="home-outline" size={12} />
           <Text
-            className="flex-1 text-[13px] font-semibold text-[#0B2D23]"
+            className="flex-1 font-semibold text-[#0B2D23] text-[13px]"
             numberOfLines={1}
           >
             {item.listing.title}
@@ -104,7 +104,10 @@ export const FeedPostCard = memo(function FeedPostCard({
       {item.hashtags.length > 0 ? (
         <View className="mt-2.5 flex-row flex-wrap gap-2">
           {item.hashtags.slice(0, 4).map((tag) => (
-            <Text key={tag} className="text-[13px] font-semibold text-[#4C7A67]">
+            <Text
+              key={tag}
+              className="font-semibold text-[#4C7A67] text-[13px]"
+            >
               #{tag}
             </Text>
           ))}
@@ -114,7 +117,9 @@ export const FeedPostCard = memo(function FeedPostCard({
       <View className="mt-3.5 flex-row flex-wrap gap-3">
         {REACTION_OPTIONS.map((reaction) => {
           const isActive = item.viewerReaction === reaction.value;
-          const iconName = isActive ? reaction.icon : `${reaction.icon}-outline`;
+          const iconName = isActive
+            ? reaction.icon
+            : `${reaction.icon}-outline`;
           const count = item.reactionSummary[reaction.value];
 
           return (
@@ -135,7 +140,7 @@ export const FeedPostCard = memo(function FeedPostCard({
                 size={16}
               />
               <Text
-                className={`text-[12px] font-semibold ${
+                className={`font-semibold text-[12px] ${
                   isActive ? "text-[#A33C33]" : "text-[#6F685E]"
                 }`}
               >
@@ -150,7 +155,7 @@ export const FeedPostCard = memo(function FeedPostCard({
           onPress={handlePress}
         >
           <Ionicons color="#8C8478" name="chatbubble-outline" size={17} />
-          <Text className="text-[13px] font-semibold text-[#6F685E]">
+          <Text className="font-semibold text-[#6F685E] text-[13px]">
             {item.commentCount}
           </Text>
         </Pressable>
@@ -163,7 +168,7 @@ export const FeedPostCard = memo(function FeedPostCard({
           }}
         >
           <Ionicons color="#8C8478" name="share-social-outline" size={17} />
-          <Text className="text-[13px] font-semibold text-[#6F685E]">
+          <Text className="font-semibold text-[#6F685E] text-[13px]">
             Share
           </Text>
         </Pressable>

@@ -16,9 +16,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ErrorRetry } from "@/components/ui/error-retry";
 import type { MyListing } from "@/types/listings";
+import { trpc } from "@/utils/api-client";
 import { formatCurrency } from "@/utils/profile";
 import { createListingRoute, listingEditRoute } from "@/utils/routes";
-import { trpc } from "@/utils/api-client";
 
 const STATUS_COLORS: Record<MyListing["status"], { bg: string; text: string }> =
   {
@@ -181,7 +181,7 @@ export default function MyListingsScreen() {
 
       {listingsQuery.isError ? (
         <ErrorRetry
-          message={listingsQuery.error?.message ?? "Failed to load listings."}
+          context="listings"
           onRetry={() => listingsQuery.refetch()}
         />
       ) : listingsQuery.isLoading ? (

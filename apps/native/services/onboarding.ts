@@ -2,7 +2,9 @@ import { asyncStorageAdapter } from "@/lib/mmkv";
 import { ONBOARDING_COMPLETE_KEY } from "@/lib/onboarding";
 
 function getOnboardingStorageKey(userId?: string | null) {
-  return userId ? `${ONBOARDING_COMPLETE_KEY}.${userId}` : ONBOARDING_COMPLETE_KEY;
+  return userId
+    ? `${ONBOARDING_COMPLETE_KEY}.${userId}`
+    : ONBOARDING_COMPLETE_KEY;
 }
 
 export async function getOnboardingCompletion(userId?: string | null) {

@@ -54,10 +54,10 @@ export function ListingSheet({
       <BottomSheetScrollView contentContainerStyle={CONTENT_CONTAINER_STYLE}>
         {isLoading ? (
           <BottomSheetView className="py-2">
-            <Text className="text-[20px] font-extrabold text-[#0F172A]">
+            <Text className="font-extrabold text-[#0F172A] text-[20px]">
               Loading listing
             </Text>
-            <Text className="mt-2 text-[14px] leading-[22px] text-slate-600">
+            <Text className="mt-2 text-[14px] text-slate-600 leading-[22px]">
               Fetching details, photos, and the full review snapshot.
             </Text>
           </BottomSheetView>
@@ -65,10 +65,10 @@ export function ListingSheet({
 
         {errorMessage ? (
           <BottomSheetView className="py-2">
-            <Text className="text-[20px] font-extrabold text-[#0F172A]">
+            <Text className="font-extrabold text-[#0F172A] text-[20px]">
               Listing unavailable
             </Text>
-            <Text className="mt-2 text-[14px] leading-[22px] text-slate-600">
+            <Text className="mt-2 text-[14px] text-slate-600 leading-[22px]">
               {errorMessage}
             </Text>
           </BottomSheetView>
@@ -87,10 +87,10 @@ export function ListingSheet({
 
             <View className="mt-[18px] flex-row gap-3">
               <View className="flex-1">
-                <Text className="text-[22px] font-extrabold text-[#0B2D23]">
+                <Text className="font-extrabold text-[#0B2D23] text-[22px]">
                   {formatCurrency(listing.pricePerMonth)}
                 </Text>
-                <Text className="mt-1 text-[22px] font-extrabold text-[#0F172A]">
+                <Text className="mt-1 font-extrabold text-[#0F172A] text-[22px]">
                   {listing.title}
                 </Text>
                 <Text className="mt-1 text-[14px] text-slate-600">
@@ -99,12 +99,12 @@ export function ListingSheet({
                 </Text>
               </View>
               <View className="items-center justify-center rounded-[20px] bg-[#F3ECE0] px-[14px] py-[10px]">
-                <Text className="text-[18px] font-extrabold text-[#0B2D23]">
+                <Text className="font-extrabold text-[#0B2D23] text-[18px]">
                   {listing.ratingOverall
                     ? listing.ratingOverall.toFixed(1)
                     : "New"}
                 </Text>
-                <Text className="text-[11px] uppercase tracking-[0.8px] text-[#6C6A64]">
+                <Text className="text-[#6C6A64] text-[11px] uppercase tracking-[0.8px]">
                   rating
                 </Text>
               </View>
@@ -112,30 +112,30 @@ export function ListingSheet({
 
             <View className="mt-4 flex-row flex-wrap gap-2">
               <View className="rounded-full bg-[#EEF5F1] px-3 py-2">
-                <Text className="text-[12px] font-bold capitalize text-[#0B2D23]">
+                <Text className="font-bold text-[#0B2D23] text-[12px] capitalize">
                   {listing.propertyType.replaceAll("_", " ")}
                 </Text>
               </View>
               <View className="rounded-full bg-[#EEF5F1] px-3 py-2">
-                <Text className="text-[12px] font-bold capitalize text-[#0B2D23]">
+                <Text className="font-bold text-[#0B2D23] text-[12px] capitalize">
                   {listing.maxOccupants ?? "?"} occupants
                 </Text>
               </View>
               <View className="rounded-full bg-[#EEF5F1] px-3 py-2">
-                <Text className="text-[12px] font-bold capitalize text-[#0B2D23]">
+                <Text className="font-bold text-[#0B2D23] text-[12px] capitalize">
                   {listing.sizeSqm ? `${listing.sizeSqm} sqm` : "Size TBC"}
                 </Text>
               </View>
             </View>
 
-            <Text className="mt-5 text-[16px] font-extrabold text-[#0F172A]">
+            <Text className="mt-5 font-extrabold text-[#0F172A] text-[16px]">
               About this place
             </Text>
-            <Text className="mt-2 text-[14px] leading-[22px] text-slate-600">
+            <Text className="mt-2 text-[14px] text-slate-600 leading-[22px]">
               {listing.description}
             </Text>
 
-            <Text className="mt-5 text-[16px] font-extrabold text-[#0F172A]">
+            <Text className="mt-5 font-extrabold text-[#0F172A] text-[16px]">
               Amenities
             </Text>
             <View className="mt-[10px] flex-row flex-wrap gap-2">
@@ -144,17 +144,17 @@ export function ListingSheet({
                   key={amenity}
                   className="rounded-full border border-[#D9D1C6] bg-[#F7F2E9] px-[10px] py-[6px]"
                 >
-                  <Text className="text-[12px] font-bold capitalize text-[#5F5A51]">
+                  <Text className="font-bold text-[#5F5A51] text-[12px] capitalize">
                     {amenity.replaceAll("_", " ")}
                   </Text>
                 </View>
               ))}
             </View>
 
-            <Text className="mt-5 text-[16px] font-extrabold text-[#0F172A]">
+            <Text className="mt-5 font-extrabold text-[#0F172A] text-[16px]">
               Lister
             </Text>
-            <Text className="mt-2 text-[14px] leading-[22px] text-slate-600">
+            <Text className="mt-2 text-[14px] text-slate-600 leading-[22px]">
               {listing.lister?.displayName ?? "Unknown lister"}
             </Text>
 
@@ -162,17 +162,8 @@ export function ListingSheet({
               onPress={() => onViewDetails(listing.id)}
               className="mt-[22px] items-center rounded-[18px] border border-[#0B2D23] bg-[#EEF5F1] py-[14px]"
             >
-              <Text className="text-[14px] font-extrabold text-[#0B2D23]">
+              <Text className="font-extrabold text-[#0B2D23] text-[14px]">
                 View details
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={onClose}
-              className="mt-3 items-center rounded-[18px] bg-[#0B2D23] py-[14px]"
-            >
-              <Text className="text-[14px] font-extrabold text-white">
-                Back to map
               </Text>
             </Pressable>
           </BottomSheetView>

@@ -12,17 +12,17 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 import { ProfileAvatar } from "@/components/profile/profile-avatar";
 import { ScreenHeader } from "@/components/ui/screen-header";
-import { PROFILE_QUERY_KEY } from "@/lib/auth";
 import { useCurrentProfile } from "@/hooks/use-current-profile";
+import { PROFILE_QUERY_KEY } from "@/lib/auth";
 import { useAuth } from "@/providers/auth-provider";
-import {
-  updateCurrentProfile,
-  uploadAvatar,
-} from "@/services/profile";
+import { updateCurrentProfile, uploadAvatar } from "@/services/profile";
 import { getInitials } from "@/utils/profile";
 
 type FieldKey = "firstName" | "lastName" | "contactEmail" | "contactPhone";
@@ -216,12 +216,16 @@ export default function EditProfileScreen() {
                 onPress={handlePickAvatar}
                 size={104}
               />
-              <Pressable className="mt-4" hitSlop={8} onPress={handlePickAvatar}>
-                <Text className="text-[14px] font-semibold text-[#0B4A30]">
+              <Pressable
+                className="mt-4"
+                hitSlop={8}
+                onPress={handlePickAvatar}
+              >
+                <Text className="font-semibold text-[#0B4A30] text-[14px]">
                   Change profile photo
                 </Text>
               </Pressable>
-              <Text className="mt-2 text-center text-[13px] leading-5 text-[#7B7468]">
+              <Text className="mt-2 text-center text-[#7B7468] text-[13px] leading-5">
                 Use a clear square photo so listers and finders can recognize
                 you quickly.
               </Text>
@@ -234,10 +238,10 @@ export default function EditProfileScreen() {
                 <View
                   key={field.key}
                   className={`py-4 ${
-                    index < FIELDS.length - 1 ? "border-b border-[#EEE7DC]" : ""
+                    index < FIELDS.length - 1 ? "border-[#EEE7DC] border-b" : ""
                   }`}
                 >
-                  <Text className="mb-2 text-[13px] font-semibold text-[#6F685E]">
+                  <Text className="mb-2 font-semibold text-[#6F685E] text-[13px]">
                     {field.label}
                     {field.required ? (
                       <Text className="text-[#0B4A30]"> *</Text>
@@ -249,7 +253,7 @@ export default function EditProfileScreen() {
                     }}
                     autoCapitalize={field.autoCapitalize ?? "sentences"}
                     autoCorrect={false}
-                    className="rounded-[18px] bg-[#F6F2EB] px-4 py-4 text-[15px] text-[#111827]"
+                    className="rounded-[18px] bg-[#F6F2EB] px-4 py-4 text-[#111827] text-[15px]"
                     keyboardType={field.keyboardType ?? "default"}
                     onChangeText={(value) => setField(field.key, value)}
                     onSubmitEditing={() => focusNext(field.key)}
@@ -267,14 +271,14 @@ export default function EditProfileScreen() {
           </View>
 
           {error ? (
-            <Text className="mt-4 px-5 text-[13px] leading-5 text-red-600">
+            <Text className="mt-4 px-5 text-[13px] text-red-600 leading-5">
               {error}
             </Text>
           ) : null}
         </ScrollView>
 
         <View
-          className="border-t border-[#E9E1D6] bg-[#F7F4EE] px-5 pt-4"
+          className="border-[#E9E1D6] border-t bg-[#F7F4EE] px-5 pt-4"
           style={{ paddingBottom: Math.max(insets.bottom + 8, 20) }}
         >
           <Pressable
@@ -287,7 +291,7 @@ export default function EditProfileScreen() {
               <ActivityIndicator color="#ffffff" size="small" />
             ) : (
               <Text
-                className="text-[15px] font-semibold"
+                className="font-semibold text-[15px]"
                 style={{ color: canSave ? "#ffffff" : "#A69D91" }}
               >
                 Save changes

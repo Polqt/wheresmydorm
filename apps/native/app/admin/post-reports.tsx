@@ -8,8 +8,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "@/providers/auth-provider";
 import type { AdminPostReportItem } from "@/types/platform";
-import { postDetailRoute } from "@/utils/routes";
 import { trpc } from "@/utils/api-client";
+import { postDetailRoute } from "@/utils/routes";
 
 const moderationStatuses = [
   "pending",
@@ -70,9 +70,7 @@ function ReportCard({
       <Text style={styles.cardTitle} numberOfLines={1}>
         Reported post
       </Text>
-      <Text style={styles.cardMeta}>
-        Post ID: {item.postId}
-      </Text>
+      <Text style={styles.cardMeta}>Post ID: {item.postId}</Text>
       <Text style={styles.reasonLabel}>Reason: {item.reason}</Text>
       {item.notes ? <Text style={styles.cardNotes}>{item.notes}</Text> : null}
 
@@ -88,7 +86,8 @@ function ReportCard({
           onPress={() => onModerate({ reportId: item.id, status: "reviewed" })}
           style={[
             styles.secondaryAction,
-            (item.status === "reviewed" || isModerating) && styles.actionDisabled,
+            (item.status === "reviewed" || isModerating) &&
+              styles.actionDisabled,
           ]}
         >
           <Text style={styles.secondaryActionText}>
@@ -103,7 +102,8 @@ function ReportCard({
           onPress={() => onModerate({ reportId: item.id, status: "dismissed" })}
           style={[
             styles.secondaryAction,
-            (item.status === "dismissed" || isModerating) && styles.actionDisabled,
+            (item.status === "dismissed" || isModerating) &&
+              styles.actionDisabled,
           ]}
         >
           <Text style={styles.secondaryActionText}>
@@ -121,7 +121,8 @@ function ReportCard({
           }
           style={[
             styles.primaryAction,
-            (item.status === "actioned" || isModerating) && styles.actionDisabled,
+            (item.status === "actioned" || isModerating) &&
+              styles.actionDisabled,
           ]}
         >
           <Text style={styles.primaryActionText}>
@@ -149,10 +150,10 @@ export default function PostReportsScreen() {
   });
   const moderateReport = useMutation(
     trpc.admin.moderatePostReport.mutationOptions({
-      onError: (error) => {
+      onError: () => {
         setFeedback({
           tone: "error",
-          message: error.message || "Post moderation failed.",
+          message: "Moderation action failed. Please try again.",
         });
         setActiveReportId(null);
       },
@@ -184,7 +185,9 @@ export default function PostReportsScreen() {
 
   if (role !== "admin") {
     return (
-      <View style={[styles.container, styles.centered, { paddingTop: insets.top }]}>
+      <View
+        style={[styles.container, styles.centered, { paddingTop: insets.top }]}
+      >
         <Text style={styles.empty}>Admin access is required.</Text>
       </View>
     );
@@ -234,12 +237,16 @@ export default function PostReportsScreen() {
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
           <Text style={styles.empty}>
-            {reportsQuery.isLoading ? "Loading post reports..." : "No post reports right now"}
+            {reportsQuery.isLoading
+              ? "Loading post reports..."
+              : "No post reports right now"}
           </Text>
         }
         renderItem={({ item }) => (
           <ReportCard
-            isModerating={moderateReport.isPending && activeReportId === item.id}
+            isModerating={
+              moderateReport.isPending && activeReportId === item.id
+            }
             item={item}
             onModerate={(input) => {
               setFeedback(null);

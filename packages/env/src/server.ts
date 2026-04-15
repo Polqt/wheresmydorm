@@ -6,18 +6,20 @@ export const env = createEnv({
   server: {
     DATABASE_URL: z.string().min(1),
 
-    SUPABASE_URL:              z.url(),
-    SUPABASE_ANON_KEY:         z.string().min(1),
+    SUPABASE_URL: z.url(),
+    SUPABASE_ANON_KEY: z.string().min(1),
     SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
 
     ANTHROPIC_API_KEY: z.string().min(1),
 
     // Paymongo
-    PAYMONGO_SECRET_KEY:  z.string().min(1),
+    PAYMONGO_SECRET_KEY: z.string().min(1),
     PAYMONGO_WEBHOOK_SECRET: z.string().min(1),
 
     CORS_ORIGIN: z.url(),
-    NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+    NODE_ENV: z
+      .enum(["development", "production", "test"])
+      .default("development"),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

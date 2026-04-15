@@ -33,11 +33,11 @@ export function AppLaunchScreen({
             />
           ) : null}
 
-          <Text className="mt-6 text-center font-bold text-[20px] leading-[26px] text-white">
+          <Text className="mt-6 text-center font-bold text-[20px] text-white leading-[26px]">
             {title}
           </Text>
           {body ? (
-            <Text className="mt-2 max-w-[280px] text-center text-sm leading-6 text-white/55">
+            <Text className="mt-2 max-w-[280px] text-center text-sm text-white/55 leading-6">
               {body}
             </Text>
           ) : null}

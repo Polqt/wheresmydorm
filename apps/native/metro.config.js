@@ -7,7 +7,9 @@ const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, "../..");
 
 const config = getDefaultConfig(projectRoot);
-const nativewindPackageDir = path.dirname(require.resolve("nativewind/package.json"));
+const nativewindPackageDir = path.dirname(
+  require.resolve("nativewind/package.json"),
+);
 const cssInteropPackageDir = path.dirname(
   require.resolve("react-native-css-interop/package.json", {
     paths: [nativewindPackageDir],

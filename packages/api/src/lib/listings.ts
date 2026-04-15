@@ -1,5 +1,20 @@
-import { db, listings, listingStatusEnum, propertyTypeEnum } from "@wheresmydorm/db";
-import { and, desc, eq, gte, ilike, inArray, isNull, lte, or } from "drizzle-orm";
+import {
+  db,
+  listingStatusEnum,
+  listings,
+  propertyTypeEnum,
+} from "@wheresmydorm/db";
+import {
+  and,
+  desc,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  isNull,
+  lte,
+  or,
+} from "drizzle-orm";
 import { z } from "zod";
 
 import {
@@ -50,9 +65,12 @@ export const listingListSchema = z.object({
 export const findNearbySchema = listingListSchema.extend({
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),
-  radiusMeters: z.number().int().min(100).max(20_000).default(
-    DEFAULT_FIND_RADIUS_METERS,
-  ),
+  radiusMeters: z
+    .number()
+    .int()
+    .min(100)
+    .max(20_000)
+    .default(DEFAULT_FIND_RADIUS_METERS),
 });
 
 export type ListingListInput = z.infer<typeof listingListSchema>;

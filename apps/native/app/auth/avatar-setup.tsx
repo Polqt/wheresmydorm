@@ -5,12 +5,7 @@ import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -65,7 +60,9 @@ export default function AvatarSetupScreen() {
       queryClient.setQueryData([PROFILE_QUERY_KEY, user.id], profile);
       router.replace("/auth/contact-info");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save. Try again.");
+      setError(
+        err instanceof Error ? err.message : "Failed to save. Try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -90,16 +87,17 @@ export default function AvatarSetupScreen() {
             <Ionicons color="#1A1A1A" name="chevron-back" size={20} />
           </Pressable>
           <Pressable hitSlop={12} onPress={handleSkip}>
-            <Text className="text-[14px] font-medium text-[#8A8480]">Skip</Text>
+            <Text className="font-medium text-[#8A8480] text-[14px]">Skip</Text>
           </Pressable>
         </View>
 
         <View className="flex-1 px-6 pt-8">
-          <Text className="text-[28px] font-bold leading-[34px] text-[#1A1A1A]">
+          <Text className="font-bold text-[#1A1A1A] text-[28px] leading-[34px]">
             Add a profile photo
           </Text>
-          <Text className="mt-2 text-[14px] leading-5 text-[#8A8480]">
-            Help listers and finders recognize you. You can always change this later.
+          <Text className="mt-2 text-[#8A8480] text-[14px] leading-5">
+            Help listers and finders recognize you. You can always change this
+            later.
           </Text>
 
           <View className="mt-10 items-center">
@@ -123,14 +121,14 @@ export default function AvatarSetupScreen() {
               )}
 
               <View
-                className="absolute bottom-1 right-1 h-10 w-10 items-center justify-center rounded-full border-2 border-white"
+                className="absolute right-1 bottom-1 h-10 w-10 items-center justify-center rounded-full border-2 border-white"
                 style={{ backgroundColor: "#04170E" }}
               >
                 <Ionicons color="#ffffff" name="camera" size={18} />
               </View>
             </Pressable>
 
-            <Text className="mt-4 text-[13px] text-[#A09A90]">
+            <Text className="mt-4 text-[#A09A90] text-[13px]">
               {avatarUri ? "Tap to change" : "Tap to select a photo"}
             </Text>
           </View>
@@ -142,7 +140,7 @@ export default function AvatarSetupScreen() {
             <View className="h-9 w-9 items-center justify-center rounded-xl bg-[#EEF5F1]">
               <Ionicons color="#0B4A30" name="images-outline" size={18} />
             </View>
-            <Text className="flex-1 text-[14px] font-medium text-[#1A1A1A]">
+            <Text className="flex-1 font-medium text-[#1A1A1A] text-[14px]">
               Choose from library
             </Text>
             <Ionicons color="#C0B8B0" name="chevron-forward" size={16} />
@@ -164,7 +162,7 @@ export default function AvatarSetupScreen() {
             {isSubmitting ? (
               <ActivityIndicator color="#ffffff" size="small" />
             ) : (
-              <Text className="text-[15px] font-bold text-white">Continue</Text>
+              <Text className="font-bold text-[15px] text-white">Continue</Text>
             )}
           </Pressable>
         </View>

@@ -73,7 +73,9 @@ export async function enrichPosts<TPost extends EnrichablePost>(
 
   const postIds = postList.map((p) => p.id);
   const authorIds = [
-    ...new Set(postList.map((p) => p.authorId).filter((id) => id !== currentUserId)),
+    ...new Set(
+      postList.map((p) => p.authorId).filter((id) => id !== currentUserId),
+    ),
   ];
 
   const [reactionRows, viewerReactions, followingRows] = await Promise.all([
@@ -88,7 +90,10 @@ export async function enrichPosts<TPost extends EnrichablePost>(
       .groupBy(postReactions.postId, postReactions.reaction),
 
     db
-      .select({ postId: postReactions.postId, reaction: postReactions.reaction })
+      .select({
+        postId: postReactions.postId,
+        reaction: postReactions.reaction,
+      })
       .from(postReactions)
       .where(
         and(
@@ -110,9 +115,16 @@ export async function enrichPosts<TPost extends EnrichablePost>(
           ),
   ]);
 
-  const reactionMap = new Map<string, Record<(typeof reactionValues)[number], number>>();
+  const reactionMap = new Map<
+    string,
+    Record<(typeof reactionValues)[number], number>
+  >();
   for (const row of reactionRows as ReactionSummaryRow[]) {
-    const current = reactionMap.get(row.postId) ?? { like: 0, helpful: 0, funny: 0 };
+    const current = reactionMap.get(row.postId) ?? {
+      like: 0,
+      helpful: 0,
+      funny: 0,
+    };
     current[row.reaction] = row.count;
     reactionMap.set(row.postId, current);
   }
@@ -127,9 +139,14 @@ export async function enrichPosts<TPost extends EnrichablePost>(
     author: {
       ...post.author,
       isCurrentUser: post.authorId === currentUserId,
-      isFollowing: post.authorId !== currentUserId && followingSet.has(post.authorId),
+      isFollowing:
+        post.authorId !== currentUserId && followingSet.has(post.authorId),
     },
-    reactionSummary: reactionMap.get(post.id) ?? { like: 0, helpful: 0, funny: 0 },
+    reactionSummary: reactionMap.get(post.id) ?? {
+      like: 0,
+      helpful: 0,
+      funny: 0,
+    },
     viewerReaction: viewerReactionMap.get(post.id) ?? null,
   }));
 }

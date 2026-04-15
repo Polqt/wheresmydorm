@@ -1,6 +1,13 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import {
+  Alert,
+  Linking,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ProfileAvatar } from "@/components/profile/profile-avatar";
@@ -46,7 +53,7 @@ export default function ProfileTabScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View className="flex-row items-center justify-between px-5 pt-4 pb-2">
-          <Text className="text-[22px] font-bold tracking-[-0.4px] text-[#1C1917]">
+          <Text className="font-bold text-[#1C1917] text-[22px] tracking-[-0.4px]">
             Profile
           </Text>
           <Pressable
@@ -76,7 +83,7 @@ export default function ProfileTabScreen() {
             <View className="flex-1">
               <View className="flex-row items-center gap-1.5">
                 <Text
-                  className="text-[18px] font-bold tracking-[-0.3px] text-[#1C1917]"
+                  className="font-bold text-[#1C1917] text-[18px] tracking-[-0.3px]"
                   numberOfLines={1}
                 >
                   {displayName}
@@ -85,12 +92,15 @@ export default function ProfileTabScreen() {
                   <Ionicons color="#0B4A30" name="checkmark-circle" size={17} />
                 ) : null}
               </View>
-              <Text className="mt-0.5 text-[13px] text-[#78716C]" numberOfLines={1}>
+              <Text
+                className="mt-0.5 text-[#78716C] text-[13px]"
+                numberOfLines={1}
+              >
                 {user?.email ?? ""}
               </Text>
               {role ? (
                 <View className="mt-2 self-start rounded-full bg-[#EEF5F1] px-3 py-1">
-                  <Text className="text-[12px] font-semibold capitalize text-[#0B4A30]">
+                  <Text className="font-semibold text-[#0B4A30] text-[12px] capitalize">
                     {role}
                   </Text>
                 </View>
@@ -211,18 +221,24 @@ export default function ProfileTabScreen() {
             <ProfileRow
               icon="help-circle-outline"
               label="Help center"
-              onPress={() => {}}
+              onPress={() =>
+                void Linking.openURL("https://wheresmydorm.com/help")
+              }
             />
             <ProfileRow
               icon="document-text-outline"
               label="Terms of service"
-              onPress={() => {}}
+              onPress={() =>
+                void Linking.openURL("https://wheresmydorm.com/terms")
+              }
             />
             <ProfileRow
               icon="shield-checkmark-outline"
               label="Privacy policy"
               last
-              onPress={() => {}}
+              onPress={() =>
+                void Linking.openURL("https://wheresmydorm.com/privacy")
+              }
             />
           </ProfileSection>
 

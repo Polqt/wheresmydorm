@@ -2,8 +2,8 @@ import { create } from "zustand";
 
 import { asyncStorageAdapter } from "@/lib/mmkv";
 import {
-  dedupeDiscoveryPresets,
   DISCOVERY_STORAGE_KEY,
+  dedupeDiscoveryPresets,
 } from "@/services/discovery";
 import type { DiscoverySearchPreset } from "@/types/discovery";
 
@@ -22,7 +22,10 @@ type PersistedDiscoveryStore = {
 };
 
 async function persistDiscoveryState(state: PersistedDiscoveryStore) {
-  await asyncStorageAdapter.setItem(DISCOVERY_STORAGE_KEY, JSON.stringify(state));
+  await asyncStorageAdapter.setItem(
+    DISCOVERY_STORAGE_KEY,
+    JSON.stringify(state),
+  );
 }
 
 export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
@@ -55,7 +58,10 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
   pushRecentSearch: (preset) =>
     set((state) => {
       const nextState = {
-        recentSearches: dedupeDiscoveryPresets([preset, ...state.recentSearches]),
+        recentSearches: dedupeDiscoveryPresets([
+          preset,
+          ...state.recentSearches,
+        ]),
         savedSearches: state.savedSearches,
       };
 

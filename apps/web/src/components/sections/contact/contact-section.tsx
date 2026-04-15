@@ -23,18 +23,18 @@ export function Contact() {
     <section
       id="contact"
       aria-labelledby="contact-heading"
-      className="scroll-mt-24 bg-[#FDFBF7] border-t border-[#E8E0D5]"
+      className="scroll-mt-24 border-[#E8E0D5] border-t bg-[#FDFBF7]"
     >
-      <div className="mx-auto max-w-[1200px] px-5 lg:px-10 py-20 lg:py-28">
-        <div className="grid lg:grid-cols-2 gap-14 items-start">
+      <div className="mx-auto max-w-[1200px] px-5 py-20 lg:px-10 lg:py-28">
+        <div className="grid items-start gap-14 lg:grid-cols-2">
           {/* Left copy */}
           <div className="lg:sticky lg:top-32">
-            <span className="inline-flex items-center rounded-full border border-[#C4622D]/30 bg-[#C4622D]/08 px-3.5 py-1 text-xs font-semibold text-[#C4622D] mb-4 tracking-wide uppercase">
+            <span className="mb-4 inline-flex items-center rounded-full border border-[#C4622D]/30 bg-[#C4622D]/08 px-3.5 py-1 font-semibold text-[#C4622D] text-xs uppercase tracking-wide">
               Contact
             </span>
             <h2
               id="contact-heading"
-              className="text-[#1C1917] tracking-[-0.02em] leading-tight mb-5"
+              className="mb-5 text-[#1C1917] leading-tight tracking-[-0.02em]"
               style={{
                 fontFamily: "var(--font-dm-serif)",
                 fontSize: "clamp(1.9rem, 4vw, 3rem)",
@@ -42,10 +42,10 @@ export function Contact() {
             >
               Get in touch
             </h2>
-            <p className="text-[#78716C] text-base leading-relaxed mb-10 max-w-[42ch]">
-              Have a question, a listing issue, or a partnership idea? We&rsquo;d
-              love to hear from you. Our team typically replies within one
-              business day.
+            <p className="mb-10 max-w-[42ch] text-[#78716C] text-base leading-relaxed">
+              Have a question, a listing issue, or a partnership idea?
+              We&rsquo;d love to hear from you. Our team typically replies
+              within one business day.
             </p>
 
             <ul className="flex flex-col gap-5" aria-label="Contact details">
@@ -93,16 +93,16 @@ export function Contact() {
               ].map((item) => (
                 <li
                   key={item.label}
-                  className="flex items-center gap-3 text-sm text-[#44403C]"
+                  className="flex items-center gap-3 text-[#44403C] text-sm"
                 >
-                  <span className="w-9 h-9 rounded-[10px] bg-[#FFF5EE] border border-[#F4A67A]/30 flex items-center justify-center text-[#C4622D] shrink-0">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-[#F4A67A]/30 bg-[#FFF5EE] text-[#C4622D]">
                     {item.icon}
                   </span>
                   <div>
-                    <p className="text-xs text-[#78716C] font-medium">
+                    <p className="font-medium text-[#78716C] text-xs">
                       {item.label}
                     </p>
-                    <p className="text-[#1C1917] font-medium">{item.value}</p>
+                    <p className="font-medium text-[#1C1917]">{item.value}</p>
                   </div>
                 </li>
               ))}
@@ -110,10 +110,10 @@ export function Contact() {
           </div>
 
           {/* Form card */}
-          <div className="rounded-[20px] bg-white border border-[#E8E0D5] shadow-[0_8px_32px_rgba(28,25,23,0.08)] p-8">
+          <div className="rounded-[20px] border border-[#E8E0D5] bg-white p-8 shadow-[0_8px_32px_rgba(28,25,23,0.08)]">
             {submitted ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center gap-4">
-                <div className="w-14 h-14 rounded-full bg-[#F0F7F2] border border-[#86C4A0] flex items-center justify-center">
+              <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full border border-[#86C4A0] bg-[#F0F7F2]">
                   <svg
                     width="22"
                     height="22"
@@ -134,14 +134,14 @@ export function Contact() {
                 >
                   Message sent!
                 </h3>
-                <p className="text-[#78716C] text-sm max-w-[32ch]">
+                <p className="max-w-[32ch] text-[#78716C] text-sm">
                   Thanks for reaching out. We&rsquo;ll get back to you within
                   one business day.
                 </p>
                 <button
                   type="button"
                   onClick={() => setSubmitted(false)}
-                  className="mt-2 text-sm font-medium text-[#C4622D] hover:text-[#A84E23] transition-colors duration-[120ms] focus-visible:outline-2 focus-visible:outline-[#C4622D] focus-visible:outline-offset-2 rounded"
+                  className="mt-2 rounded font-medium text-[#C4622D] text-sm transition-colors duration-[120ms] hover:text-[#A84E23] focus-visible:outline-2 focus-visible:outline-[#C4622D] focus-visible:outline-offset-2"
                 >
                   Send another message
                 </button>
@@ -153,12 +153,12 @@ export function Contact() {
                 aria-label="Contact form"
                 className="flex flex-col gap-5"
               >
-                <div className="grid sm:grid-cols-2 gap-5">
+                <div className="grid gap-5 sm:grid-cols-2">
                   {/* Name */}
                   <div className="flex flex-col gap-1.5">
                     <label
                       htmlFor="contact-name"
-                      className="text-sm font-medium text-[#1C1917]"
+                      className="font-medium text-[#1C1917] text-sm"
                     >
                       Name{" "}
                       <span className="text-[#C4622D]" aria-label="required">
@@ -172,7 +172,7 @@ export function Contact() {
                       required
                       autoComplete="name"
                       placeholder="Your full name"
-                      className="h-11 rounded-[12px] border border-[#D6C5B0] bg-white px-4 text-sm text-[#1C1917] placeholder-[#A8A29E] transition-colors duration-[120ms] focus:outline-none focus:border-[#C4622D] focus:ring-2 focus:ring-[#C4622D]/20"
+                      className="h-11 rounded-[12px] border border-[#D6C5B0] bg-white px-4 text-[#1C1917] text-sm placeholder-[#A8A29E] transition-colors duration-[120ms] focus:border-[#C4622D] focus:outline-none focus:ring-2 focus:ring-[#C4622D]/20"
                     />
                   </div>
 
@@ -180,7 +180,7 @@ export function Contact() {
                   <div className="flex flex-col gap-1.5">
                     <label
                       htmlFor="contact-email"
-                      className="text-sm font-medium text-[#1C1917]"
+                      className="font-medium text-[#1C1917] text-sm"
                     >
                       Email{" "}
                       <span className="text-[#C4622D]" aria-label="required">
@@ -194,7 +194,7 @@ export function Contact() {
                       required
                       autoComplete="email"
                       placeholder="you@university.edu"
-                      className="h-11 rounded-[12px] border border-[#D6C5B0] bg-white px-4 text-sm text-[#1C1917] placeholder-[#A8A29E] transition-colors duration-[120ms] focus:outline-none focus:border-[#C4622D] focus:ring-2 focus:ring-[#C4622D]/20"
+                      className="h-11 rounded-[12px] border border-[#D6C5B0] bg-white px-4 text-[#1C1917] text-sm placeholder-[#A8A29E] transition-colors duration-[120ms] focus:border-[#C4622D] focus:outline-none focus:ring-2 focus:ring-[#C4622D]/20"
                     />
                   </div>
                 </div>
@@ -203,7 +203,7 @@ export function Contact() {
                 <div className="flex flex-col gap-1.5">
                   <label
                     htmlFor="contact-topic"
-                    className="text-sm font-medium text-[#1C1917]"
+                    className="font-medium text-[#1C1917] text-sm"
                   >
                     Topic{" "}
                     <span className="text-[#C4622D]" aria-label="required">
@@ -216,7 +216,7 @@ export function Contact() {
                       name="topic"
                       required
                       defaultValue=""
-                      className="h-11 w-full appearance-none rounded-[12px] border border-[#D6C5B0] bg-white pl-4 pr-10 text-sm text-[#1C1917] transition-colors duration-[120ms] focus:outline-none focus:border-[#C4622D] focus:ring-2 focus:ring-[#C4622D]/20"
+                      className="h-11 w-full appearance-none rounded-[12px] border border-[#D6C5B0] bg-white pr-10 pl-4 text-[#1C1917] text-sm transition-colors duration-[120ms] focus:border-[#C4622D] focus:outline-none focus:ring-2 focus:ring-[#C4622D]/20"
                     >
                       <option value="" disabled>
                         Select a topic
@@ -228,7 +228,7 @@ export function Contact() {
                       ))}
                     </select>
                     <svg
-                      className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[#A8A29E]"
+                      className="pointer-events-none absolute top-1/2 right-3.5 -translate-y-1/2 text-[#A8A29E]"
                       width="15"
                       height="15"
                       viewBox="0 0 24 24"
@@ -248,7 +248,7 @@ export function Contact() {
                 <div className="flex flex-col gap-1.5">
                   <label
                     htmlFor="contact-message"
-                    className="text-sm font-medium text-[#1C1917]"
+                    className="font-medium text-[#1C1917] text-sm"
                   >
                     Message{" "}
                     <span className="text-[#C4622D]" aria-label="required">
@@ -261,13 +261,13 @@ export function Contact() {
                     required
                     rows={5}
                     placeholder="How can we help you?"
-                    className="resize-none rounded-[12px] border border-[#D6C5B0] bg-white px-4 py-3 text-sm text-[#1C1917] placeholder-[#A8A29E] transition-colors duration-[120ms] focus:outline-none focus:border-[#C4622D] focus:ring-2 focus:ring-[#C4622D]/20"
+                    className="resize-none rounded-[12px] border border-[#D6C5B0] bg-white px-4 py-3 text-[#1C1917] text-sm placeholder-[#A8A29E] transition-colors duration-[120ms] focus:border-[#C4622D] focus:outline-none focus:ring-2 focus:ring-[#C4622D]/20"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="mt-1 inline-flex items-center justify-center h-11 rounded-full bg-[#C4622D] text-white text-sm font-medium hover:bg-[#A84E23] transition-colors duration-[180ms] shadow-[0_4px_14px_rgba(196,98,45,0.3)] focus-visible:outline-2 focus-visible:outline-[#C4622D] focus-visible:outline-offset-2 active:scale-[0.98]"
+                  className="mt-1 inline-flex h-11 items-center justify-center rounded-full bg-[#C4622D] font-medium text-sm text-white shadow-[0_4px_14px_rgba(196,98,45,0.3)] transition-colors duration-[180ms] hover:bg-[#A84E23] focus-visible:outline-2 focus-visible:outline-[#C4622D] focus-visible:outline-offset-2 active:scale-[0.98]"
                 >
                   Send message
                 </button>

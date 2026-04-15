@@ -8,7 +8,12 @@ import { createNotification } from "./notifications";
 type PaymongoMetadata = {
   listingId?: string;
   paymentId: string;
-  type: "finder_upgrade" | "listing_boost" | "listing_fee" | "verified_badge" | "lister_analytics";
+  type:
+    | "finder_upgrade"
+    | "listing_boost"
+    | "listing_fee"
+    | "verified_badge"
+    | "lister_analytics";
   userId: string;
 };
 
@@ -49,7 +54,9 @@ type PaymongoPaymentEvent = {
   };
 };
 
-function getRequiredEnv(name: "PAYMONGO_SECRET_KEY" | "PAYMONGO_WEBHOOK_SECRET") {
+function getRequiredEnv(
+  name: "PAYMONGO_SECRET_KEY" | "PAYMONGO_WEBHOOK_SECRET",
+) {
   const value = process.env[name];
 
   if (!value) {
@@ -146,7 +153,10 @@ export function verifyPaymongoWebhookSignature(
   return candidates.some((candidate) => candidate === expectedSignature);
 }
 
-export async function markPaymentAsPaid(paymentId: string, paymongoPaymentId?: string | null) {
+export async function markPaymentAsPaid(
+  paymentId: string,
+  paymongoPaymentId?: string | null,
+) {
   const payment = await db.query.payments.findFirst({
     where: eq(payments.id, paymentId),
   });
@@ -204,8 +214,7 @@ export async function markPaymentAsPaid(paymentId: string, paymongoPaymentId?: s
   }
 
   if (payment.type === "lister_analytics") {
-    const analyticsExpiresAt = new Date();
-    analyticsExpiresAt.setMonth(analyticsExpiresAt.getMonth() + 1); // 30-day subscription
+    const analyticsExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days exact
     await db
       .update(profiles)
       .set({ analyticsExpiresAt })
@@ -234,13 +243,19 @@ export async function markPaymentAsPaid(paymentId: string, paymongoPaymentId?: s
 }
 
 export async function handlePaymongoWebhook(rawBody: string) {
-  const payload = JSON.parse(rawBody) as PaymongoPaymentEvent;
+  let payload: PaymongoPaymentEvent;
+  try {
+    payload = JSON.parse(rawBody) as PaymongoPaymentEvent;
+  } catch {
+    return { ignored: true, reason: "invalid_json" as const };
+  }
+
   const eventType = payload.data?.attributes?.type ?? null;
   const paymentData = payload.data?.attributes?.data;
   const paymentAttributes = paymentData?.attributes;
   const metadata = paymentAttributes?.metadata;
 
-  if (!metadata?.paymentId) {
+  if (!metadata?.paymentId || !metadata?.userId) {
     return { ignored: true, reason: "missing_metadata" as const };
   }
 

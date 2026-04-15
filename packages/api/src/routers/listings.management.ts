@@ -18,10 +18,7 @@ import {
   getFreeListingIdsForLister,
   getLatestListingPaymentStatusMap,
 } from "../lib/listing-quotas";
-import {
-  listingBodySchema,
-  listingStatusValues,
-} from "../lib/listings";
+import { listingBodySchema, listingStatusValues } from "../lib/listings";
 import { formatProfileName } from "../lib/profile";
 
 export const listingManagementProcedures = {
@@ -125,7 +122,12 @@ export const listingManagementProcedures = {
         where: eq(listings.id, input.id),
         with: {
           lister: {
-            columns: { id: true, firstName: true, lastName: true, avatarUrl: true },
+            columns: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              avatarUrl: true,
+            },
           },
           photos: {
             columns: { id: true, url: true, orderIndex: true },
@@ -347,7 +349,15 @@ export const listingManagementProcedures = {
               eq(listings.listerId, ctx.userId),
             )
           : eq(listings.listerId, ctx.userId),
-        columns: { id: true, title: true, viewCount: true, bookmarkCount: true, inquiryCount: true, isFeatured: true, boostExpiresAt: true },
+        columns: {
+          id: true,
+          title: true,
+          viewCount: true,
+          bookmarkCount: true,
+          inquiryCount: true,
+          isFeatured: true,
+          boostExpiresAt: true,
+        },
       });
 
       const thirtyDayViews = await db
@@ -377,7 +387,10 @@ export const listingManagementProcedures = {
         totalSaves: listing.bookmarkCount,
         totalInquiries: listing.inquiryCount,
         viewsLast30Days: viewsMap.get(listing.id) ?? 0,
-        isBoosted: listing.isFeatured && (listing.boostExpiresAt == null || listing.boostExpiresAt > new Date()),
+        isBoosted:
+          listing.isFeatured &&
+          (listing.boostExpiresAt == null ||
+            listing.boostExpiresAt > new Date()),
         boostExpiresAt: listing.boostExpiresAt?.toISOString() ?? null,
       }));
     }),

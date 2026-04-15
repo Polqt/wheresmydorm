@@ -1,7 +1,6 @@
+import type { FlashListRef } from "@shopify/flash-list";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
-
-import type { FlashListRef } from "@shopify/flash-list";
 import type { ChatMessage } from "@/types/chat";
 import { trpc } from "@/utils/api-client";
 
@@ -55,7 +54,7 @@ export function useAiChat() {
 
   return {
     errorMessage: sendMutation.isError
-      ? (sendMutation.error.message || "Failed to send. Try again.")
+      ? sendMutation.error.message || "Failed to send. Try again."
       : null,
     inputText,
     isPending: sendMutation.isPending,
