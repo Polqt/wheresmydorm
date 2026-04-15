@@ -1,5 +1,5 @@
-import { useQueryClient } from "@tanstack/react-query";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -17,16 +17,17 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
+import { SetupProgressBar } from "@/components/ui/setup-progress-bar";
+import { ONBOARDING_STEPS, PROFILE_QUERY_KEY } from "@/lib/auth";
 import { useAuth } from "@/providers/auth-provider";
 import { updateCurrentProfile } from "@/services/profile";
 
-const STEPS = 4;
 const CURRENT_STEP = 1;
 
 export default function ProfileSetupScreen() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { role, user } = useAuth();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,10 +52,12 @@ export default function ProfileSetupScreen() {
         firstName: firstName.trim(),
         lastName: lastName.trim() || null,
       });
-      queryClient.setQueryData(["auth-profile", user.id], profile);
+      queryClient.setQueryData([PROFILE_QUERY_KEY, user.id], profile);
       router.replace("/auth/avatar-setup");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save. Try again.");
+      setError(
+        err instanceof Error ? err.message : "Failed to save. Try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -69,18 +72,8 @@ export default function ProfileSetupScreen() {
         className="flex-1"
       >
         <View className="flex-1">
-          {/* Progress bar */}
-          <View className="flex-row gap-1.5 px-5 pt-3">
-            {Array.from({ length: STEPS }).map((_, i) => (
-              <View
-                key={i}
-                className="h-1 flex-1 rounded-full"
-                style={{ backgroundColor: i < CURRENT_STEP ? "#04170E" : "#E8E3DC" }}
-              />
-            ))}
-          </View>
+          <SetupProgressBar current={CURRENT_STEP} total={ONBOARDING_STEPS} />
 
-          {/* Nav */}
           <View className="px-4 pt-3">
             <Pressable
               className="h-10 w-10 items-center justify-center rounded-full bg-[#F4F0EA]"
@@ -91,25 +84,29 @@ export default function ProfileSetupScreen() {
           </View>
 
           <View className="flex-1 px-6 pt-8">
-            <Text className="text-[28px] font-bold leading-[34px] text-[#1A1A1A]">
+            <Text className="font-bold text-[#1A1A1A] text-[28px] leading-[34px]">
               What's your name?
             </Text>
-            <Text className="mt-2 text-[14px] leading-5 text-[#8A8480]">
-              We'll only show this to people you connect with on WheresMyDorm.
+            <Text className="mt-2 text-[#8A8480] text-[14px] leading-5">
+              {role === "lister"
+                ? "This is how Finders will recognize you in your listings, inbox, and public posts."
+                : "This is how Listers and other Finders will recognize you across messages and the community feed."}
             </Text>
 
-            {/* Inputs */}
             <View className="mt-8 gap-4">
               <View>
-                <Text className="mb-2 text-[13px] font-semibold text-[#4A4540]">
+                <Text className="mb-2 font-semibold text-[#4A4540] text-[13px]">
                   First name <Text className="font-normal text-red-400">*</Text>
                 </Text>
                 <TextInput
                   autoCapitalize="words"
                   autoCorrect={false}
                   autoFocus
-                  className="h-[52px] w-full rounded-xl border border-[#D8D2CA] bg-white px-4 text-[15px] text-[#1A1A1A]"
-                  onChangeText={(v) => { setFirstName(v); setError(null); }}
+                  className="h-[52px] w-full rounded-xl border border-[#D8D2CA] bg-white px-4 text-[#1A1A1A] text-[15px]"
+                  onChangeText={(v) => {
+                    setFirstName(v);
+                    setError(null);
+                  }}
                   onSubmitEditing={() => lastNameRef.current?.focus()}
                   placeholder="Alex"
                   placeholderTextColor="#C0B8B0"
@@ -119,14 +116,14 @@ export default function ProfileSetupScreen() {
               </View>
 
               <View>
-                <Text className="mb-2 text-[13px] font-semibold text-[#4A4540]">
+                <Text className="mb-2 font-semibold text-[#4A4540] text-[13px]">
                   Last name{" "}
                 </Text>
                 <TextInput
                   ref={lastNameRef}
                   autoCapitalize="words"
                   autoCorrect={false}
-                  className="h-[52px] w-full rounded-xl border border-[#D8D2CA] bg-white px-4 text-[15px] text-[#1A1A1A]"
+                  className="h-[52px] w-full rounded-xl border border-[#D8D2CA] bg-white px-4 text-[#1A1A1A] text-[15px]"
                   onChangeText={(v) => setLastName(v)}
                   onSubmitEditing={handleContinue}
                   placeholder="Smith"
@@ -138,26 +135,29 @@ export default function ProfileSetupScreen() {
             </View>
 
             {error ? (
-              <Text className="mt-3 text-[13px] leading-5 text-red-500">{error}</Text>
+              <Text className="mt-3 text-[13px] text-red-500 leading-5">
+                {error}
+              </Text>
             ) : null}
 
             <View className="flex-1" />
           </View>
 
-          {/* Continue */}
           <View className="px-6" style={bottomAreaStyle}>
             <Pressable
-              className="h-[52px] w-full items-center justify-center rounded-xl"
+              className={`h-[52px] w-full items-center justify-center rounded-2xl ${
+                canContinue ? "bg-brand-orange" : "bg-[#E8E3DC]"
+              }`}
               disabled={!canContinue}
               onPress={handleContinue}
-              style={{ backgroundColor: canContinue ? "#04170E" : "#E8E3DC" }}
             >
               {isSubmitting ? (
                 <ActivityIndicator color="#ffffff" size="small" />
               ) : (
                 <Text
-                  className="text-[15px] font-semibold"
-                  style={{ color: canContinue ? "#ffffff" : "#A09A90" }}
+                  className={`font-bold text-[15px] ${
+                    canContinue ? "text-white" : "text-[#A09A90]"
+                  }`}
                 >
                   Continue
                 </Text>

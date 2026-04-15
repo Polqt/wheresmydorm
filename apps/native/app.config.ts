@@ -7,11 +7,13 @@ const config: ExpoConfig = {
   slug: "wheresmydorm",
   version: "1.0.0",
   orientation: "portrait",
-  scheme: "mybetterapp",
+  scheme: ["wheresmydorm", "mybetterapp"],
   userInterfaceStyle: "light",
   newArchEnabled: true,
   ios: {
     supportsTablet: true,
+    bundleIdentifier: "com.wheresmydorm.app",
+    buildNumber: "1",
     config: googleMapsApiKey
       ? {
           googleMapsApiKey,
@@ -21,7 +23,9 @@ const config: ExpoConfig = {
   android: {
     edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
-    package: "com.anonymous.wheresmydorm",
+    package: "com.wheresmydorm.app",
+    versionCode: 1,
+    googleServicesFile: "./google-services.json",
     config: googleMapsApiKey
       ? {
           googleMaps: {
@@ -33,16 +37,32 @@ const config: ExpoConfig = {
   web: {
     output: "static",
   },
+  extra: {
+    eas: {
+      projectId: "YOUR_EAS_PROJECT_ID",
+    },
+  },
+  updates: {
+    url: "https://u.expo.dev/YOUR_EAS_PROJECT_ID",
+  },
+  runtimeVersion: {
+    policy: "appVersion",
+  },
   plugins: [
     "expo-router",
-    "expo-notifications",
+    [
+      "expo-notifications",
+      {
+        icon: "./assets/icons/notification-icon.png",
+        color: "#ea580c",
+        defaultChannel: "default",
+        sounds: [],
+      },
+    ],
     "expo-video",
     [
       "expo-splash-screen",
       {
-        image: "./assets/animations/splash.png",
-        imageWidth: 200,
-        resizeMode: "contain",
         backgroundColor: "#04170E",
         dark: {
           backgroundColor: "#04170E",

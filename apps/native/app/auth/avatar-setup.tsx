@@ -1,25 +1,21 @@
-import { useQueryClient } from "@tanstack/react-query";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
+import { SetupProgressBar } from "@/components/ui/setup-progress-bar";
+import { ONBOARDING_STEPS, PROFILE_QUERY_KEY } from "@/lib/auth";
 import { useAuth } from "@/providers/auth-provider";
-import { updateCurrentProfile } from "@/services/profile";
+import { updateCurrentProfile, uploadAvatar } from "@/services/profile";
 
-const STEPS = 4;
 const CURRENT_STEP = 2;
 
 export default function AvatarSetupScreen() {
@@ -55,11 +51,18 @@ export default function AvatarSetupScreen() {
     setError(null);
 
     try {
-      const profile = await updateCurrentProfile(user.id, { avatarUrl: avatarUri });
-      queryClient.setQueryData(["auth-profile", user.id], profile);
+      const uploadedAvatarUrl = avatarUri
+        ? await uploadAvatar(user.id, avatarUri)
+        : null;
+      const profile = await updateCurrentProfile(user.id, {
+        avatarUrl: uploadedAvatarUrl,
+      });
+      queryClient.setQueryData([PROFILE_QUERY_KEY, user.id], profile);
       router.replace("/auth/contact-info");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save. Try again.");
+      setError(
+        err instanceof Error ? err.message : "Failed to save. Try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -74,18 +77,8 @@ export default function AvatarSetupScreen() {
       <StatusBar style="dark" />
 
       <View className="flex-1">
-        {/* Progress bar */}
-        <View className="flex-row gap-1.5 px-5 pt-3">
-          {Array.from({ length: STEPS }).map((_, i) => (
-            <View
-              key={i}
-              className="h-1 flex-1 rounded-full"
-              style={{ backgroundColor: i < CURRENT_STEP ? "#04170E" : "#E8E3DC" }}
-            />
-          ))}
-        </View>
+        <SetupProgressBar current={CURRENT_STEP} total={ONBOARDING_STEPS} />
 
-        {/* Nav */}
         <View className="flex-row items-center justify-between px-4 pt-3">
           <Pressable
             className="h-10 w-10 items-center justify-center rounded-full bg-[#F4F0EA]"
@@ -94,19 +87,19 @@ export default function AvatarSetupScreen() {
             <Ionicons color="#1A1A1A" name="chevron-back" size={20} />
           </Pressable>
           <Pressable hitSlop={12} onPress={handleSkip}>
-            <Text className="text-[14px] font-medium text-[#8A8480]">Skip</Text>
+            <Text className="font-medium text-[#8A8480] text-[14px]">Skip</Text>
           </Pressable>
         </View>
 
         <View className="flex-1 px-6 pt-8">
-          <Text className="text-[28px] font-bold leading-[34px] text-[#1A1A1A]">
+          <Text className="font-bold text-[#1A1A1A] text-[28px] leading-[34px]">
             Add a profile photo
           </Text>
-          <Text className="mt-2 text-[14px] leading-5 text-[#8A8480]">
-            Help listers and finders recognize you. You can always change this later.
+          <Text className="mt-2 text-[#8A8480] text-[14px] leading-5">
+            Help listers and finders recognize you. You can always change this
+            later.
           </Text>
 
-          {/* Avatar picker */}
           <View className="mt-10 items-center">
             <Pressable
               className="relative items-center justify-center"
@@ -127,21 +120,19 @@ export default function AvatarSetupScreen() {
                 </View>
               )}
 
-              {/* Camera badge */}
               <View
-                className="absolute bottom-1 right-1 h-10 w-10 items-center justify-center rounded-full border-2 border-white"
+                className="absolute right-1 bottom-1 h-10 w-10 items-center justify-center rounded-full border-2 border-white"
                 style={{ backgroundColor: "#04170E" }}
               >
                 <Ionicons color="#ffffff" name="camera" size={18} />
               </View>
             </Pressable>
 
-            <Text className="mt-4 text-[13px] text-[#A09A90]">
+            <Text className="mt-4 text-[#A09A90] text-[13px]">
               {avatarUri ? "Tap to change" : "Tap to select a photo"}
             </Text>
           </View>
 
-          {/* Photo library shortcut */}
           <Pressable
             className="mt-6 flex-row items-center gap-3 rounded-2xl border border-[#EAE5DE] bg-[#FAF8F5] px-4 py-3.5"
             onPress={handlePickImage}
@@ -149,7 +140,7 @@ export default function AvatarSetupScreen() {
             <View className="h-9 w-9 items-center justify-center rounded-xl bg-[#EEF5F1]">
               <Ionicons color="#0B4A30" name="images-outline" size={18} />
             </View>
-            <Text className="flex-1 text-[14px] font-medium text-[#1A1A1A]">
+            <Text className="flex-1 font-medium text-[#1A1A1A] text-[14px]">
               Choose from library
             </Text>
             <Ionicons color="#C0B8B0" name="chevron-forward" size={16} />
@@ -162,18 +153,16 @@ export default function AvatarSetupScreen() {
           <View className="flex-1" />
         </View>
 
-        {/* Continue */}
         <View className="px-6" style={bottomAreaStyle}>
           <Pressable
-            className="h-[52px] w-full items-center justify-center rounded-xl"
+            className="h-[52px] w-full items-center justify-center rounded-2xl bg-brand-orange"
             disabled={isSubmitting}
             onPress={handleContinue}
-            style={{ backgroundColor: "#04170E" }}
           >
             {isSubmitting ? (
               <ActivityIndicator color="#ffffff" size="small" />
             ) : (
-              <Text className="text-[15px] font-semibold text-white">Continue</Text>
+              <Text className="font-bold text-[15px] text-white">Continue</Text>
             )}
           </Pressable>
         </View>

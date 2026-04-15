@@ -1,5 +1,5 @@
-import { useQueryClient } from "@tanstack/react-query";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useMemo, useState } from "react";
@@ -17,16 +17,17 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
+import { SetupProgressBar } from "@/components/ui/setup-progress-bar";
+import { ONBOARDING_STEPS, PROFILE_QUERY_KEY } from "@/lib/auth";
 import { useAuth } from "@/providers/auth-provider";
 import { updateCurrentProfile } from "@/services/profile";
 
-const STEPS = 4;
 const CURRENT_STEP = 3;
 
 export default function ContactInfoScreen() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { role, user } = useAuth();
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,17 +49,19 @@ export default function ContactInfoScreen() {
         contactEmail: contactEmail.trim() || null,
         contactPhone: contactPhone.trim() || null,
       });
-      queryClient.setQueryData(["auth-profile", user.id], profile);
-      router.replace("/auth/permissions");
+      queryClient.setQueryData([PROFILE_QUERY_KEY, user.id], profile);
+      router.replace("/auth/role-preferences");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save. Try again.");
+      setError(
+        err instanceof Error ? err.message : "Failed to save. Try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
   }, [contactEmail, contactPhone, queryClient, user]);
 
   const handleSkip = useCallback(() => {
-    router.replace("/auth/permissions");
+    router.replace("/auth/role-preferences");
   }, []);
 
   return (
@@ -70,18 +73,8 @@ export default function ContactInfoScreen() {
         className="flex-1"
       >
         <View className="flex-1">
-          {/* Progress bar */}
-          <View className="flex-row gap-1.5 px-5 pt-3">
-            {Array.from({ length: STEPS }).map((_, i) => (
-              <View
-                key={i}
-                className="h-1 flex-1 rounded-full"
-                style={{ backgroundColor: i < CURRENT_STEP ? "#04170E" : "#E8E3DC" }}
-              />
-            ))}
-          </View>
+          <SetupProgressBar current={CURRENT_STEP} total={ONBOARDING_STEPS} />
 
-          {/* Nav */}
           <View className="flex-row items-center justify-between px-4 pt-3">
             <Pressable
               className="h-10 w-10 items-center justify-center rounded-full bg-[#F4F0EA]"
@@ -90,32 +83,38 @@ export default function ContactInfoScreen() {
               <Ionicons color="#1A1A1A" name="chevron-back" size={20} />
             </Pressable>
             <Pressable hitSlop={12} onPress={handleSkip}>
-              <Text className="text-[14px] font-medium text-[#8A8480]">Skip</Text>
+              <Text className="font-medium text-[#8A8480] text-[14px]">
+                Skip
+              </Text>
             </Pressable>
           </View>
 
           <View className="flex-1 px-6 pt-8">
-            <Text className="text-[28px] font-bold leading-[34px] text-[#1A1A1A]">
+            <Text className="font-bold text-[#1A1A1A] text-[28px] leading-[34px]">
               How can people{"\n"}reach you?
             </Text>
-            <Text className="mt-2 text-[14px] leading-5 text-[#8A8480]">
-              Optional — we'll only share this with people you connect with.
+            <Text className="mt-2 text-[#8A8480] text-[14px] leading-5">
+              {role === "lister"
+                ? "Optional. This helps serious Finders reach you faster once they inquire about a property."
+                : "Optional. We only surface this when you choose to connect with a Lister."}
             </Text>
 
             <View className="mt-8 gap-5">
-              {/* Email */}
               <View>
-                <Text className="mb-2 text-[13px] font-semibold text-[#4A4540]">
+                <Text className="mb-2 font-semibold text-[#4A4540] text-[13px]">
                   Contact email
                 </Text>
-                <View className="flex-row items-center h-[52px] rounded-xl border border-[#D8D2CA] bg-white px-4 gap-3">
+                <View className="h-[52px] flex-row items-center gap-3 rounded-xl border border-[#D8D2CA] bg-white px-4">
                   <Ionicons color="#C0B8B0" name="mail-outline" size={18} />
                   <TextInput
                     autoCapitalize="none"
                     autoCorrect={false}
-                    className="flex-1 text-[15px] text-[#1A1A1A]"
+                    className="flex-1 text-[#1A1A1A] text-[15px]"
                     keyboardType="email-address"
-                    onChangeText={(v) => { setContactEmail(v); setError(null); }}
+                    onChangeText={(v) => {
+                      setContactEmail(v);
+                      setError(null);
+                    }}
                     placeholder="you@example.com"
                     placeholderTextColor="#C0B8B0"
                     returnKeyType="next"
@@ -124,15 +123,14 @@ export default function ContactInfoScreen() {
                 </View>
               </View>
 
-              {/* Phone */}
               <View>
-                <Text className="mb-2 text-[13px] font-semibold text-[#4A4540]">
+                <Text className="mb-2 font-semibold text-[#4A4540] text-[13px]">
                   Phone number
                 </Text>
-                <View className="flex-row items-center h-[52px] rounded-xl border border-[#D8D2CA] bg-white px-4 gap-3">
+                <View className="h-[52px] flex-row items-center gap-3 rounded-xl border border-[#D8D2CA] bg-white px-4">
                   <Ionicons color="#C0B8B0" name="call-outline" size={18} />
                   <TextInput
-                    className="flex-1 text-[15px] text-[#1A1A1A]"
+                    className="flex-1 text-[#1A1A1A] text-[15px]"
                     keyboardType="phone-pad"
                     onChangeText={(v) => setContactPhone(v)}
                     onSubmitEditing={handleContinue}
@@ -146,8 +144,13 @@ export default function ContactInfoScreen() {
             </View>
 
             <View className="mt-5 flex-row items-start gap-2 rounded-xl bg-[#FAF8F5] px-4 py-3">
-              <Ionicons color="#8A8480" name="shield-checkmark-outline" size={15} style={{ marginTop: 1 }} />
-              <Text className="flex-1 text-[12px] leading-[18px] text-[#8A8480]">
+              <Ionicons
+                color="#8A8480"
+                name="shield-checkmark-outline"
+                size={15}
+                style={{ marginTop: 1 }}
+              />
+              <Text className="flex-1 text-[#8A8480] text-[12px] leading-[18px]">
                 We'll only show this to people you connect with on WheresMyDorm.
               </Text>
             </View>
@@ -159,18 +162,18 @@ export default function ContactInfoScreen() {
             <View className="flex-1" />
           </View>
 
-          {/* Continue */}
           <View className="px-6" style={bottomAreaStyle}>
             <Pressable
-              className="h-[52px] w-full items-center justify-center rounded-xl"
+              className="h-[52px] w-full items-center justify-center rounded-2xl bg-brand-orange"
               disabled={isSubmitting}
               onPress={handleContinue}
-              style={{ backgroundColor: "#04170E" }}
             >
               {isSubmitting ? (
                 <ActivityIndicator color="#ffffff" size="small" />
               ) : (
-                <Text className="text-[15px] font-semibold text-white">Continue</Text>
+                <Text className="font-bold text-[15px] text-white">
+                  Continue
+                </Text>
               )}
             </Pressable>
           </View>

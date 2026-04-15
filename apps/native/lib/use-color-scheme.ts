@@ -14,14 +14,10 @@ export function useColorScheme(): ColorSchemeState {
     colorScheme,
     isDarkColorScheme: false,
     setColorScheme: () => {
-      console.warn(
-        "WheresMyDorm currently ships in light mode only.",
-      );
+      console.warn("WheresMyDorm currently ships in light mode only.");
     },
     toggleColorScheme: () => {
-      console.warn(
-        "WheresMyDorm currently ships in light mode only.",
-      );
+      console.warn("WheresMyDorm currently ships in light mode only.");
     },
   };
 }

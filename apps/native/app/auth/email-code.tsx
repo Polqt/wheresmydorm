@@ -54,8 +54,9 @@ export default function EmailCodeScreen() {
       await sendEmailOtp(pendingEmail);
       setErrorMessage(null);
     } catch (error) {
+      void error;
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to resend code.",
+        "We couldn't resend the code. Please wait a moment and try again.",
       );
     } finally {
       setIsResending(false);
@@ -72,10 +73,11 @@ export default function EmailCodeScreen() {
       await verifyEmailOtp(pendingEmail, code);
       clearPendingEmail();
       // AuthProvider detects the new session via onAuthStateChange
-      // and routes to role-select or (tabs)/map automatically.
+      // and routes to role-select or the correct role home automatically.
     } catch (error) {
+      void error;
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to verify your code.",
+        "That code didn't work. Please check it and try again, or request a new one.",
       );
     } finally {
       setIsSubmitting(false);
@@ -102,26 +104,31 @@ export default function EmailCodeScreen() {
 
           <View className="flex-1 px-6 pt-6">
             <View className="items-center">
-              <AppLogo containerClassName="h-[68px] w-[68px] rounded-[22px]" size={38} />
+              <AppLogo
+                containerClassName="h-[68px] w-[68px] rounded-[22px]"
+                size={38}
+              />
             </View>
 
-            <Text className="mt-6 text-center font-bold text-[26px] leading-[32px] text-[#1A1A1A]">
+            <Text className="mt-6 text-center font-bold text-[#1A1A1A] text-[26px] leading-[32px]">
               Enter your code
             </Text>
-            <Text className="mt-2 text-center text-[14px] leading-5 text-[#8A8480]">
+            <Text className="mt-2 text-center text-[#8A8480] text-[14px] leading-5">
               We sent a {EMAIL_CODE_LENGTH}-digit code to{"\n"}
-              <Text className="font-semibold text-[#1A1A1A]">{pendingEmail}</Text>
+              <Text className="font-semibold text-[#1A1A1A]">
+                {pendingEmail}
+              </Text>
             </Text>
 
             <View className="mt-8">
-              <Text className="mb-2 text-[13px] font-semibold text-[#4A4540]">
+              <Text className="mb-2 font-semibold text-[#4A4540] text-[13px]">
                 Verification code
               </Text>
               <TextInput
                 autoCapitalize="none"
                 autoCorrect={false}
                 autoFocus
-                className="h-[52px] w-full rounded-xl border border-[#D8D2CA] bg-white px-4 text-center text-[20px] font-bold tracking-[6px] text-[#1A1A1A]"
+                className="h-[52px] w-full rounded-xl border border-[#D8D2CA] bg-white px-4 text-center font-bold text-[#1A1A1A] text-[20px] tracking-[6px]"
                 keyboardType="number-pad"
                 maxLength={EMAIL_CODE_LENGTH}
                 onChangeText={handleCodeChange}
@@ -139,7 +146,7 @@ export default function EmailCodeScreen() {
               onPress={handleResend}
             >
               <Text
-                className={`text-[13px] font-semibold ${
+                className={`font-semibold text-[13px] ${
                   isResending ? "text-[#B0A898]" : "text-[#1D5B43]"
                 }`}
               >
@@ -148,7 +155,7 @@ export default function EmailCodeScreen() {
             </Pressable>
 
             {errorMessage ? (
-              <Text className="mt-4 text-center text-[13px] leading-5 text-red-500">
+              <Text className="mt-4 text-center text-[13px] text-red-500 leading-5">
                 {errorMessage}
               </Text>
             ) : null}
@@ -158,8 +165,8 @@ export default function EmailCodeScreen() {
 
           <View className="px-6" style={bottomAreaStyle}>
             <Pressable
-              className={`h-[52px] w-full items-center justify-center rounded-xl ${
-                canContinue ? "bg-[#04170E]" : "bg-[#E8E3DC]"
+              className={`h-[52px] w-full items-center justify-center rounded-2xl ${
+                canContinue ? "bg-brand-orange" : "bg-[#E8E3DC]"
               }`}
               disabled={!canContinue}
               onPress={handleContinue}

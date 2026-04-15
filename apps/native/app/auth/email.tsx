@@ -46,7 +46,6 @@ export default function EmailSignInScreen() {
     setErrorMessage(null);
 
     try {
-      // If the user already has a valid session for this email, skip OTP entirely
       const restored = await tryRestoreSession(email);
       if (restored) {
         router.replace("/");
@@ -55,8 +54,9 @@ export default function EmailSignInScreen() {
 
       const normalizedEmail = await sendEmailOtp(email);
 
-      // In dev mode, password auth signs in immediately — no code needed
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session) {
         router.replace("/");
         return;
@@ -65,8 +65,9 @@ export default function EmailSignInScreen() {
       setPendingEmail(normalizedEmail);
       router.push("/auth/email-code");
     } catch (error) {
+      void error;
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to send verification code.",
+        "We couldn't send a verification code. Please check your email and try again.",
       );
     } finally {
       setIsSubmitting(false);
@@ -93,24 +94,30 @@ export default function EmailSignInScreen() {
 
           <View className="flex-1 px-6 pt-6">
             <View className="items-center">
-              <AppLogo containerClassName="h-[68px] w-[68px] rounded-[22px]" size={38} />
+              <AppLogo
+                containerClassName="h-[68px] w-[68px] rounded-[22px]"
+                size={38}
+              />
             </View>
 
-            <Text className="mt-6 text-center font-bold text-[26px] leading-[32px] text-[#1A1A1A]">
+            <Text className="mt-6 text-center font-bold text-[#1A1A1A] text-[26px] leading-[32px]">
               Let's start with email
             </Text>
 
             <View className="mt-8">
-              <Text className="mb-2 text-[13px] font-semibold text-[#4A4540]">
+              <Text className="mb-2 font-semibold text-[#4A4540] text-[13px]">
                 Email
               </Text>
               <TextInput
                 autoCapitalize="none"
                 autoCorrect={false}
                 autoFocus
-                className="h-[52px] w-full rounded-xl border border-[#D8D2CA] bg-white px-4 text-[15px] text-[#1A1A1A]"
+                className="h-[52px] w-full rounded-xl border border-[#D8D2CA] bg-white px-4 text-[#1A1A1A] text-[15px]"
                 keyboardType="email-address"
-                onChangeText={(v) => { setEmail(v); setErrorMessage(null); }}
+                onChangeText={(v) => {
+                  setEmail(v);
+                  setErrorMessage(null);
+                }}
                 onSubmitEditing={handleContinue}
                 placeholder="you@example.com"
                 placeholderTextColor="#C0B8B0"
@@ -119,7 +126,7 @@ export default function EmailSignInScreen() {
             </View>
 
             {errorMessage ? (
-              <Text className="mt-3 text-[13px] leading-5 text-red-500">
+              <Text className="mt-3 text-[13px] text-red-500 leading-5">
                 {errorMessage}
               </Text>
             ) : null}
@@ -129,8 +136,8 @@ export default function EmailSignInScreen() {
 
           <View className="px-6" style={bottomAreaStyle}>
             <Pressable
-              className={`h-[52px] w-full items-center justify-center rounded-xl ${
-                canContinue ? "bg-[#04170E]" : "bg-[#E8E3DC]"
+              className={`h-[52px] w-full items-center justify-center rounded-2xl ${
+                canContinue ? "bg-brand-orange" : "bg-[#E8E3DC]"
               }`}
               disabled={!canContinue}
               onPress={handleContinue}

@@ -3,19 +3,14 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
 import { AppLogo } from "@/components/ui/app-logo";
-import { ROLE_CARDS } from "@/lib/auth";
+import { PROFILE_QUERY_KEY, ROLE_CARDS } from "@/lib/auth";
 import { useAuth } from "@/providers/auth-provider";
 import { setCurrentProfileRole } from "@/services/profile";
 import { useAuthFlowStore } from "@/stores/auth";
@@ -52,8 +47,8 @@ const RoleCard = React.memo(function RoleCard({
       </View>
 
       <View className="flex-1">
-        <Text className="font-bold text-[16px] text-[#1A1A1A]">{title}</Text>
-        <Text className="mt-0.5 text-[13px] leading-5 text-[#8A8480]">
+        <Text className="font-bold text-[#1A1A1A] text-[16px]">{title}</Text>
+        <Text className="mt-0.5 text-[#8A8480] text-[13px] leading-5">
           {subtitle}
         </Text>
       </View>
@@ -105,7 +100,7 @@ export default function RoleSelectScreen() {
       { role: selectedRole },
       {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ["auth-profile"] });
+          queryClient.invalidateQueries({ queryKey: [PROFILE_QUERY_KEY] });
           setAwaitingRoleSync();
           router.replace("/auth/profile-setup");
         },
@@ -118,10 +113,9 @@ export default function RoleSelectScreen() {
       <StatusBar style="dark" />
 
       <View className="flex-1">
-        {/* Nav */}
         <View className="flex-row items-center px-4 pt-2">
           <Pressable
-            className="h-10 w-10 items-center justify-center rounded-full bg-white border border-[#EAE5DE]"
+            className="h-10 w-10 items-center justify-center rounded-full border border-[#EAE5DE] bg-white"
             onPress={handleBack}
           >
             <Ionicons color="#1A1A1A" name="chevron-back" size={20} />
@@ -129,19 +123,21 @@ export default function RoleSelectScreen() {
         </View>
 
         <View className="flex-1 px-5 pt-6">
-          {/* Logo + header */}
           <View className="items-center">
-            <AppLogo containerClassName="h-[60px] w-[60px] rounded-[18px]" size={32} />
+            <AppLogo
+              containerClassName="h-[60px] w-[60px] rounded-[18px]"
+              size={32}
+            />
           </View>
 
-          <Text className="mt-6 text-center font-bold text-[28px] leading-[34px] text-[#1A1A1A]">
+          <Text className="mt-6 text-center font-bold text-[#1A1A1A] text-[28px] leading-[34px]">
             How will you use{"\n"}WheresMyDorm?
           </Text>
-          <Text className="mt-2 text-center text-[14px] leading-6 text-[#8A8480]">
-            Pick the path that fits you best. You can switch roles later in settings.
+          <Text className="mt-2 text-center text-[#8A8480] text-[14px] leading-6">
+            Pick the path that fits you best. Your role shapes the whole app
+            experience.
           </Text>
 
-          {/* Role cards */}
           <View className="mt-8 gap-3">
             {ROLE_CARDS.map((card) => (
               <RoleCard
@@ -156,17 +152,16 @@ export default function RoleSelectScreen() {
 
           {setRoleMutation.error ? (
             <Text className="mt-4 text-center text-[13px] text-red-500">
-              {setRoleMutation.error.message}
+              Something went wrong. Please try again.
             </Text>
           ) : null}
         </View>
 
-        {/* Continue button */}
         <View className="px-5" style={bottomAreaStyle}>
           <Pressable
-            className={`h-[52px] w-full items-center justify-center rounded-xl ${
+            className={`h-[52px] w-full items-center justify-center rounded-2xl ${
               selectedRole && !setRoleMutation.isPending
-                ? "bg-[#04170E]"
+                ? "bg-brand-orange"
                 : "bg-[#E8E3DC]"
             }`}
             disabled={!selectedRole || setRoleMutation.isPending}
@@ -176,7 +171,7 @@ export default function RoleSelectScreen() {
               <ActivityIndicator color="#ffffff" size="small" />
             ) : (
               <Text
-                className={`font-semibold text-[15px] ${
+                className={`font-bold text-[15px] ${
                   selectedRole ? "text-white" : "text-[#A09A90]"
                 }`}
               >

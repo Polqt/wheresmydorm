@@ -1,14 +1,17 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import { asyncStorageAdapter } from "@/lib/mmkv";
 import { ONBOARDING_COMPLETE_KEY } from "@/lib/onboarding";
 
 function getOnboardingStorageKey(userId?: string | null) {
-  return userId ? `${ONBOARDING_COMPLETE_KEY}:${userId}` : ONBOARDING_COMPLETE_KEY;
+  return userId
+    ? `${ONBOARDING_COMPLETE_KEY}.${userId}`
+    : ONBOARDING_COMPLETE_KEY;
 }
 
 export async function getOnboardingCompletion(userId?: string | null) {
   try {
-    const value = await AsyncStorage.getItem(getOnboardingStorageKey(userId));
+    const value = await asyncStorageAdapter.getItem(
+      getOnboardingStorageKey(userId),
+    );
     return value === "true";
   } catch {
     return false;
@@ -17,9 +20,9 @@ export async function getOnboardingCompletion(userId?: string | null) {
 
 export async function setOnboardingCompletion(userId?: string | null) {
   const key = getOnboardingStorageKey(userId);
-  await AsyncStorage.setItem(key, "true");
+  await asyncStorageAdapter.setItem(key, "true");
 
   if (userId) {
-    await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, "true");
+    await asyncStorageAdapter.setItem(ONBOARDING_COMPLETE_KEY, "true");
   }
 }

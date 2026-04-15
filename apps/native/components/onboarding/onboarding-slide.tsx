@@ -1,7 +1,7 @@
-import { Image } from "expo-image";
 import React, { useMemo } from "react";
 import { Text, View } from "react-native";
 
+import LogoWhiteFill from "@/assets/icons/logo_white_fill.svg";
 import type { OnboardingSlide as OnboardingSlideItem } from "@/types/onboarding";
 
 type OnboardingSlideProps = {
@@ -42,17 +42,14 @@ const SLIDE_CONFIGS = {
   },
 } as const;
 
-const SLIDE_STATS: Record<
-  string,
-  Array<{ label: string; value: string }>
-> = {
+const SLIDE_STATS: Record<string, Array<{ label: string; value: string }>> = {
   primary900: [
     { label: "Listings nearby", value: "200+" },
     { label: "Avg. search time", value: "4 min" },
   ],
   primary700: [
     { label: "Filters available", value: "12+" },
-    { label: "Avg. savings", value: "₱2k/mo" },
+    { label: "Avg. savings", value: "PHP 2k/mo" },
   ],
   primary500: [
     { label: "Reviews verified", value: "98%" },
@@ -75,29 +72,22 @@ export const OnboardingSlide = React.memo(function OnboardingSlide({
 
   return (
     <View className="h-full justify-center px-6" style={slideStyle}>
-      {/* Logo mark */}
       <View className="mb-8 items-center">
         <View
           className="h-[96px] w-[96px] items-center justify-center rounded-[30px]"
           style={{ backgroundColor: config.accent }}
         >
-          <Image
-            accessibilityLabel="WheresMyDorm logo"
-            contentFit="contain"
-            source={require("../../assets/icons/logo_white_fill.svg")}
-            style={{ height: 52, width: 52 }}
-          />
+          <LogoWhiteFill height={52} width={52} />
         </View>
       </View>
 
-      {/* Overline badge */}
       <View className="mb-4 items-center">
         <View
           className="rounded-full px-4 py-1.5"
           style={{ backgroundColor: config.badge }}
         >
           <Text
-            className="text-[11px] font-bold uppercase tracking-[2px]"
+            className="font-bold text-[11px] uppercase tracking-[2px]"
             style={{ color: config.badgeText }}
           >
             {overline}
@@ -105,7 +95,6 @@ export const OnboardingSlide = React.memo(function OnboardingSlide({
         </View>
       </View>
 
-      {/* Headline */}
       <Text
         className="text-center font-bold text-[32px] leading-[40px]"
         style={{ color: config.heading }}
@@ -113,7 +102,6 @@ export const OnboardingSlide = React.memo(function OnboardingSlide({
         {heading}
       </Text>
 
-      {/* Body */}
       <Text
         className="mt-4 text-center text-[15px] leading-7"
         style={{ color: config.body }}
@@ -121,7 +109,6 @@ export const OnboardingSlide = React.memo(function OnboardingSlide({
         {body}
       </Text>
 
-      {/* Stats cards */}
       <View className="mt-8 flex-row gap-3">
         {stats.map((stat) => (
           <View
@@ -130,7 +117,7 @@ export const OnboardingSlide = React.memo(function OnboardingSlide({
             style={{ backgroundColor: config.card }}
           >
             <Text
-              className="text-[11px] font-semibold uppercase tracking-[1.4px]"
+              className="font-semibold text-[11px] uppercase tracking-[1.4px]"
               style={{ color: config.body }}
             >
               {stat.label}

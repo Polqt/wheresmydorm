@@ -1,7 +1,7 @@
 import type { Session, User } from "@supabase/supabase-js";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { router, useSegments } from "expo-router";
+import { router, useRootNavigationState, useSegments } from "expo-router";
 import {
   createContext,
   startTransition,
@@ -15,11 +15,16 @@ import {
 import {
   AppLaunchScreen,
   LaunchScreenButton,
-} from "@/components/ui/app-launch-screen";
+} from "@/components/ui/launch-screen";
+import { PROFILE_QUERY_KEY } from "@/lib/auth";
 import { saveSessionForRestore } from "@/services/auth";
-import { getOnboardingCompletion } from "@/services/onboarding";
 import { getOrCreateCurrentProfile } from "@/services/profile";
 import { useAuthFlowStore } from "@/stores/auth";
+import {
+  finderHomeRoute,
+  listerHomeRoute,
+  roleHomeRoute,
+} from "@/utils/routes";
 import { supabase } from "@/utils/supabase";
 
 type AuthContextValue = {
@@ -31,11 +36,9 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-// Fallback max wait in case the video never fires playToEnd (e.g. load failure)
 const SPLASH_FALLBACK_MS = 20_000;
 const LOADING_TIMEOUT_MS = 10_000;
 
-// Once the splash plays once per app launch, skip the video on subsequent loads.
 let hasShownInitialSplash = false;
 
 const SETUP_SCREENS = new Set([
@@ -43,12 +46,16 @@ const SETUP_SCREENS = new Set([
   "profile-setup",
   "avatar-setup",
   "contact-info",
+  "role-preferences",
   "permissions",
 ]);
+const FINDER_TAB_GROUP = "(finder-tabs)";
+const LISTER_TAB_GROUP = "(lister-tabs)";
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const segments = useSegments();
+  const navigationState = useRootNavigationState();
   const [firstSegment, secondSegment] = segments as string[];
 
   const [session, setSession] = useState<Session | null>(null);
@@ -58,26 +65,19 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isAwaitingRoleSync = useAuthFlowStore((s) => s.isAwaitingRoleSync);
-  const clearAwaitingRoleSync = useAuthFlowStore((s) => s.clearAwaitingRoleSync);
+  const clearAwaitingRoleSync = useAuthFlowStore(
+    (s) => s.clearAwaitingRoleSync,
+  );
   const clearPendingEmail = useAuthFlowStore((s) => s.clearPendingEmail);
 
   const profileQuery = useQuery({
     enabled: Boolean(session),
     queryFn: () => getOrCreateCurrentProfile(session!.user),
-    queryKey: ["auth-profile", session?.user.id],
+    queryKey: [PROFILE_QUERY_KEY, session?.user.id],
     retry: 2,
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
   });
 
-  const handleVideoEnd = useCallback(() => {
-    if (!splashDone) {
-      hasShownInitialSplash = true;
-      setSplashDone(true);
-    }
-  }, [splashDone]);
-
-  // Skip video on re-mounts within the same app session; keep a fallback timer
-  // in case playToEnd never fires (video load failure, etc.)
   useEffect(() => {
     if (hasShownInitialSplash) {
       setSplashDone(true);
@@ -101,12 +101,12 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, nextSession) => {
-        setSession(nextSession);
-        queryClient.invalidateQueries({ queryKey: ["auth-profile"] });
-      },
-    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      queryClient.invalidateQueries({ queryKey: [PROFILE_QUERY_KEY] });
+    });
 
     return () => {
       mounted = false;
@@ -115,12 +115,15 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   }, [queryClient]);
 
   const role = profileQuery.data?.role ?? null;
+  const canNavigate = Boolean(navigationState?.key);
   const isReady =
-    isSessionReady && (!session || (!profileQuery.isLoading && !profileQuery.error));
+    isSessionReady &&
+    (!session || (!profileQuery.isLoading && !profileQuery.error));
   const isInAuth = firstSegment === "auth";
   const isIndexRoute = firstSegment === undefined;
-  const isOnboardingRoute = firstSegment === "onboarding";
   const isSetupRoute = isInAuth && SETUP_SCREENS.has(secondSegment ?? "");
+  const isInFinderTabs = firstSegment === FINDER_TAB_GROUP;
+  const isInListerTabs = firstSegment === LISTER_TAB_GROUP;
 
   // Loading timeout
   useEffect(() => {
@@ -146,29 +149,20 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
   // Route sync
   useEffect(() => {
-    if (!isReady || !splashDone) return;
+    if (!isReady || !splashDone || !canNavigate) return;
 
     let cancelled = false;
 
     const sync = async () => {
-      let onboardingDone = false;
-      try {
-        onboardingDone = await getOnboardingCompletion(session?.user.id);
-      } catch {
-        // treat as not done
-      }
-
-      if (cancelled) return;
-
       // --- Not signed in ---
       if (!session) {
-        if (!onboardingDone && !isOnboardingRoute) {
-          startTransition(() => router.replace("/onboarding"));
-        } else if (onboardingDone && !isInAuth) {
+        if (!isInAuth) {
           startTransition(() => router.replace("/auth/sign-in"));
         }
         return;
       }
+
+      if (cancelled) return;
 
       // --- Signed in, no role yet ---
       if (!role) {
@@ -184,36 +178,45 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       // Let users finish the setup flow without interruption
       if (isSetupRoute) return;
 
-      // --- Signed in, has role, check onboarding ---
-      if (!onboardingDone && !isOnboardingRoute) {
-        startTransition(() => router.replace("/onboarding"));
+      if (role === "finder" && isInListerTabs) {
+        startTransition(() => router.replace(finderHomeRoute()));
         return;
       }
 
-      if ((isInAuth || isIndexRoute || isOnboardingRoute) && onboardingDone) {
-        startTransition(() => router.replace("/(tabs)/map"));
+      if (role === "lister" && isInFinderTabs) {
+        startTransition(() => router.replace(listerHomeRoute()));
+        return;
+      }
+
+      if (isInAuth || isIndexRoute || firstSegment === "onboarding") {
+        startTransition(() => router.replace(roleHomeRoute(role)));
       }
     };
 
     void sync();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [
     clearAwaitingRoleSync,
     isAwaitingRoleSync,
     isInAuth,
     isIndexRoute,
-    isOnboardingRoute,
     isReady,
+    isInFinderTabs,
+    isInListerTabs,
     isSetupRoute,
+    firstSegment,
     role,
     secondSegment,
     session,
     splashDone,
+    canNavigate,
   ]);
 
   const handleRetry = useCallback(() => {
     setLoadingTooLong(false);
-    queryClient.invalidateQueries({ queryKey: ["auth-profile"] });
+    queryClient.invalidateQueries({ queryKey: [PROFILE_QUERY_KEY] });
   }, [queryClient]);
 
   const signOut = useCallback(async () => {
@@ -223,8 +226,8 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     // can restore it on quick re-login, avoiding Supabase's email OTP rate limit.
     await saveSessionForRestore();
     await supabase.auth.signOut({ scope: "local" });
-    queryClient.removeQueries({ queryKey: ["auth-profile"] });
-    startTransition(() => router.replace("/auth/sign-in"));
+    setSession(null);
+    queryClient.removeQueries({ queryKey: [PROFILE_QUERY_KEY] });
   }, [clearAwaitingRoleSync, clearPendingEmail, queryClient]);
 
   const value = useMemo<AuthContextValue>(
@@ -241,23 +244,30 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   // --- Loading / splash screens ---
   if (!isReady || !splashDone) {
     if (!splashDone) {
-      return <AppLaunchScreen body="" title="" showGif onVideoEnd={handleVideoEnd} />;
+      return <AppLaunchScreen body="" title="" />;
     }
 
     return (
       <AppLaunchScreen
-        showGif={false}
         body={
           loadingTooLong
             ? "Having trouble loading your profile. You can retry or sign out."
             : "Checking your session..."
         }
-        title={loadingTooLong ? "Taking longer than expected" : "Preparing your account"}
+        title={
+          loadingTooLong
+            ? "Taking longer than expected"
+            : "Preparing your account"
+        }
         actions={
           loadingTooLong ? (
             <>
               <LaunchScreenButton label="Retry" onPress={handleRetry} />
-              <LaunchScreenButton label="Sign out" onPress={signOut} variant="ghost" />
+              <LaunchScreenButton
+                label="Sign out"
+                onPress={signOut}
+                variant="ghost"
+              />
             </>
           ) : undefined
         }
