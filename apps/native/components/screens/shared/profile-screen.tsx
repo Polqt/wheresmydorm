@@ -1,0 +1,277 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { router } from "expo-router";
+import {
+  Alert,
+  Linking,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+import { ProfileAvatar } from "@/components/profile/profile-avatar";
+import { ProfileRow } from "@/components/profile/profile-row";
+import { ProfileSection } from "@/components/profile/profile-section";
+import { ProfileStatsRow } from "@/components/profile/profile-stat";
+import { useProfileScreen } from "@/hooks/use-profile-screen";
+import {
+  adminConversationReportsRoute,
+  adminPostReportsRoute,
+  adminUsersRoute,
+  aiChatRoute,
+  createListingRoute,
+  listerListingsTabRoute,
+  messagesInboxRoute,
+  notificationsRoute,
+  paymentsRoute,
+  profileEditRoute,
+  reviewsRoute,
+  savedListingsRoute,
+} from "@/utils/routes";
+
+export default function ProfileTabScreen() {
+  const {
+    deleteAccount,
+    displayName,
+    initials,
+    profile,
+    role,
+    signOut,
+    stats,
+    unreadCount,
+    user,
+  } = useProfileScreen();
+
+  const goEdit = () => router.push(profileEditRoute());
+
+  return (
+    <SafeAreaView className="flex-1 bg-[#F5F0E8]" edges={["top"]}>
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 64 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="flex-row items-center justify-between px-5 pt-4 pb-2">
+          <Text className="font-bold text-[#1C1917] text-[22px] tracking-[-0.4px]">
+            Profile
+          </Text>
+          <Pressable
+            className="h-9 w-9 items-center justify-center rounded-full bg-white"
+            hitSlop={8}
+            onPress={goEdit}
+            style={{
+              boxShadow: "0 1px 4px rgba(0, 0, 0, 0.08)",
+            }}
+          >
+            <Ionicons color="#1C1917" name="pencil" size={15} />
+          </Pressable>
+        </View>
+
+        <View
+          className="mx-5 mb-5 rounded-3xl bg-white p-5"
+          style={{
+            boxShadow: "0 2px 12px rgba(0, 0, 0, 0.06)",
+          }}
+        >
+          <View className="flex-row items-center gap-4">
+            <ProfileAvatar
+              avatarUrl={profile?.avatarUrl ?? null}
+              initials={initials}
+              size={72}
+            />
+            <View className="flex-1">
+              <View className="flex-row items-center gap-1.5">
+                <Text
+                  className="font-bold text-[#1C1917] text-[18px] tracking-[-0.3px]"
+                  numberOfLines={1}
+                >
+                  {displayName}
+                </Text>
+                {profile?.isVerifiedMember ? (
+                  <Ionicons color="#0B4A30" name="checkmark-circle" size={17} />
+                ) : null}
+              </View>
+              <Text
+                className="mt-0.5 text-[#78716C] text-[13px]"
+                numberOfLines={1}
+              >
+                {user?.email ?? ""}
+              </Text>
+              {role ? (
+                <View className="mt-2 self-start rounded-full bg-[#EEF5F1] px-3 py-1">
+                  <Text className="font-semibold text-[#0B4A30] text-[12px] capitalize">
+                    {role}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          </View>
+
+          <View className="mt-4 h-px bg-[#F0EBE3]" />
+
+          <View className="mt-4">
+            <ProfileStatsRow stats={stats} />
+          </View>
+        </View>
+
+        <View className="px-5">
+          <ProfileSection title="Account">
+            <ProfileRow
+              icon="person-outline"
+              label="Name"
+              onPress={goEdit}
+              value={profile?.fullName ?? null}
+            />
+            <ProfileRow
+              icon="mail-outline"
+              label="Email"
+              value={user?.email ?? null}
+            />
+            <ProfileRow
+              icon="call-outline"
+              label="Phone"
+              onPress={goEdit}
+              value={profile?.contactPhone ?? null}
+            />
+            <ProfileRow
+              icon="at-outline"
+              label="Contact"
+              last
+              onPress={goEdit}
+              value={profile?.contactEmail ?? null}
+            />
+          </ProfileSection>
+
+          {role === "lister" ? (
+            <ProfileSection title="Listings">
+              <ProfileRow
+                icon="home-outline"
+                label="My listings"
+                onPress={() => router.push(listerListingsTabRoute())}
+              />
+              <ProfileRow
+                icon="add-circle-outline"
+                label="Create listing"
+                last
+                onPress={() => router.push(createListingRoute())}
+              />
+            </ProfileSection>
+          ) : role === "finder" ? (
+            <ProfileSection title="Activity">
+              <ProfileRow
+                icon="bookmark-outline"
+                label="Saved listings"
+                onPress={() => router.push(savedListingsRoute())}
+              />
+              <ProfileRow
+                icon="chatbubble-outline"
+                label="Messages"
+                onPress={() => router.push(messagesInboxRoute())}
+              />
+              <ProfileRow
+                icon="star-outline"
+                label="My reviews"
+                onPress={() => router.push(reviewsRoute())}
+              />
+              <ProfileRow
+                icon="sparkles-outline"
+                label="AI Housing Assistant"
+                last
+                onPress={() => router.push(aiChatRoute())}
+              />
+            </ProfileSection>
+          ) : role === "admin" ? (
+            <ProfileSection title="Moderation">
+              <ProfileRow
+                icon="shield-checkmark-outline"
+                label="Conversation reports"
+                onPress={() => router.push(adminConversationReportsRoute())}
+              />
+              <ProfileRow
+                icon="chatbox-ellipses-outline"
+                label="Post reports"
+                onPress={() => router.push(adminPostReportsRoute())}
+              />
+              <ProfileRow
+                icon="people-outline"
+                label="User management"
+                last
+                onPress={() => router.push(adminUsersRoute())}
+              />
+            </ProfileSection>
+          ) : null}
+
+          <ProfileSection title="Preferences">
+            <ProfileRow
+              icon="notifications-outline"
+              label="Notifications"
+              onPress={() => router.push(notificationsRoute())}
+              value={unreadCount > 0 ? `${unreadCount} unread` : null}
+            />
+            <ProfileRow
+              icon="card-outline"
+              label="Payments"
+              last
+              onPress={() => router.push(paymentsRoute())}
+            />
+          </ProfileSection>
+
+          <ProfileSection title="Support">
+            <ProfileRow
+              icon="help-circle-outline"
+              label="Help center"
+              onPress={() =>
+                void Linking.openURL("https://wheresmydorm.com/help")
+              }
+            />
+            <ProfileRow
+              icon="document-text-outline"
+              label="Terms of service"
+              onPress={() =>
+                void Linking.openURL("https://wheresmydorm.com/terms")
+              }
+            />
+            <ProfileRow
+              icon="shield-checkmark-outline"
+              label="Privacy policy"
+              last
+              onPress={() =>
+                void Linking.openURL("https://wheresmydorm.com/privacy")
+              }
+            />
+          </ProfileSection>
+
+          <ProfileSection>
+            <ProfileRow
+              destructive
+              icon="trash-outline"
+              label="Delete account"
+              onPress={() => {
+                Alert.alert(
+                  "Delete account?",
+                  "This permanently deletes your account and associated data.",
+                  [
+                    { text: "Cancel", style: "cancel" },
+                    {
+                      text: "Delete",
+                      style: "destructive",
+                      onPress: () => deleteAccount.mutate({ confirm: true }),
+                    },
+                  ],
+                );
+              }}
+            />
+            <ProfileRow
+              destructive
+              icon="log-out-outline"
+              label="Sign out"
+              last
+              onPress={() => void signOut()}
+            />
+          </ProfileSection>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}

@@ -1,23 +1,52 @@
+import { FlashList } from "@shopify/flash-list";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
-
+import { Alert, Pressable, Text, TextInput, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/providers/auth-provider";
 import { uploadPickedAsset } from "@/services/storage";
+import { trpc } from "@/utils/api-client";
 import { supabase } from "@/utils/supabase";
-import { trpc } from "@/utils/trpc";
+
+function statusTone(status: "closed" | "pending" | "responded") {
+  switch (status) {
+    case "closed":
+      return {
+        bg: "#F5EDE5",
+        label: "Closed",
+        text: "#8A4B1F",
+      };
+    case "responded":
+      return {
+        bg: "#E8F3EE",
+        label: "Responded",
+        text: "#0B4A30",
+      };
+    default:
+      return {
+        bg: "#FFF4E5",
+        label: "Pending",
+        text: "#B45309",
+      };
+  }
+}
 
 export default function ThreadScreen() {
   const { threadId } = useLocalSearchParams<{ threadId: string }>();
-  const { user } = useAuth();
+  const { role, user } = useAuth();
+  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const [body, setBody] = useState("");
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(
     null,
   );
+  const [feedback, setFeedback] = useState<{
+    tone: "error" | "success";
+    message: string;
+  } | null>(null);
   const threadQuery = useQuery(
     trpc.messages.getMessages.queryOptions({
       threadId,
@@ -26,14 +55,83 @@ export default function ThreadScreen() {
   const markRead = useMutation(trpc.messages.markRead.mutationOptions());
   const sendMessage = useMutation(
     trpc.messages.send.mutationOptions({
-      onSuccess: () => {
+      onError: () => {
+        setFeedback({
+          tone: "error",
+          message: "Your message couldn't be sent. Please try again.",
+        });
+      },
+      onSuccess: async () => {
         setBody("");
         setAttachmentPreview(null);
-        queryClient.invalidateQueries();
+        setFeedback(null);
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: ["trpc", "messages", "getMessages"],
+          }),
+          queryClient.invalidateQueries({
+            queryKey: ["trpc", "messages", "getThreads"],
+          }),
+        ]);
       },
     }),
   );
-  const blockUser = useMutation(trpc.messages.blockUser.mutationOptions());
+  const blockUser = useMutation(
+    trpc.messages.blockUser.mutationOptions({
+      onError: () => {
+        setFeedback({
+          tone: "error",
+          message: "Something went wrong. Please try again.",
+        });
+      },
+      onSuccess: () => {
+        setFeedback({
+          tone: "success",
+          message: "User blocked.",
+        });
+      },
+    }),
+  );
+  const reportConversation = useMutation(
+    trpc.messages.reportConversation.mutationOptions({
+      onError: () => {
+        setFeedback({
+          tone: "error",
+          message: "We couldn't submit your report. Please try again.",
+        });
+      },
+      onSuccess: () => {
+        setFeedback({
+          tone: "success",
+          message: "Conversation reported for admin review.",
+        });
+      },
+    }),
+  );
+  const setInquiryStatus = useMutation(
+    trpc.messages.setInquiryStatus.mutationOptions({
+      onError: () => {
+        setFeedback({
+          tone: "error",
+          message: "Couldn't update inquiry status. Please try again.",
+        });
+      },
+      onSuccess: async (_, variables) => {
+        setFeedback({
+          tone: "success",
+          message: `Inquiry marked ${variables.status}.`,
+        });
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: ["trpc", "messages", "getMessages"],
+          }),
+          queryClient.invalidateQueries({
+            queryKey: ["trpc", "messages", "getThreads"],
+          }),
+        ]);
+      },
+    }),
+  );
 
   useEffect(() => {
     if (!threadId) {
@@ -51,7 +149,12 @@ export default function ThreadScreen() {
           table: "messages",
         },
         () => {
-          queryClient.invalidateQueries();
+          void queryClient.invalidateQueries({
+            queryKey: ["trpc", "messages", "getMessages"],
+          });
+          void queryClient.invalidateQueries({
+            queryKey: ["trpc", "messages", "getThreads"],
+          });
         },
       )
       .subscribe();
@@ -94,6 +197,11 @@ export default function ThreadScreen() {
     });
   };
 
+  const currentStatus =
+    role === "lister" && threadQuery.data?.inquiryStatus
+      ? statusTone(threadQuery.data.inquiryStatus)
+      : null;
+
   return (
     <View className="flex-1 bg-[#f8fafc] px-4 pt-5">
       <View className="rounded-[28px] border border-stone-200 bg-white px-4 py-4">
@@ -103,30 +211,124 @@ export default function ThreadScreen() {
         <Text className="mt-2 font-black text-2xl text-slate-900">
           {threadQuery.data?.listing?.title ?? "Listing chat"}
         </Text>
-        <Pressable
-          className="mt-3 self-start rounded-full border border-red-200 px-3 py-2"
-          onPress={() =>
-            threadQuery.data?.otherUser
-              ? blockUser.mutate({ userId: threadQuery.data.otherUser.id })
-              : undefined
-          }
-        >
-          <Text className="font-extrabold text-[11px] text-red-600 uppercase tracking-[1px]">
-            Block user
-          </Text>
-        </Pressable>
+        {currentStatus ? (
+          <View
+            className="mt-3 self-start rounded-full px-3 py-1.5"
+            style={{ backgroundColor: currentStatus.bg }}
+          >
+            <Text
+              className="font-extrabold text-[11px] uppercase tracking-[0.8px]"
+              style={{ color: currentStatus.text }}
+            >
+              Inquiry {currentStatus.label}
+            </Text>
+          </View>
+        ) : null}
+        {role === "lister" && threadQuery.data?.threadId ? (
+          <View className="mt-3 flex-row flex-wrap gap-2">
+            {(["pending", "responded", "closed"] as const).map((status) => {
+              const tone = statusTone(status);
+              const active = threadQuery.data?.inquiryStatus === status;
+
+              return (
+                <Pressable
+                  key={status}
+                  className="rounded-full px-3 py-2"
+                  disabled={active || setInquiryStatus.isPending}
+                  onPress={() =>
+                    setInquiryStatus.mutate({
+                      status,
+                      threadId: threadQuery.data!.threadId,
+                    })
+                  }
+                  style={{
+                    backgroundColor: active ? tone.bg : "#E5E7EB",
+                  }}
+                >
+                  <Text
+                    className="font-extrabold text-[11px] uppercase tracking-[0.7px]"
+                    style={{ color: active ? tone.text : "#475569" }}
+                  >
+                    {tone.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null}
+        <View className="mt-3 flex-row flex-wrap gap-2">
+          <Pressable
+            className="self-start rounded-full border border-red-200 px-3 py-2"
+            onPress={() =>
+              threadQuery.data?.otherUser
+                ? blockUser.mutate({ userId: threadQuery.data.otherUser.id })
+                : undefined
+            }
+          >
+            <Text className="font-extrabold text-[11px] text-red-600 uppercase tracking-[1px]">
+              Block user
+            </Text>
+          </Pressable>
+          <Pressable
+            className="self-start rounded-full border border-amber-200 px-3 py-2"
+            disabled={
+              !threadQuery.data?.threadId || reportConversation.isPending
+            }
+            onPress={() =>
+              threadQuery.data?.threadId
+                ? Alert.alert(
+                    "Report conversation",
+                    "Flag this thread for admin review?",
+                    [
+                      { text: "Cancel", style: "cancel" },
+                      {
+                        text: "Report",
+                        style: "destructive",
+                        onPress: () =>
+                          reportConversation.mutate({
+                            reason: "other",
+                            threadId: threadQuery.data.threadId,
+                          }),
+                      },
+                    ],
+                  )
+                : undefined
+            }
+          >
+            <Text className="font-extrabold text-[11px] text-amber-700 uppercase tracking-[1px]">
+              Report thread
+            </Text>
+          </Pressable>
+        </View>
+        {feedback ? (
+          <View
+            className={`mt-3 rounded-[18px] px-3 py-2.5 ${
+              feedback.tone === "success" ? "bg-[#ECFDF3]" : "bg-[#FEF2F2]"
+            }`}
+          >
+            <Text
+              className={`font-bold text-[12px] ${
+                feedback.tone === "success"
+                  ? "text-[#166534]"
+                  : "text-[#B91C1C]"
+              }`}
+            >
+              {feedback.message}
+            </Text>
+          </View>
+        ) : null}
       </View>
 
-      <ScrollView
+      <FlashList
         className="mt-4 flex-1"
         contentContainerStyle={{ paddingBottom: 24 }}
-      >
-        {(threadQuery.data?.items ?? []).map((message) => {
+        data={threadQuery.data?.items ?? []}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item: message }) => {
           const isOwnMessage = message.senderId === user?.id;
 
           return (
             <View
-              key={message.id}
               className={`mb-3 max-w-[82%] rounded-[24px] px-4 py-3 ${
                 isOwnMessage
                   ? "ml-auto bg-brand-orange"
@@ -157,10 +359,10 @@ export default function ThreadScreen() {
               </Text>
             </View>
           );
-        })}
-      </ScrollView>
+        }}
+      />
 
-      <View className="pb-6">
+      <View style={{ paddingBottom: insets.bottom + 8 }}>
         {attachmentPreview ? (
           <Image
             contentFit="cover"
