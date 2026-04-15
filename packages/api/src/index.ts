@@ -1,6 +1,6 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 
-import type { Context } from "./context.js";
+import type { Context } from "./context";
 
 export const t = initTRPC.context<Context>().create();
 
@@ -16,8 +16,19 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   return next({
     ctx: {
       ...ctx,
-      user:   ctx.user,
+      user: ctx.user,
       userId: ctx.userId,
     },
   });
+});
+
+// Admin — throws FORBIDDEN if the authenticated user is not an admin
+export const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.role !== "admin") {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Only admins can access this resource.",
+    });
+  }
+  return next({ ctx });
 });

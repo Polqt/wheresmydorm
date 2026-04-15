@@ -1,7 +1,16 @@
-import { env } from "@wheresmydorm/env/server";
 import { drizzle } from "drizzle-orm/node-postgres";
 
-import * as schema from "./schema/index.js";
+import * as schema from "./schema/index";
 
-export const db = drizzle(env.DATABASE_URL, { schema });
-export * from "./schema/index.js";
+function requireDatabaseUrl() {
+  const databaseUrl = process.env.DATABASE_URL;
+
+  if (!databaseUrl) {
+    throw new Error("Missing required environment variable: DATABASE_URL");
+  }
+
+  return databaseUrl;
+}
+
+export const db = drizzle(requireDatabaseUrl(), { schema });
+export * from "./schema/index";

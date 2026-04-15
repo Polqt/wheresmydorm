@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
   integer,
@@ -16,16 +17,26 @@ export const profiles = pgTable("profiles", {
   role: userRoleEnum("role"),
 
   isPaidFinder: boolean("is_paid_finder").notNull().default(false),
-  freeSearchesRemaining: integer("free_searches_remaining")
-    .notNull()
-    .default(5),
-  freeListingsRemaining: integer("free_listings_remaining")
-    .notNull()
-    .default(2),
   isVerifiedMember: boolean("is_verified_member").notNull().default(false),
+  isVerifiedLister: boolean("is_verified_lister").notNull().default(false),
+  analyticsExpiresAt: timestamp("analytics_expires_at", { withTimezone: true }),
 
+  bio: text("bio"),
   contactEmail: text("contact_email"),
   contactPhone: text("contact_phone"),
+
+  preferredArea: text("preferred_area"),
+  finderBudgetMin: text("finder_budget_min"),
+  finderBudgetMax: text("finder_budget_max"),
+  finderPropertyTypes: text("finder_property_types")
+    .array()
+    .notNull()
+    .default(sql`'{}'::text[]`),
+  propertyTypes: text("property_types")
+    .array()
+    .notNull()
+    .default(sql`'{}'::text[]`),
+  listerPropertyCount: integer("lister_property_count"),
 
   fcmToken: text("fcm_token"),
 

@@ -1,5 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
+import { db, profiles } from "@wheresmydorm/db";
+import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
+
+type AppRole = "admin" | "finder" | "lister";
 
 function requireEnv(name: string) {
   const value = process.env[name];
@@ -12,37 +17,66 @@ function requireEnv(name: string) {
 }
 
 export async function createContext(req: NextRequest) {
-  const supabase = createServerClient(
-    requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
-    requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
-    {
-      cookies: {
-        getAll: () => req.cookies.getAll(),
-        // trpc route handler - cookie writes (handled by middleware)
-        setAll: () => {},
-      },
-      global: {
-        // support bearer token from the native app
+  const authorization = req.headers.get("Authorization") ?? "";
+  const supabaseUrl = requireEnv("NEXT_PUBLIC_SUPABASE_URL");
+  const supabaseAnonKey = requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  const supabaseServiceRoleKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
 
-        headers: {
-          Authorization: req.headers.get("Authorization") ?? "",
-        },
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll: () => req.cookies.getAll(),
+      // trpc route handler - cookie writes (handled by middleware)
+      setAll: () => {},
+    },
+    global: {
+      // support bearer token from the native app
+      headers: {
+        Authorization: authorization,
       },
     },
-  );
+  });
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  if (!authorization && req.cookies.getAll().length === 0) {
+    return {
+      supabaseAdmin,
+      supabase,
+      user: null,
+      userId: null,
+      role: null as AppRole | null,
+    };
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user) {
+    return {
+      supabaseAdmin,
+      supabase,
+      user: null,
+      userId: null,
+      role: null as AppRole | null,
+    };
+  }
+
+  const profile = await db.query.profiles.findFirst({
+    where: eq(profiles.id, user.id),
+    columns: { role: true },
+  });
+
   return {
+    supabaseAdmin,
     supabase,
-    session,
     user,
-    userId: user?.id ?? null,
+    userId: user.id,
+    role: (profile?.role ?? null) as AppRole | null,
   };
 }
 
